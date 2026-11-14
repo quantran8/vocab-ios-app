@@ -83,6 +83,8 @@ final class PracticeSessionStore {
     private(set) var effort: SessionEffort?
     /// Read and cleared by the shell once the session screen is gone.
     private(set) var followUp: FollowUp?
+    /// A daily chain's first commit (the review), kept for the results screen once the new words are saved.
+    private(set) var pendingReviewSummary: ReviewSummary?
     /// Falls back to the backend when the task has no reference text or on-device recognition can't run.
     var recordingScoring: RecordingScoring
 
@@ -191,6 +193,13 @@ final class PracticeSessionStore {
     var isReviewOnly: Bool { lastRequest?.reviewOnly == true }
     var practiceSkills: [PracticeSkill]? { lastRequest?.skills }
     var practiceFilter: PracticeFilter? { lastRequest?.filter }
+    /// Random and Weak end with "Practice again", which plans the same request anew.
+    var canPracticeAgain: Bool { lastRequest.map { [.randomPractice, .weakWordsPractice].contains($0.mode) } ?? false }
+
+    /// What the results screen shows for `summary`, the summary in `.finished`.
+    func result(for summary: CommitSummary) -> PracticeResult {
+        PracticeResult(mode: lastRequest?.mode ?? .daily, summary: summary, chosenSkills: lastRequest?.skills)
+    }
     /// A denied microphone empties a speaking plan, and only Settings can fix that.
     var canRecord: Bool { recorder.canRecord }
 
@@ -198,24 +207,31 @@ final class PracticeSessionStore {
 
     func start(_ mode: SessionMode, challengeID: String? = nil) async {
         guard stage == .idle else { return }
-        let request = Request(mode: mode, challengeID: challengeID)
-        lastRequest = request
-        await plan(request)
+        await begin(Request(mode: mode, challengeID: challengeID))
     }
 
     /// A daily session of due reviews only: no new words and no Journey slot.
     func startReviewOnly() async {
         guard stage == .idle else { return }
-        let request = Request(mode: .daily, reviewOnly: true)
-        lastRequest = request
-        await plan(request)
+        await begin(Request(mode: .daily, reviewOnly: true))
     }
 
     /// Random practice on `skills` (empty is mixed practice), from `filter` (nil is every learned word).
     func startPractice(_ skills: [PracticeSkill], filter: PracticeFilter? = nil) async {
         guard stage == .idle else { return }
-        let request = Request(mode: .randomPractice, skills: skills.isEmpty ? nil : skills, filter: filter)
+        await begin(Request(mode: .randomPractice, skills: skills.isEmpty ? nil : skills, filter: filter))
+    }
+
+    /// From the results of a Random or Weak session: a new session with the same skills and source.
+    func practiceAgain() async {
+        guard case .finished = stage, canPracticeAgain, let request = lastRequest else { return }
+        close()
+        await begin(request)
+    }
+
+    private func begin(_ request: Request) async {
         lastRequest = request
+        pendingReviewSummary = nil
         await plan(request)
     }
 
@@ -274,6 +290,8 @@ final class PracticeSessionStore {
         sessionID = nil
         commitBody = nil
         isSandbox = false
+        // A chain left halfway has no results screen; its review must not show up under the next session.
+        pendingReviewSummary = nil
         resetStepState()
         stage = .idle
         sessionToken = UUID()
@@ -636,8 +654,15 @@ final class PracticeSessionStore {
 
     private func finish(_ summary: CommitSummary) async {
         let hasNewWords = await continueToNewWords()
-        guard !hasNewWords else { return }
-        stage = .finished(summary)
+        if hasNewWords {
+            pendingReviewSummary = summary.review
+            return
+        }
+        // A daily chain: the review came with the first commit, the new words with this one.
+        var merged = summary
+        if let pendingReviewSummary { merged.review = pendingReviewSummary }
+        pendingReviewSummary = nil
+        stage = .finished(merged)
         haptics.success()
     }
 

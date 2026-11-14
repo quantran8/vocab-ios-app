@@ -79,7 +79,7 @@ private struct PartOfSpeechEyebrow: View {
     }
 }
 
-private struct ExpandChevron: View {
+struct ExpandChevron: View {
     let isExpanded: Bool
 
     var body: some View {

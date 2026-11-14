@@ -61,7 +61,7 @@ final class ScopeReviewLoadTests: XCTestCase {
     func testFilterEncodesTheOneKeyTheBackendExpects() throws {
         let encode = { (filter: PracticeFilter) in try PracticeFixtures.json(filter) as? [String: AnyHashable] }
         XCTAssertEqual(try encode(.collection("c1")), ["collectionId": "c1"])
-        XCTAssertEqual(try encode(.topic("t1")), ["topicIds": ["t1"]])
+        XCTAssertEqual(try encode(.topics(["t1"])), ["topicIds": ["t1"]])
         XCTAssertEqual(try encode(.customWords), ["customOnly": true])
     }
 
@@ -155,8 +155,8 @@ final class ScopeReviewLoadTests: XCTestCase {
 
     func testRandomPracticeSendsTheChosenSource() async {
         let store = makeStore(SessionPlan(sessionID: nil, mode: .randomPractice, steps: []))
-        await store.startPractice([], filter: .topic("t1"))
-        XCTAssertEqual(api.planRequests.last?.filter, .topic("t1"))
+        await store.startPractice([], filter: .topics(["t1"]))
+        XCTAssertEqual(api.planRequests.last?.filter, .topics(["t1"]))
         XCTAssertNil(api.planRequests.last?.skills)
         XCTAssertEqual(store.stage, .empty)
     }

@@ -4,6 +4,8 @@ struct PracticeLabView: View {
     @Environment(TemplateSandboxStore.self) private var sandbox
     @Environment(ChallengeRunStore.self) private var challengeRun
     @Environment(\.motion) private var motion
+    @State private var resultFixtures: [ResultLabFixture] = []
+    @State private var shownResult: ResultLabFixture?
 
     var body: some View {
         ScrollView {
@@ -41,10 +43,26 @@ struct PracticeLabView: View {
                         motion.perform(MotionTokens.transition) { challengeRun.startSandbox(plan: .sandbox(), timed: false) }
                     }
                 }
+
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Text("Results screens")
+                        .font(Typography.emphasis)
+                        .foregroundStyle(Color.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    // Example commit summaries on the real results screen: no session, no API.
+                    ForEach(resultFixtures) { fixture in
+                        ResultFixtureCard(fixture: fixture) { shownResult = fixture }
+                    }
+                }
             }
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.top, Spacing.m)
             .padding(.bottom, Spacing.l)
+        }
+        .task { if resultFixtures.isEmpty { resultFixtures = ResultLabFixtures.load() } }
+        .fullScreenCover(item: $shownResult) { fixture in
+            PracticeResultsView(result: fixture.result, onDone: { shownResult = nil })
+                .background(Color.canvas)
         }
         .safeAreaInset(edge: .top) {
             HStack {
@@ -139,6 +157,43 @@ private struct GameCard: View {
         .buttonStyle(ActionButtonStyle(kind: .secondary))
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Starts a practice round."))
+    }
+}
+
+private struct ResultFixtureCard: View {
+    let fixture: ResultLabFixture
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: Spacing.m) {
+                RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
+                    .fill(Color.neutralSurface)
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(Color.ink)
+                    )
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(verbatim: fixture.title)
+                        .font(Typography.emphasis)
+                        .foregroundStyle(Color.ink)
+                    Text(verbatim: fixture.subtitle)
+                        .font(Typography.secondary)
+                        .foregroundStyle(Color.mutedInk)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(ActionButtonStyle(kind: .secondary))
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text("Shows the results screen."))
     }
 }
 

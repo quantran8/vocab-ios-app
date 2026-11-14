@@ -60,7 +60,7 @@ struct LanguageRow: View {
                 .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget + 12, alignment: .leading)
                 .padding(.horizontal, Spacing.m)
                 .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-                .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: isSelected ? 2 : 1.5))
+                .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
                 .contentShape(shape)
         }
         .buttonStyle(PressScaleButtonStyle())

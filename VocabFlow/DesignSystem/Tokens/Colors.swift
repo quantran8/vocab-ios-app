@@ -36,6 +36,13 @@ extension Color {
     static let successDepth = Color(hex: 0x9EE5B8)
     static let errorDepth = Color(hex: 0xFFB5A5)
 
+    // Results bar: three levels (strong / mid / weak), told apart by lightness and pattern too, never by color alone.
+    // Deliberately not the success/error pair of the lesson screens.
+    static let resultStrong = Color(hex: 0x2B55CE)
+    static let resultMid = Color(hex: 0x9DB4F7)
+    static let resultWeakSurface = Color(hex: 0xE4EAFB)
+    static let resultWeakStripe = Color(hex: 0x7F98DE)
+
     static let track = Color(hex: 0xE1E4EB)
     static let slotTargetedSurface = Color(hex: 0xD9E4FF)
 

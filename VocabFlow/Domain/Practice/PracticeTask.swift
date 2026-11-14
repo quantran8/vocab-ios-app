@@ -36,7 +36,7 @@ struct PlanRequest: Encodable, Equatable {
 /// The source of a random practice. Encodes as the one key the backend expects.
 enum PracticeFilter: Encodable, Equatable, Hashable {
     case collection(String)
-    case topic(String)
+    case topics([String])
     case customWords
 
     private enum CodingKeys: String, CodingKey {
@@ -47,7 +47,7 @@ enum PracticeFilter: Encodable, Equatable, Hashable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
         case .collection(let id): try container.encode(id, forKey: .collectionId)
-        case .topic(let id): try container.encode([id], forKey: .topicIds)
+        case .topics(let ids): try container.encode(ids, forKey: .topicIds)
         case .customWords: try container.encode(true, forKey: .customOnly)
         }
     }
@@ -434,13 +434,22 @@ struct RecordingAssessment: Decodable, Equatable {
 }
 
 struct CommitSummary: Decodable, Equatable {
-    let newWordGoalSlots: Int
-    let reviewedMeanings: Int
-    let practiceTasks: Int
+    // Legacy counts: only the fallback results grid reads them, for a session saved before the result groups existed.
+    var newWordGoalSlots: Int? = nil
+    var reviewedMeanings: Int? = nil
+    var practiceTasks: Int? = nil
     /// Only for a checkpoint challenge (the Journey's review).
     var checkpoint: ReviewResult? = nil
     /// Words passed with "I know this"; nil from an older backend.
     var knownMeanings: Int? = nil
+
+    // Results screen (Session Result Statistics). Daily: `review` + `newWords`. Random/Weak: the rest.
+    var review: ReviewSummary? = nil
+    var newWords: NewWordSummary? = nil
+    var practice: PracticeSummary? = nil
+    var skillChanges: ResultGroups<SkillChangeGroup>? = nil
+    var needPractice: NeedPracticeCount? = nil
+    var countedAsReview: [ResultItem]? = nil
 }
 
 /// Set only by the commit that used up a topic, the scope or the whole collection; a retry repeats it.

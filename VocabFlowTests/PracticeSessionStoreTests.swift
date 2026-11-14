@@ -428,4 +428,88 @@ final class PracticeSessionStoreTests: XCTestCase {
         XCTAssertEqual(store.stage, .idle)
         XCTAssertTrue(api.commitBodies.isEmpty)
     }
+
+    // MARK: Results (Session Result Statistics)
+
+    private let reviewed = ReviewSummary(total: 1, groups: ResultGroups([.solid: [ResultItem(meaningId: "m-review", lemma: "endure")]]))
+    private let learned = NewWordSummary(total: 1, groups: ResultGroups([.smooth: [ResultItem(meaningId: "m-new", lemma: "symptom")]]))
+
+    func testDailyChainShowsTheFirstCommitsReviewWithTheNewWords() async {
+        let store = makeStore(steps: [.practice(phase: .dueReview, task: PracticeFixtures.choice())])
+        let reviewCommit = CommitResponse(sessionId: "s1", summary: CommitSummary(review: reviewed, newWords: NewWordSummary()))
+        let newWordsCommit = CommitResponse(sessionId: "s2", summary: CommitSummary(review: ReviewSummary(), newWords: learned))
+        api.commitResults = [.success(reviewCommit), .success(newWordsCommit)]
+        await store.start(.daily)
+        store.submitOption(3)
+        api.plan = .success(SessionPlan(sessionID: "s2", mode: .daily, steps: learnAndChoice))
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+        XCTAssertEqual(store.stage, .reviewFinished)
+        XCTAssertEqual(store.pendingReviewSummary, reviewed)
+
+        store.continueToPractice()
+        store.advance()
+        store.submitOption(3)
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+
+        guard case .finished(let summary) = store.stage else { return XCTFail("Expected results, got \(store.stage)") }
+        XCTAssertEqual(summary.review, reviewed)
+        XCTAssertEqual(summary.newWords, learned)
+        XCTAssertNil(store.pendingReviewSummary)
+        XCTAssertEqual(store.result(for: summary).kind, .daily)
+    }
+
+    func testAChainLeftHalfwayDoesNotCarryItsReviewIntoTheNextSession() async {
+        let store = makeStore(steps: [.practice(phase: .dueReview, task: PracticeFixtures.choice())])
+        api.commitResults = [.success(CommitResponse(sessionId: "s1", summary: CommitSummary(review: reviewed)))]
+        await store.start(.daily)
+        store.submitOption(3)
+        api.plan = .success(SessionPlan(sessionID: "s2", mode: .daily, steps: learnAndChoice))
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+        XCTAssertEqual(store.pendingReviewSummary, reviewed)
+
+        store.close()
+        XCTAssertNil(store.pendingReviewSummary)
+
+        let next = CommitSummary(review: ReviewSummary(), newWords: learned)
+        api.commitResults = [.success(CommitResponse(sessionId: "s2", summary: next))]
+        await store.start(.daily)
+        store.advance()
+        store.submitOption(3)
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+        XCTAssertEqual(store.stage, .finished(next))
+    }
+
+    func testPracticeAgainPlansTheSameSkillsAndSource() async {
+        let store = makeStore(steps: [.practice(phase: .randomPractice, task: PracticeFixtures.choice())])
+        api.plan = .success(SessionPlan(sessionID: "s1", mode: .randomPractice, steps: [.practice(phase: .randomPractice, task: PracticeFixtures.choice())]))
+        api.commitResults = [.success(committed)]
+        await store.startPractice([.reading, .listening], filter: .topics(["t1"]))
+        store.submitOption(3)
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+        guard case .finished(let summary) = store.stage else { return XCTFail("Expected results, got \(store.stage)") }
+        XCTAssertTrue(store.canPracticeAgain)
+        XCTAssertEqual(store.result(for: summary).kind, .randomPractice)
+        XCTAssertEqual(store.result(for: summary).chosenSkills, [.reading, .listening])
+        let firstToken = store.sessionToken
+
+        await store.practiceAgain()
+        XCTAssertEqual(store.stage, .running)
+        XCTAssertNotEqual(store.sessionToken, firstToken)
+        XCTAssertEqual(api.planRequests.count, 2)
+        XCTAssertEqual(api.planRequests.last, api.planRequests.first)
+    }
+
+    func testDailyHasNoPracticeAgain() async {
+        let store = makeStore(steps: learnAndChoice)
+        api.commitResults = [.success(committed)]
+        await runToCommit(store)
+        XCTAssertFalse(store.canPracticeAgain)
+        await store.practiceAgain()
+        XCTAssertEqual(store.stage, .finished(summary))
+    }
 }

@@ -155,7 +155,7 @@ struct DayToggle: View {
                 .foregroundStyle(isSelected ? Color.selectedInk : Color.mutedInk)
                 .frame(maxWidth: .infinity, minHeight: 50)
                 .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-                .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: isSelected ? 2 : 1.5))
+                .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
                 .contentShape(shape)
                 .animation(motion.animation(MotionTokens.press), value: isSelected)
         }

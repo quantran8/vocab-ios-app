@@ -216,4 +216,68 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(meaning.skills.reading.status, .verified)
         XCTAssertEqual(meaning.skills.writing.status, .notVerified)
     }
+
+    // MARK: Commit summary for the results screen
+
+    private func decodeSummary(_ summary: String) throws -> CommitSummary {
+        let json = #"{"sessionId":"s1","summary":\#(summary)}"#
+        return try APIClient.decoder.decode(CommitResponse.self, from: Data(json.utf8)).summary
+    }
+
+    func testSummaryFromAnOlderBackendHasNoResultBlocks() throws {
+        let summary = try decodeSummary(#"{"newWordGoalSlots":2,"reviewedMeanings":1,"practiceTasks":9}"#)
+        XCTAssertEqual(summary.practiceTasks, 9)
+        XCTAssertNil(summary.review)
+        XCTAssertNil(summary.newWords)
+        XCTAssertNil(summary.practice)
+        // A later backend drops the legacy counts.
+        XCTAssertNil(try decodeSummary(#"{"review":null,"newWords":null}"#).practiceTasks)
+    }
+
+    func testDailySummaryDecodesGroupsAndSkipsUnknownOnes() throws {
+        let summary = try decodeSummary(#"""
+        {"review":{"total":2,"groups":{
+            "solid":[{"meaningId":"m1","wordId":"w1","lemma":"prevalence","gloss":"tỷ lệ phổ biến","nextReviewAt":"2026-11-25T13:00:00Z","learnedAt":"2026-11-09T12:10:00.000Z"}],
+            "relearn":[{"meaningId":"m2","lemma":"chronic","cause":"out_of_tries","struggledAt":"writing"}],
+            "shaky":[{"meaningId":"m5","lemma":"budget","cause":"something_new"}],
+            "forgotten":[{"oddShape":true}]}},
+         "newWords":{"total":1,"groups":{
+            "retried":[{"meaningId":"m3","lemma":"fatigue","struggledAt":"grammar"}],
+            "revealed":[{"meaningId":"m4","lemma":"immune","struggledAt":"speaking"}]}}}
+        """#)
+        let review = try XCTUnwrap(summary.review)
+        XCTAssertEqual(review.groups[.solid].first?.lemma, "prevalence")
+        XCTAssertNotNil(review.groups[.solid].first?.learnedAt)
+        XCTAssertEqual(review.groups[.relearn].first?.gloss, "")
+        XCTAssertEqual(review.groups[.relearn].first?.cause, .outOfTries)
+        XCTAssertEqual(review.groups[.relearn].first?.struggledAt, .writing)
+        XCTAssertEqual(review.groups[.shaky].first?.cause, .unknown)
+        XCTAssertNil(review.groups[.solid].first?.cause)
+        let newWords = try XCTUnwrap(summary.newWords)
+        XCTAssertEqual(newWords.groups[.retried].first?.struggledAt, .unknown)
+        XCTAssertEqual(newWords.groups[.revealed].first?.struggledAt, .speaking)
+        XCTAssertEqual(newWords.groups[.known], [])
+    }
+
+    func testPracticeSummaryDecodesWithUnknownSkillsAndStatuses() throws {
+        let summary = try decodeSummary(#"""
+        {"review":null,"newWords":null,
+         "practice":{"total":1,"excluded":{"count":2,"reasons":["weak_template","something_new"]},
+            "groups":{"clean":[{"meaningId":"m1","lemma":"vivid","skill":"grammar","hadIssue":false}]}},
+         "skillChanges":{"leveledUp":[{"meaningId":"m1","skill":"reading","from":"demonstrated","to":"mastered"}],
+            "pendingConfirm":[{"meaningId":"m2","skill":"listening","confirmableAt":"2026-11-14T03:00:00Z"}]},
+         "needPractice":{"before":3,"after":null},
+         "countedAsReview":[{"meaningId":"m1","lemma":"vivid","nextReviewAt":"2026-11-22T13:00:00Z"}]}
+        """#)
+        let practice = try XCTUnwrap(summary.practice)
+        XCTAssertEqual(practice.excluded?.count, 2)
+        XCTAssertEqual(practice.groups[.clean].first?.skill, .unknown)
+        XCTAssertEqual(practice.groups[.clean].first?.hadIssue, false)
+        let changes = try XCTUnwrap(summary.skillChanges)
+        XCTAssertEqual(changes[.leveledUp].first?.to, .unknown)
+        XCTAssertNotNil(changes[.pendingConfirm].first?.confirmableAt)
+        XCTAssertEqual(changes[.cleared], [])
+        XCTAssertEqual(summary.needPractice, NeedPracticeCount(before: 3, after: nil))
+        XCTAssertEqual(summary.countedAsReview?.count, 1)
+    }
 }

@@ -311,7 +311,7 @@ private struct LevelStep: View {
             .frame(maxWidth: .infinity, minHeight: 74)
             .padding(.horizontal, Spacing.s)
             .background(Color.surface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: 1.5))
+            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
             .contentShape(shape)
         }
         .buttonStyle(PressScaleButtonStyle())

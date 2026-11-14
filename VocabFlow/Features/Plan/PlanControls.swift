@@ -35,7 +35,7 @@ struct LevelTile: View {
             .padding(.vertical, Spacing.s)
             .frame(maxWidth: .infinity, minHeight: 74)
             .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: 1.5))
+            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
             .contentShape(shape)
         }
         .buttonStyle(PressScaleButtonStyle())
@@ -97,7 +97,7 @@ private struct CollectionCard: View {
             .padding(Spacing.s)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: isSelected ? 2 : 1.5))
+            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
             .contentShape(shape)
             .animation(motion.animation(MotionTokens.press), value: isSelected)
         }
@@ -287,7 +287,7 @@ struct ReminderPicker: View {
             .padding(.horizontal, Spacing.m - 1)
             .frame(minHeight: 57)
             .background(isOn ? Color.surface : Color.disabledSurface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: 1.5))
+            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
             .disabled(!isOn)
             .opacity(isOn ? 1 : 0.6)
         }

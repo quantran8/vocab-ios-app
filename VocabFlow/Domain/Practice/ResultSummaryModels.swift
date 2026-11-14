@@ -1,0 +1,163 @@
+import Foundation
+
+// Results-screen blocks of a commit summary (backend FRONTEND_FLOW.md §15).
+// Every field is optional: sessions committed by an older backend replay without them.
+
+/// The skill a result item is about. An unknown value hides the line that would name it.
+enum ResultSkill: String, LenientEnum, Equatable, CaseIterable {
+    case reading, writing, listening, speaking
+    case unknown
+    static let fallback = ResultSkill.unknown
+}
+
+/// Skill level in a change ("Demonstrated → Verified"); lenient, unlike `SkillStatus` on the word page.
+enum ResultSkillStatus: String, LenientEnum, Equatable {
+    case notVerified = "not_verified"
+    case demonstrated, verified
+    case unknown
+    static let fallback = ResultSkillStatus.unknown
+}
+
+/// Why a word is in a weaker group: the answer that decided it. Unknown values show no reason.
+enum ResultCause: String, LenientEnum, Equatable {
+    case hinted, retried, primed
+    case recognizedOnly = "recognized_only"
+    case revealed
+    case outOfTries = "out_of_tries"
+    case wrongChoice = "wrong_choice"
+    case notPassed = "not_passed"
+    case unknown
+    static let fallback = ResultCause.unknown
+}
+
+/// One word in a group. Which fields are set depends on the block.
+struct ResultItem: Decodable, Equatable {
+    let meaningId: String
+    var wordId: String? = nil
+    var lemma = ""
+    var gloss = ""
+    var nextReviewAt: Date? = nil
+    /// Review items only.
+    var learnedAt: Date? = nil
+    /// Weaker review and new-word items: what happened, and in which skill.
+    var cause: ResultCause? = nil
+    var struggledAt: ResultSkill? = nil
+    /// Practice answers and skill changes.
+    var skill: ResultSkill? = nil
+    /// Practice answers: the (word, skill) pair had an open issue before the session.
+    var hadIssue: Bool? = nil
+    var from: ResultSkillStatus? = nil
+    var to: ResultSkillStatus? = nil
+    var confirmableAt: Date? = nil
+
+    private enum CodingKeys: String, CodingKey {
+        case meaningId, wordId, lemma, gloss, nextReviewAt, learnedAt, cause, struggledAt, skill, hadIssue, from, to, confirmableAt
+    }
+
+    init(meaningId: String, wordId: String? = nil, lemma: String = "", gloss: String = "", nextReviewAt: Date? = nil,
+         learnedAt: Date? = nil, cause: ResultCause? = nil, struggledAt: ResultSkill? = nil, skill: ResultSkill? = nil, hadIssue: Bool? = nil,
+         from: ResultSkillStatus? = nil, to: ResultSkillStatus? = nil, confirmableAt: Date? = nil) {
+        self.meaningId = meaningId
+        self.wordId = wordId
+        self.lemma = lemma
+        self.gloss = gloss
+        self.nextReviewAt = nextReviewAt
+        self.learnedAt = learnedAt
+        self.cause = cause
+        self.struggledAt = struggledAt
+        self.skill = skill
+        self.hadIssue = hadIssue
+        self.from = from
+        self.to = to
+        self.confirmableAt = confirmableAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        meaningId = try c.decode(String.self, forKey: .meaningId)
+        wordId = try c.decodeIfPresent(String.self, forKey: .wordId)
+        lemma = try c.decodeIfPresent(String.self, forKey: .lemma) ?? ""
+        gloss = try c.decodeIfPresent(String.self, forKey: .gloss) ?? ""
+        nextReviewAt = try c.decodeIfPresent(Date.self, forKey: .nextReviewAt)
+        learnedAt = try c.decodeIfPresent(Date.self, forKey: .learnedAt)
+        cause = try c.decodeIfPresent(ResultCause.self, forKey: .cause)
+        struggledAt = try c.decodeIfPresent(ResultSkill.self, forKey: .struggledAt)
+        skill = try c.decodeIfPresent(ResultSkill.self, forKey: .skill)
+        hadIssue = try c.decodeIfPresent(Bool.self, forKey: .hadIssue)
+        from = try c.decodeIfPresent(ResultSkillStatus.self, forKey: .from)
+        to = try c.decodeIfPresent(ResultSkillStatus.self, forKey: .to)
+        confirmableAt = try c.decodeIfPresent(Date.self, forKey: .confirmableAt)
+    }
+}
+
+/// The groups of one block. Reads only the keys the app knows: an unknown group is ignored, a missing one is empty.
+struct ResultGroups<Group: Hashable & CaseIterable & RawRepresentable>: Decodable, Equatable where Group.RawValue == String {
+    private var items: [Group: [ResultItem]]
+
+    init(_ items: [Group: [ResultItem]] = [:]) {
+        self.items = items
+    }
+
+    subscript(_ group: Group) -> [ResultItem] { items[group] ?? [] }
+
+    func count(_ group: Group) -> Int { self[group].count }
+
+    private struct Key: CodingKey {
+        let stringValue: String
+        init(stringValue: String) { self.stringValue = stringValue }
+        var intValue: Int? { nil }
+        init?(intValue: Int) { nil }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: Key.self)
+        var items: [Group: [ResultItem]] = [:]
+        for group in Group.allCases {
+            items[group] = try container.decodeIfPresent([ResultItem].self, forKey: Key(stringValue: group.rawValue)) ?? []
+        }
+        self.items = items
+    }
+}
+
+enum ReviewGroup: String, CaseIterable {
+    case solid, shaky, relearn
+}
+
+enum NewWordGroup: String, CaseIterable {
+    case smooth, retried, revealed, known
+}
+
+enum PracticeGroup: String, CaseIterable {
+    case clean, helped, missed
+}
+
+enum SkillChangeGroup: String, CaseIterable {
+    case leveledUp, cleared, pendingConfirm, regressed
+}
+
+struct ReviewSummary: Decodable, Equatable {
+    var total: Int? = nil
+    var groups = ResultGroups<ReviewGroup>()
+}
+
+struct NewWordSummary: Decodable, Equatable {
+    var total: Int? = nil
+    var groups = ResultGroups<NewWordGroup>()
+}
+
+struct PracticeSummary: Decodable, Equatable {
+    struct Excluded: Decodable, Equatable {
+        var count = 0
+        var reasons: [String] = []
+    }
+
+    var total: Int? = nil
+    var excluded: Excluded? = nil
+    var groups = ResultGroups<PracticeGroup>()
+}
+
+/// `needPracticeWords` of the word stats, before and after the commit.
+struct NeedPracticeCount: Decodable, Equatable {
+    var before: Int? = nil
+    var after: Int? = nil
+}

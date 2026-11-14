@@ -1,0 +1,407 @@
+import SwiftUI
+
+extension ResultSection: Identifiable {
+    var id: Self { self }
+}
+
+/// The words behind the tiles, grouped as the server decided. Opens scrolled to the tapped tile's block.
+struct SessionResultDetailSheet: View {
+    let result: PracticeResult
+    let focus: ResultSection
+    @Environment(LearnerStore.self) private var learner
+    @Environment(\.motion) private var motion
+    @State private var expanded: Set<String> = []
+    @State private var collapsed: Set<String> = []
+    @State private var selectedWord: SelectedWord?
+
+    private struct SelectedWord: Identifiable {
+        let wordId: String
+        let lemma: String
+        let meaningId: String
+        var id: String { meaningId }
+    }
+
+    private var blocks: [ResultSheetBlock] { ResultSheetModel.blocks(for: result) }
+    private var calendar: Calendar { ResultDateText.calendar(timeZone: learner.profile?.settings.timeZone) }
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Session details")
+                            .font(Typography.screenTitle)
+                            .tracking(-0.6)
+                            .foregroundStyle(Color.ink)
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer()
+                        SheetCloseButton()
+                    }
+
+                    ForEach(blocks) { block in
+                        blockView(block)
+                    }
+                }
+                .padding(.horizontal, Spacing.screenGutter)
+                .padding(.vertical, Spacing.l)
+            }
+            .onAppear {
+                // The first block of the tapped tile's section.
+                guard let target = blocks.first(where: { $0.section == focus })?.id else { return }
+                Task { @MainActor in proxy.scrollTo(target, anchor: .top) }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color.canvas)
+        .sheet(item: $selectedWord) { word in
+            WordDetailSheet(wordID: word.wordId, lemma: word.lemma, ipa: nil, focusMeaningID: word.meaningId, playAudio: nil)
+        }
+    }
+
+    // MARK: Blocks
+
+    private func blockView(_ block: ResultSheetBlock) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text(block.title.text)
+                .font(Typography.eyebrow)
+                .tracking(0.4)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.mutedInk)
+                .accessibilityAddTraits(.isHeader)
+
+            // The block's proportions; each group header below carries its part's swatch, so the names are the key.
+            if let bar = block.bar {
+                SegmentedResultBar(segments: bar, revealed: true)
+                    .accessibilityHidden(true)
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(block.groups.enumerated()), id: \.element.id) { index, group in
+                    if index > 0 { hairline }
+                    groupView(group, in: block)
+                }
+            }
+            .cardSurface(radius: Radii.card - 4)
+
+            if let excluded = block.excluded, excluded.count > 0 {
+                Text("\(excluded.count) answers didn’t count toward skills: \(reasonList(excluded.reasons))")
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if !block.countedAsReview.isEmpty {
+                countedAsReview(block.countedAsReview)
+            }
+        }
+    }
+
+    private func countedAsReview(_ items: [ResultItem]) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
+            Text("\(items.count) due words counted as review")
+                .font(Typography.secondary.weight(.semibold))
+                .foregroundStyle(Color.ink)
+            if let next = items.first?.nextReviewAt {
+                nextReviewText(next)
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Groups
+
+    private func key(_ group: ResultSheetGroup, in block: ResultSheetBlock) -> String { "\(block.id)-\(group.id)" }
+
+    private func isExpanded(_ group: ResultSheetGroup, in block: ResultSheetBlock) -> Bool {
+        let key = key(group, in: block)
+        return group.collapsedByDefault ? expanded.contains(key) : !collapsed.contains(key)
+    }
+
+    private func toggle(_ group: ResultSheetGroup, in block: ResultSheetBlock) {
+        let key = key(group, in: block)
+        motion.perform(MotionTokens.snap) {
+            if group.collapsedByDefault {
+                if expanded.contains(key) { expanded.remove(key) } else { expanded.insert(key) }
+            } else {
+                if collapsed.contains(key) { collapsed.remove(key) } else { collapsed.insert(key) }
+            }
+        }
+    }
+
+    private func groupView(_ group: ResultSheetGroup, in block: ResultSheetBlock) -> some View {
+        let open = isExpanded(group, in: block)
+        return VStack(alignment: .leading, spacing: 0) {
+            Button { toggle(group, in: block) } label: {
+                HStack(alignment: .center, spacing: Spacing.s) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(alignment: .center, spacing: Spacing.xs) {
+                            if block.bar != nil, let level = group.barLevel {
+                                ResultSwatch(level: level)
+                                    .frame(width: 14, height: 10)
+                                    .accessibilityHidden(true)
+                            }
+                            Text(group.kind.header(group.items.count))
+                                .font(Typography.emphasis)
+                                .foregroundStyle(Color.ink)
+                        }
+                        if let subtitle = subtitle(group) {
+                            subtitle
+                                .font(Typography.micro)
+                                .foregroundStyle(Color.mutedInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                    ExpandChevron(isExpanded: open)
+                }
+                .padding(.horizontal, Spacing.m)
+                .padding(.vertical, Spacing.s)
+                .frame(minHeight: Spacing.minTouchTarget)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .accessibilityValue(Text(open ? "Expanded" : "Collapsed"))
+
+            if open {
+                VStack(spacing: 0) {
+                    ForEach(Array(group.items.enumerated()), id: \.offset) { _, item in
+                        itemRow(item, group: group)
+                    }
+                }
+                .padding(.bottom, Spacing.xs)
+                .transition(.opacity)
+            }
+        }
+    }
+
+    // MARK: Items
+
+    @ViewBuilder private func itemRow(_ item: ResultItem, group: ResultSheetGroup) -> some View {
+        let row = HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: item.lemma)
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Color.ink)
+                if !item.gloss.isEmpty {
+                    Text(verbatim: item.gloss)
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                }
+            }
+            Spacer(minLength: Spacing.xs)
+            VStack(alignment: .trailing, spacing: 2) {
+                if let tag = tag(for: item, in: group) {
+                    tag
+                        .font(Typography.micro.weight(.semibold))
+                        .foregroundStyle(Color.selectedInk)
+                }
+                if let detail = detail(for: item) {
+                    detail
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                }
+            }
+            .multilineTextAlignment(.trailing)
+        }
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.xs)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+
+        if let wordId = item.wordId {
+            Button {
+                selectedWord = SelectedWord(wordId: wordId, lemma: item.lemma, meaningId: item.meaningId)
+            } label: { row }
+                .buttonStyle(PressScaleButtonStyle())
+                .accessibilityHint(Text("Opens the word."))
+        } else {
+            row
+        }
+    }
+
+    private func tag(for item: ResultItem, in group: ResultSheetGroup) -> Text? {
+        if group.kind == .waitingToConfirm, let at = item.confirmableAt {
+            return Text("can confirm at \(at.formatted(timeStyle))")
+        }
+        if group.kind == .leveledUp || group.kind == .regressed,
+           let skill = item.skill?.name, let from = item.from?.name, let to = item.to?.name {
+            return Text("\(skill): \(from) → \(to)")
+        }
+        if group.marksFrequentMistakes {
+            if let skill = item.skill?.name { return Text("\(skill) · frequent mistake lately") }
+            return Text("frequent mistake lately")
+        }
+        if let skill = item.skill?.name { return Text(verbatim: skill) }
+        // Review and new words: what the deciding answer was.
+        if let cause = item.cause, cause != .unknown { return Text(cause.text) }
+        return nil
+    }
+
+    /// Under the reason: the skill it happened in, and for a review word learned this week, when.
+    private func detail(for item: ResultItem) -> Text? {
+        var parts: [Text] = []
+        if item.cause != nil, let skill = item.struggledAt?.name {
+            parts.append(Text("while \(skill.lowercased(with: AppLanguage.active.locale))"))
+        }
+        if let learned = ResultDateText.recentlyLearned(item.learnedAt, now: .now, calendar: calendar) {
+            parts.append(Text("learned \(learned.formatted(weekdayStyle))"))
+        }
+        return parts.reduce(nil) { joined, part in joined.map { $0 + Text(verbatim: " · ") + part } ?? part }
+    }
+
+    /// What puts a word in this group, then when the group comes back.
+    private func subtitle(_ group: ResultSheetGroup) -> Text? {
+        let explanation = group.kind.explanation.map { Text($0) }
+        let next = group.showsNextReview ? group.items.first?.nextReviewAt.map(nextReviewText) : nil
+        switch (explanation, next) {
+        case let (explanation?, next?): return explanation + Text(verbatim: " · ") + next
+        case let (explanation?, nil): return explanation
+        case let (nil, next?): return next
+        default: return nil
+        }
+    }
+
+    private func nextReviewText(_ date: Date) -> Text {
+        switch ResultDateText.nextReview(date, now: .now, calendar: calendar) {
+        case .tonight: Text("Back tonight")
+        case .tomorrow: Text("Back tomorrow")
+        case .weekday(let day): Text("Back on \(day.formatted(weekdayStyle))")
+        case .inDays(let days): Text("Back in \(days) days")
+        }
+    }
+
+    private var weekdayStyle: Date.FormatStyle {
+        Date.FormatStyle(locale: AppLanguage.active.locale, calendar: calendar, timeZone: calendar.timeZone).weekday(.wide)
+    }
+
+    private var timeStyle: Date.FormatStyle {
+        Date.FormatStyle(date: .omitted, time: .shortened, locale: AppLanguage.active.locale, calendar: calendar, timeZone: calendar.timeZone)
+    }
+
+    private func reasonList(_ reasons: [String]) -> String {
+        reasons.compactMap(Self.reasonName).formatted(.list(type: .and).locale(AppLanguage.active.locale))
+    }
+
+    private static func reasonName(_ reason: String) -> String? {
+        switch reason {
+        case "weak_template": String(localized: "easier exercise types", bundle: .appLanguage)
+        case "invalid_recording": String(localized: "unclear recordings", bundle: .appLanguage)
+        case "unavailable": String(localized: "couldn’t record", bundle: .appLanguage)
+        case "audio_not_played": String(localized: "audio didn’t play", bundle: .appLanguage)
+        case "quality_unqualified": String(localized: "exercises still in review", bundle: .appLanguage)
+        default: nil
+        }
+    }
+
+    private var hairline: some View {
+        Rectangle().fill(Color.stroke).frame(height: 1)
+    }
+}
+
+extension ResultSheetBlock.Title {
+    var text: LocalizedStringKey {
+        switch self {
+        case .review: "Review"
+        case .newWords: "New words"
+        case .answers: "Answers"
+        case .answersFor(let skill): "Answers · \(skill.name ?? "")"
+        case .skillChanges: "Skill changes"
+        case .weakWords: "Weak words"
+        case .frequentMistakes: "Frequent mistakes"
+        }
+    }
+}
+
+extension ResultCause {
+    var text: LocalizedStringKey {
+        switch self {
+        case .hinted: "Used a hint"
+        case .retried: "Right after another try"
+        case .primed: "Saw it just before"
+        case .recognizedOnly: "Recognised, not recalled"
+        case .revealed: "Saw the answer"
+        case .outOfTries: "Not right after all tries"
+        case .wrongChoice: "Picked another answer"
+        case .notPassed: "Pronunciation not passed yet"
+        case .unknown: ""
+        }
+    }
+}
+
+extension ResultSheetGroup.Kind {
+    /// One plain line on what puts a word in this group; nil where the header already says it.
+    var explanation: LocalizedStringKey? {
+        switch self {
+        case .relearn: "Didn’t come back on your own"
+        case .shaky: "Right, but not fully on your own"
+        case .solid: "Recalled on your own"
+        case .revealed: "Saw the answer or ran out of tries"
+        case .retried: "Right after a hint or another try"
+        case .smooth: "Right first time, no hints"
+        case .known: "You already knew these"
+        case .missed: "Not right this time"
+        case .helped: "Right with a hint or another try"
+        case .clean: "Right first time, on your own"
+        case .regressed, .leveledUp, .stillNeedsPractice, .waitingToConfirm, .settled: nil
+        }
+    }
+
+    func header(_ count: Int) -> LocalizedStringKey {
+        switch self {
+        case .relearn: "Relearn (\(count))"
+        case .shaky: "Not solid yet (\(count))"
+        case .solid: "Remembered (\(count))"
+        case .revealed: "Saw the answer (\(count))"
+        case .retried: "Needed a retry (\(count))"
+        case .smooth: "Picked up right away (\(count))"
+        case .known: "Already knew (\(count))"
+        case .missed: "Not done yet (\(count))"
+        case .helped: "Right with help (\(count))"
+        case .clean: "Right on your own (\(count))"
+        case .regressed: "Need practice again (\(count))"
+        case .leveledUp: "Leveled up (\(count))"
+        case .stillNeedsPractice: "Still needs practice (\(count))"
+        case .waitingToConfirm: "Waiting to confirm (\(count))"
+        case .settled: "Settled (\(count))"
+        }
+    }
+}
+
+extension ResultSkill {
+    /// Same words as the skill rows on the word page; nil for a skill this app doesn't know.
+    var name: String? {
+        switch self {
+        case .reading: String(localized: "Reading", bundle: .appLanguage)
+        case .writing: String(localized: "Writing", bundle: .appLanguage)
+        case .listening: String(localized: "Listening", bundle: .appLanguage)
+        case .speaking: String(localized: "Speaking", bundle: .appLanguage)
+        case .unknown: nil
+        }
+    }
+}
+
+extension ResultSkillStatus {
+    /// The word page's labels (`SkillStatus.label`), so both screens say the same thing.
+    var name: String? {
+        switch self {
+        case .notVerified: SkillStatus.notVerified.label
+        case .demonstrated: SkillStatus.demonstrated.label
+        case .verified: SkillStatus.verified.label
+        case .unknown: nil
+        }
+    }
+}
+
+extension SkillStatus {
+    var label: String {
+        switch self {
+        case .notVerified: String(localized: "Not verified", bundle: .appLanguage)
+        case .demonstrated: String(localized: "Demonstrated", bundle: .appLanguage)
+        case .verified: String(localized: "Verified", bundle: .appLanguage)
+        }
+    }
+}

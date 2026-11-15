@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// One of the three equal-height tiles on the results screen. One number, one caption, one bar.
+/// One of the equal-height tiles on the results screen: a title, one number, a caption and, when it opens the
+/// detail sheet, a "See details ›" link. The weaker groups are listed on the sheet, not here.
 struct ResultTileView: View {
     let tile: ResultTile
     /// False until the screen has appeared: the number counts up and the bar grows from it.
@@ -19,7 +20,7 @@ struct ResultTileView: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
                 Text(tile.title)
                     .font(Typography.micro.weight(.semibold))
@@ -35,29 +36,38 @@ struct ResultTileView: View {
             }
 
             numberText
-                .font(Typography.screenTitle.monospacedDigit())
+                .font(Typography.stat.monospacedDigit())
+                .tracking(Typography.tightTracking)
                 .foregroundStyle(Color.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
+                .padding(.top, Spacing.xxs)
 
             Text(tile.caption.text)
                 .font(Typography.micro)
                 .foregroundStyle(Color.mutedInk)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, tile.lines.isEmpty ? 0 : Spacing.xxs)
-
-            ForEach(Array(tile.lines.enumerated()), id: \.offset) { _, line in
-                Text(line.text)
-                    .font(Typography.micro.weight(.semibold))
-                    .foregroundStyle(Color.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
             Spacer(minLength: 0)
+
+            if onTap != nil {
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    CardDivider()
+                    HStack(spacing: Spacing.xxs) {
+                        Text("See details")
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.bold))
+                            .accessibilityHidden(true)
+                    }
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Color.link)
+                }
+                .padding(.top, Spacing.m)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(Spacing.s)
-        .cardSurface(radius: Radii.tile)
+        .padding(Spacing.m)
+        .cardSurface()
         .accessibilityElement(children: .combine)
     }
 
@@ -82,6 +92,8 @@ struct ResultTileView: View {
 /// Three proportional parts: solid, light, and striped, so the levels read without color. Keyed on the sheet by the
 /// swatch in front of each group's header.
 struct SegmentedResultBar: View {
+    static let height: CGFloat = 10
+
     let segments: [Int]
     let revealed: Bool
     @Environment(\.motion) private var motion
@@ -101,7 +113,7 @@ struct SegmentedResultBar: View {
             .scaleEffect(x: revealed ? 1 : 0, anchor: .leading)
             .animation(motion.reduceMotion ? nil : motion.animation(MotionTokens.progress.delay(MotionTokens.celebrationStatsDelay)), value: revealed)
         }
-        .frame(height: 8)
+        .frame(height: Self.height)
         .background(Color.track)
         .clipShape(Capsule())
     }
@@ -181,8 +193,6 @@ extension ResultTile.Line {
         case .missed(let n): "\(n) not done yet"
         case .helped(let n): "\(n) needed help"
         case .regressed(let n): "\(n) to practise again"
-        case .newlyVerified(let n): "\(n) newly verified"
-        case .verifiedHint: "Verified needs right answers in 2 sessions at least 24 h apart"
         case .weakDelta(let delta): "\(ResultTile.Line.signed(delta)) after this session"
         case .weakPending(let n): "\(n) to confirm after 12 h"
         }

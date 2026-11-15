@@ -19,8 +19,8 @@ struct EditPublicProfileSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
-                HStack {
-                    PunctuatedTitle(text: "Your public profile", font: Typography.screenTitle)
+                HStack(alignment: .top) {
+                    SheetTitle("Your public profile")
                     Spacer(minLength: Spacing.xs)
                     SheetCloseButton()
                 }
@@ -57,7 +57,7 @@ struct EditPublicProfileSheet: View {
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.top, Spacing.l)
             .padding(.bottom, Spacing.l)
         }
         .scrollDismissesKeyboard(.interactively)

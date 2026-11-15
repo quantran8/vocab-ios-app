@@ -29,9 +29,9 @@ struct EditLevelView: View {
                     SheetCloseButton()
                 }
 
-                PunctuatedTitle(text: "Your level")
+                SheetTitle("Your level")
                     .padding(.top, Spacing.xs)
-                    .padding(.bottom, Spacing.l - 4)
+                    .padding(.bottom, Spacing.l)
 
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible())], spacing: Spacing.s) {
                     ForEach(CEFRLevel.allCases) { level in
@@ -50,7 +50,7 @@ struct EditLevelView: View {
                 .padding(.top, Spacing.l)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.l)
+            .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.l)
         }
         .safeAreaInset(edge: .bottom) {

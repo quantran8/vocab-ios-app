@@ -37,29 +37,39 @@ enum PasswordPolicy {
     }
 }
 
-/// The rules under a new-password field, ticked live as the learner types.
+/// The rules under a new-password field, ticked live as the learner types: a Green check when met,
+/// an Ink 300 ring when not.
 struct PasswordRuleList: View {
     let password: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
+        VStack(alignment: .leading, spacing: Spacing.xs - 2) {
             ForEach(PasswordPolicy.Rule.allCases) { rule in
                 row(rule.title, isMet: rule.isMet(by: password))
             }
-            if PasswordPolicy.isTooLong(password) {
-                row("At most 72 characters", isMet: false)
-            }
+            row("At most 72 characters", isMet: !PasswordPolicy.isTooLong(password))
         }
         .font(Typography.secondary)
     }
 
     private func row(_ title: LocalizedStringKey, isMet: Bool) -> some View {
         HStack(spacing: Spacing.xs) {
-            Image(systemName: isMet ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isMet ? Color.success : Color.mutedInk)
-                .accessibilityHidden(true)
+            Group {
+                if isMet {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Color.success, in: Circle())
+                } else {
+                    Circle()
+                        .strokeBorder(Color.ink300, lineWidth: Borders.card)
+                        .frame(width: 18, height: 18)
+                }
+            }
+            .accessibilityHidden(true)
             Text(title)
-                .foregroundStyle(isMet ? Color.successInk : Color.mutedInk)
+                .foregroundStyle(isMet ? Color.ink : Color.mutedInk)
         }
         .accessibilityElement(children: .combine)
         .accessibilityValue(isMet ? Text("Done") : Text("Not yet"))

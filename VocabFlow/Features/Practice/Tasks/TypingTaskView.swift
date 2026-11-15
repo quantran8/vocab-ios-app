@@ -11,7 +11,7 @@ struct TypingTaskView: View {
 
     var body: some View {
         TaskScaffold(attempt: attempt, onTapOutside: { isFocused = false }) {
-            RecallInput(text: $text, isFocused: $isFocused, isEnabled: attempt.status == .answering, onSubmit: check)
+            answerField
         } action: {
             VStack(spacing: 0) {
                 if attempt.status == .answering {
@@ -39,6 +39,30 @@ struct TypingTaskView: View {
                 text = ""
                 isFocused = true
             }
+        }
+    }
+
+    /// "Your answer" eyebrow over a 56 pt field: Blue border and halo while focused, 20 pt semibold text.
+    private var answerField: some View {
+        let isEnabled = attempt.status == .answering
+        return VStack(alignment: .leading, spacing: Spacing.xs) {
+            Eyebrow(text: "Your answer")
+                .accessibilityHidden(true)
+            TextField("Type the English word", text: $text)
+                .font(Typography.tileLarge)
+                .foregroundStyle(Color.ink)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .submitLabel(.done)
+                .focused($isFocused)
+                .onSubmit(check)
+                .disabled(!isEnabled)
+                .accessibilityLabel(Text("Your answer"))
+                .fieldSurface(isFocused: isFocused, minHeight: Spacing.fieldHeight + Spacing.xs)
+                // The padding around the text is part of the field.
+                .contentShape(RoundedRectangle(cornerRadius: Radii.field, style: .continuous))
+                .onTapGesture { if isEnabled { isFocused = true } }
         }
     }
 

@@ -91,33 +91,24 @@ final class CustomWordDomainTests: XCTestCase {
         ])
     }
 
-    func testInflectedSentenceNeedsAPickedWord() throws {
+    func testInflectionIsHighlightedAutomatically() {
         var draft = CustomWordEditDraft(lemma: "run", sense: sense)
         draft.examples[0].text = "She ran home."
-        XCTAssertFalse(draft.isValid, "Nothing to highlight yet")
-
-        let ran = try XCTUnwrap(TargetLocator.words(in: "She ran home.").dropFirst().first)
-        draft.pick(ran, inExample: 0)
         XCTAssertTrue(draft.isValid)
-        XCTAssertEqual(draft.edits?.examples?.first?.targetLocator, TargetLocator(start: 4, end: 7))
+        XCTAssertEqual(draft.locator(for: draft.examples[0]), TargetLocator(start: 4, end: 7))
     }
 
-    func testPickedHighlightLastsOnlyForItsSentence() {
+    func testMissingTargetDisablesSave() {
         var draft = CustomWordEditDraft(lemma: "run", sense: sense)
-        draft.examples[0].text = "She ran home."
-        draft.pick(TargetLocator(start: 4, end: 7), inExample: 0)
-        draft.examples[0].text = "She ran away."
+        draft.examples[0].text = "She went home."
+        XCTAssertFalse(draft.isValid)
         XCTAssertNil(draft.locator(for: draft.examples[0]))
     }
 
-    func testSecondWordExtendsTheHighlightAndAThirdStartsOver() {
+    func testTargetMustBeAWholeWord() {
         var draft = CustomWordEditDraft(lemma: "run", sense: sense)
-        draft.examples[0].text = "She ran home."
-        draft.pick(TargetLocator(start: 0, end: 3), inExample: 0)
-        draft.pick(TargetLocator(start: 4, end: 7), inExample: 0)
-        XCTAssertEqual(draft.locator(for: draft.examples[0]), TargetLocator(start: 0, end: 7))
-        draft.pick(TargetLocator(start: 8, end: 12), inExample: 0)
-        XCTAssertEqual(draft.locator(for: draft.examples[0]), TargetLocator(start: 8, end: 12))
+        draft.examples[0].text = "A trunk."
+        XCTAssertNil(draft.locator(for: draft.examples[0]))
     }
 
     func testWordsSkipPunctuation() {
@@ -203,6 +194,30 @@ final class CustomWordStoreTests: XCTestCase {
         await store.add(.meaning("m"), lemma: "bank")
         XCTAssertEqual(store.phase, .added(lemma: "bank", isNew: false))
         XCTAssertEqual(refreshes, 1)
+    }
+
+    func testMultiAddKeepsSuccessesAndRetriesOnlyFailures() async {
+        api.lookupResults = [.success(draft)]
+        await store.lookup("bank")
+        api.addResults = [
+            .success(CustomWordAdded(meaningId: "a", added: true)),
+            .failure(CustomWordFixtures.error(503, "UNAVAILABLE", retryable: true)),
+        ]
+        let selections: [CustomWordStore.Selection] = [
+            .init(id: "a", addition: .meaning("a"), meaning: "river bank"),
+            .init(id: "b", addition: .meaning("b"), meaning: "financial bank"),
+        ]
+        await store.addSelected(selections, lemma: "bank")
+        XCTAssertEqual(store.phase, .result(draft))
+        XCTAssertEqual(store.addedSenseIDs, ["a"])
+        XCTAssertNotNil(store.notice)
+        api.addResults = [.success(CustomWordAdded(meaningId: "b", added: true))]
+        await store.addSelected(selections, lemma: "bank")
+        XCTAssertEqual(store.addedMeanings, ["river bank", "financial bank"])
+        XCTAssertEqual(store.addedSenseIDs, ["a", "b"])
+        XCTAssertNil(store.notice)
+        guard case .added = store.phase else { return XCTFail("Expected confirmation") }
+        XCTAssertTrue(api.addResults.isEmpty)
     }
 
     func testStaleDraftRepeatsTheLookupSilently() async {

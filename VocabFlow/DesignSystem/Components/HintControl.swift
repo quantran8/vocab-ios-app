@@ -16,10 +16,10 @@ struct HintControl: View {
             HStack {
                 Button(action: onHint) {
                     Text("Reveal hint \(hintsUsed)/\(maxHints)")
-                        .font(Typography.micro.weight(.heavy))
+                        .font(Typography.secondary.weight(.heavy))
                         .frame(minHeight: Spacing.minTouchTarget)
                 }
-                .foregroundStyle(Color.selectedInk)
+                .foregroundStyle(Color.blue700)
                 .disabled(!isEnabled || hintsUsed >= maxHints)
                 .opacity(isEnabled && hintsUsed < maxHints ? 1 : 0.4)
 
@@ -27,7 +27,7 @@ struct HintControl: View {
 
                 Button(action: onReveal) {
                     Text("Show answer")
-                        .font(Typography.micro.weight(.semibold))
+                        .font(Typography.secondary.weight(.bold))
                         .frame(minHeight: Spacing.minTouchTarget)
                 }
                 .foregroundStyle(Color.mutedInk)
@@ -37,12 +37,13 @@ struct HintControl: View {
 
             ForEach(Array(hints.enumerated()), id: \.offset) { _, hint in
                 Text(verbatim: hint)
-                    .font(.system(.subheadline, design: .monospaced, weight: .semibold))
-                    .foregroundStyle(Color.selectedInk)
+                    .font(.system(.callout, design: .monospaced, weight: .bold))
+                    .tracking(3)
+                    .foregroundStyle(Color.blue700)
+                    .padding(.horizontal, Spacing.s)
+                    .frame(minHeight: 32)
+                    .background(Color.blue50, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, Spacing.m)
-                    .padding(.vertical, Spacing.s)
-                    .background(Color.selectedSurface, in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous))
                     .accessibilityLabel(Text("Hint: \(hint.replacingOccurrences(of: "_", with: "blank"))"))
                     .transition(motion.popTransition)
             }

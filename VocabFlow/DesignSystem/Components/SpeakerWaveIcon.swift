@@ -29,7 +29,8 @@ struct SpeakerWaveIcon: View {
         .frame(width: side, height: side)
         .accessibilityHidden(true)
         // A new id cancels the previous loop; the stopping loop picks up from wherever the cycle is.
-        .task(id: isPlaying) {
+        .task(id: "\(isPlaying)-\(motion.reduceMotion)") {
+            if motion.reduceMotion { visibleWaves = 3; return }
             if isPlaying {
                 await cycle()
             } else {

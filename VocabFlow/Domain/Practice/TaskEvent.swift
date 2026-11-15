@@ -30,15 +30,18 @@ struct TaskEvent: Encodable, Equatable {
 
     let seq: Int
     let action: Action
+    /// Ms since the task was shown, never decreasing within a task. The backend uses the first submit's to grade a fast recall Easy.
+    var elapsedMs: Int? = nil
 
     private enum CodingKeys: String, CodingKey {
-        case seq, action, optionId, value, tileIds, graphemeIndex, replacement, edits
+        case seq, elapsedMs, action, optionId, value, tileIds, graphemeIndex, replacement, edits
         case leftId, rightId, tileId, toIndex, assessmentReceiptId, reason, transcript
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(seq, forKey: .seq)
+        try container.encodeIfPresent(elapsedMs, forKey: .elapsedMs)
         switch action {
         case .submitOption(let id):
             try container.encode("submit", forKey: .action)

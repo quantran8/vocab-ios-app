@@ -20,7 +20,7 @@ struct LevelTile: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         Button(action: action) {
             VStack(spacing: Spacing.xxs) {
                 Text(verbatim: level.rawValue)
@@ -67,7 +67,7 @@ private struct CollectionCard: View {
     @Environment(\.motion) private var motion
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         Button(action: action) {
             HStack(spacing: Spacing.s) {
                 Image(systemName: collection.systemImage)
@@ -76,7 +76,7 @@ private struct CollectionCard: View {
                     .frame(width: 48, height: 48)
                     .background(
                         isSelected ? Color.interactive : Color.neutralSurface,
-                        in: RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
+                        in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
                     )
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Spacing.xxs - 2) {
@@ -117,17 +117,12 @@ struct TopicPicker: View {
     var body: some View {
         let hasAll = selectedIDs == collection.topicIDs
         VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Eyebrow(text: LocalizedStringKey(collection.name))
                 Spacer()
-                Button(action: onToggleAll) {
-                    Text(hasAll ? "Clear all" : "Select all")
-                        .font(Typography.micro.weight(.heavy))
-                        .foregroundStyle(Color.selectedInk)
-                        .frame(minHeight: Spacing.minTouchTarget)
-                }
+                TextLink(title: hasAll ? "Clear all" : "Select all", action: onToggleAll)
+                    .padding(.vertical, -Spacing.s)
             }
-            .padding(.bottom, -Spacing.xs)
 
             // Topics with new words left first; finished ones last but still selectable.
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
@@ -147,7 +142,7 @@ struct TopicPicker: View {
     }
 }
 
-/// − value + inside a card, clamped to `range`.
+/// − value + inside a card, clamped to `range`: 48 pt round Ink 100 buttons around a 30 pt number.
 struct WordsPerDayStepper: View {
     let value: Int
     var range: ClosedRange<Int> = LearningPreferences.wordsPerDayRange
@@ -158,19 +153,19 @@ struct WordsPerDayStepper: View {
     @Environment(\.motion) private var motion
 
     var body: some View {
-        HStack(spacing: Spacing.xs - 1) {
+        HStack(spacing: Spacing.m) {
             stepperButton("minus", label: decreaseLabel, isEnabled: value > range.lowerBound) {
                 onAdjust(-1)
             }
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.xs - 1) {
+            HStack(alignment: .firstTextBaseline, spacing: Spacing.xs - 2) {
                 Text(verbatim: "\(value)")
-                    .font(Typography.display.monospacedDigit())
-                    .tracking(-1.5)
+                    .font(Typography.stat.monospacedDigit())
+                    .tracking(Typography.tightTracking)
                     .foregroundStyle(Color.ink)
                     .contentTransition(.numericText(value: Double(value)))
                     .animation(motion.animation(MotionTokens.snap), value: value)
                 Text("words")
-                    .font(Typography.micro.weight(.semibold))
+                    .font(Typography.body.weight(.semibold))
                     .foregroundStyle(Color.mutedInk)
             }
             .frame(maxWidth: .infinity)
@@ -188,8 +183,8 @@ struct WordsPerDayStepper: View {
                 onAdjust(1)
             }
         }
-        .padding(Spacing.xs)
-        .cardSurface(radius: Radii.card - 2)
+        .padding(Spacing.s)
+        .cardSurface()
     }
 
     private func stepperButton(
@@ -200,10 +195,11 @@ struct WordsPerDayStepper: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 17, weight: .bold))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(Color.ink)
-                .frame(width: 56, height: 56)
-                .background(Color.neutralSurface, in: RoundedRectangle(cornerRadius: Radii.tile - 2, style: .continuous))
+                .frame(width: Spacing.fieldHeight, height: Spacing.fieldHeight)
+                .background(Color.neutralSurface, in: Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(PressScaleButtonStyle())
         .disabled(!isEnabled)
@@ -212,7 +208,7 @@ struct WordsPerDayStepper: View {
     }
 }
 
-/// Title row with an "Every day / Clear all" shortcut, seven day toggles and a summary line.
+/// Title row with an "Every day / Clear all" link, seven day toggles and a summary line.
 struct LearningDaysPicker: View {
     let selected: Set<Int>
     let onToggleDay: (Int) -> Void
@@ -220,20 +216,15 @@ struct LearningDaysPicker: View {
 
     var body: some View {
         let isEveryDay = selected == LearningPreferences.allWeekdays
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
+        VStack(alignment: .leading, spacing: Spacing.s - 2) {
+            HStack(alignment: .firstTextBaseline) {
                 PlanSectionTitle(text: "Learning days")
                 Spacer()
-                Button(action: onToggleEveryDay) {
-                    Text(isEveryDay ? "Clear all" : "Every day")
-                        .font(Typography.micro.weight(.heavy))
-                        .foregroundStyle(Color.selectedInk)
-                        .frame(minHeight: Spacing.minTouchTarget)
-                }
+                TextLink(title: isEveryDay ? "Clear all" : "Every day", action: onToggleEveryDay)
+                    .padding(.vertical, -Spacing.s)
             }
-            .padding(.bottom, -Spacing.xs)
 
-            HStack(spacing: Spacing.xxs) {
+            HStack(spacing: Spacing.xs - 2) {
                 ForEach(Weekday.ordered) { day in
                     DayToggle(
                         title: day.short,
@@ -260,37 +251,43 @@ struct LearningDaysPicker: View {
     }
 }
 
-/// "Remind me" switch above a time field that dims while reminders are off.
+/// One card: a "Remind me" switch row above the reminder time. Tapping the time opens the system time
+/// picker as a popup (compact `DatePicker`); the row dims while reminders are off.
 struct ReminderPicker: View {
     @Binding var preferences: LearningPreferences
     @Environment(\.motion) private var motion
 
     var body: some View {
         let isOn = preferences.reminderEnabled
-        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
-        VStack(alignment: .leading, spacing: Spacing.s) {
+        VStack(spacing: 0) {
             Toggle(isOn: $preferences.reminderEnabled.animation(motion.animation(MotionTokens.press))) {
                 PlanSectionTitle(text: "Remind me")
             }
-            .tint(Color.interactive)
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
+            .frame(minHeight: Spacing.rowMinHeight)
 
-            HStack(spacing: Spacing.s - 1) {
+            CardDivider()
+
+            HStack(spacing: Spacing.s) {
                 Image(systemName: "clock")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(isOn ? Color.mutedInk : Color.disabledInk)
+                    .font(Typography.body.weight(.medium))
+                    .foregroundStyle(Color.mutedInk)
                     .accessibilityHidden(true)
-                DatePicker("Reminder time", selection: reminderTime, displayedComponents: .hourAndMinute)
-                    .labelsHidden()
-                    .tint(Color.interactive)
-                Spacer(minLength: 0)
+                DatePicker(selection: reminderTime, displayedComponents: .hourAndMinute) {
+                    Text("Reminder time")
+                        .font(Typography.body)
+                        .foregroundStyle(Color.bodyInk)
+                }
+                .datePickerStyle(.compact)
             }
-            .padding(.horizontal, Spacing.m - 1)
-            .frame(minHeight: 57)
-            .background(isOn ? Color.surface : Color.disabledSurface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
+            .frame(maxWidth: .infinity, minHeight: Spacing.rowMinHeight, alignment: .leading)
             .disabled(!isOn)
-            .opacity(isOn ? 1 : 0.6)
+            .opacity(isOn ? 1 : 0.5)
         }
+        .cardSurface()
     }
 
     private var reminderTime: Binding<Date> {
@@ -316,7 +313,8 @@ struct PlanSectionTitle: View {
     }
 }
 
-/// Weekday labels in the user's locale, starting on the locale's first weekday.
+/// Weekday labels in the app's language, starting on the calendar's first weekday (Monday in Vietnamese).
+/// Vietnamese uses the usual T2…T7 and CN (the system's short symbols read "Th 2").
 struct Weekday: Identifiable {
     /// `Calendar` weekday number, 1 = Sunday.
     let id: Int
@@ -328,12 +326,19 @@ struct Weekday: Identifiable {
         var names = calendar
         names.locale = AppLanguage.active.locale
         return (0..<7).map { offset in
-            let id = (calendar.firstWeekday - 1 + offset) % 7 + 1
+            // A Vietnamese week runs T2 → CN whatever the device region says.
+            let first = AppLanguage.active == .vietnamese ? 2 : calendar.firstWeekday
+            let id = (first - 1 + offset) % 7 + 1
             return Weekday(
                 id: id,
-                short: names.shortWeekdaySymbols[id - 1],
+                short: short(id, names),
                 full: names.weekdaySymbols[id - 1]
             )
         }
+    }
+
+    private static func short(_ id: Int, _ calendar: Calendar) -> String {
+        guard AppLanguage.active == .vietnamese else { return calendar.shortWeekdaySymbols[id - 1] }
+        return id == 1 ? "CN" : "T\(id)"
     }
 }

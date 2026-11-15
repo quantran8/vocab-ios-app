@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// Large title ending in the brand's blue full stop ("Your routine.") or another blue mark ("…learn?").
+/// Large title. A full stop is dropped (no brand dot); other marks ("…learn?") are kept in ink.
 struct PunctuatedTitle: View {
     let text: LocalizedStringKey
     var mark = "."
     var font: Font = Typography.display
 
     var body: some View {
-        (Text(text) + Text(verbatim: mark).foregroundStyle(Color.interactive))
+        (Text(text) + Text(verbatim: mark == "." ? "" : mark))
             .font(font)
-            .tracking(-1.2)
+            .tracking(Typography.displayTracking)
             .foregroundStyle(Color.ink)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityAddTraits(.isHeader)
@@ -100,14 +100,16 @@ struct TopicChip: View {
     var progress: (learned: Int, total: Int)? = nil
     /// Every word learned: labelled, still selectable.
     var isFinished = false
+    /// Fill when selected; `.surface` on a Blue 50 panel.
+    var selectedFill: Color = .selectedSurface
     let action: () -> Void
     @Environment(\.motion) private var motion
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Spacing.xs - 1) {
+            HStack(spacing: Spacing.xs - 2) {
                 Image(systemName: isFinished ? "checkmark.seal" : systemImage)
-                    .font(.subheadline.weight(.medium))
+                    .font(.footnote.weight(.semibold))
                     .accessibilityHidden(true)
                 Text(verbatim: title)
                     .font(Typography.secondary.weight(.semibold))
@@ -123,13 +125,8 @@ struct TopicChip: View {
                         .accessibilityLabel(Text("\(progress.learned) of \(progress.total) words learned"))
                 }
             }
-            .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
-            .padding(.leading, Spacing.s - 1)
-            .padding(.trailing, Spacing.s + 1)
+            .chipSurface(isSelected: isSelected, selectedFill: selectedFill)
             .frame(minHeight: Spacing.minTouchTarget)
-            .background(isSelected ? Color.selectedSurface : Color.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: 1.5))
-            .contentShape(Capsule())
             .animation(motion.animation(MotionTokens.press), value: isSelected)
         }
         .buttonStyle(PressScaleButtonStyle())
@@ -146,14 +143,14 @@ struct DayToggle: View {
     @Environment(\.motion) private var motion
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile - 1, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
         Button(action: action) {
             Text(verbatim: title)
-                .font(Typography.micro.weight(.bold))
+                .font(Typography.secondary.weight(.bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                .foregroundStyle(isSelected ? Color.selectedInk : Color.mutedInk)
-                .frame(maxWidth: .infinity, minHeight: 50)
+                .foregroundStyle(isSelected ? Color.selectedInk : Color.ink600)
+                .frame(maxWidth: .infinity, minHeight: Spacing.fieldHeight)
                 .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
                 .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
                 .contentShape(shape)
@@ -171,11 +168,10 @@ struct SearchField: View {
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         HStack(spacing: Spacing.s - 2) {
             Image(systemName: "magnifyingglass")
                 .font(.body.weight(.medium))
-                .foregroundStyle(Color.mutedInk)
+                .foregroundStyle(Color.ink400)
                 .accessibilityHidden(true)
             TextField(placeholder, text: $text)
                 .font(Typography.body)
@@ -190,17 +186,14 @@ struct SearchField: View {
                     isFocused = true
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.mutedInk)
+                        .foregroundStyle(Color.ink400)
                         .frame(width: Spacing.minTouchTarget - 12, height: Spacing.minTouchTarget - 12)
                 }
                 .accessibilityLabel(Text("Clear search"))
             }
         }
-        .padding(.horizontal, Spacing.m - 2)
-        .frame(minHeight: Spacing.minTouchTarget + 4)
-        .background(Color.neutralSurface, in: shape)
-        .overlay(shape.strokeBorder(isFocused ? Color.focusRing : .clear, lineWidth: 2))
-        .contentShape(shape)
+        .fieldSurface(isFocused: isFocused)
+        .contentShape(RoundedRectangle(cornerRadius: Radii.field, style: .continuous))
         .onTapGesture { isFocused = true }
     }
 }
@@ -221,13 +214,7 @@ struct SheetBackButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Color.mutedInk)
-                .frame(width: 34, height: 34)
-                .background(Color.neutralSurface, in: Circle())
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
-                .contentShape(Rectangle())
+            IconButtonLabel(systemImage: "chevron.left")
         }
         .buttonStyle(PressScaleButtonStyle())
         .padding(.leading, -Spacing.xs)
@@ -245,13 +232,7 @@ struct SheetCloseButton: View {
         Button {
             if let action { action() } else { dismiss() }
         } label: {
-            Image(systemName: "xmark")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Color.mutedInk)
-                .frame(width: 34, height: 34)
-                .background(Color.neutralSurface, in: Circle())
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
-                .contentShape(Rectangle())
+            IconButtonLabel(systemImage: "xmark")
         }
         .buttonStyle(PressScaleButtonStyle())
         .padding(.trailing, -Spacing.xs)

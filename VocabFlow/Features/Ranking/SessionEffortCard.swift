@@ -9,20 +9,25 @@ struct SessionEffortCard: View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             lpSummary
             if let tierUp = effort.celebratedTierUp, let key = tierUp.key {
-                Divider().overlay(Color.neutralSurface)
+                CardDivider()
                 tierUnlocked(key)
             }
         }
         .padding(Spacing.m)
-        .cardSurface(radius: Radii.card - 2)
+        .cardSurface()
         .accessibilityElement(children: .combine)
     }
 
     private var lpSummary: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "bolt.fill")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Color.reward)
+                    .accessibilityHidden(true)
                 Text("+\(effort.earned) LP")
-                    .font(Typography.screenTitle.monospacedDigit())
+                    .font(Typography.screenTitle.weight(.heavy).monospacedDigit())
+                    .tracking(Typography.tightTracking)
                     .foregroundStyle(Color.ink)
                 Spacer(minLength: Spacing.s)
                 Text("\(effort.lifetimeLP) LP in total")
@@ -46,11 +51,11 @@ struct SessionEffortCard: View {
 
     private func part(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(Typography.micro.weight(.semibold))
-            .foregroundStyle(Color.selectedInk)
+            .font(Typography.caption.weight(.bold))
+            .foregroundStyle(Color.ink700)
             .padding(.horizontal, Spacing.s - 2)
-            .padding(.vertical, Spacing.xxs + 1)
-            .background(Color.selectedSurface, in: Capsule())
+            .frame(minHeight: Spacing.l)
+            .background(Color.neutralSurface, in: Capsule())
     }
 
     private func tierUnlocked(_ key: TierKey) -> some View {

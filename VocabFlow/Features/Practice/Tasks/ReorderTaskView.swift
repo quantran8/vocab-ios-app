@@ -18,17 +18,19 @@ struct ReorderTaskView: View {
     /// Tiles still travelling after a tap. Tapping one again mid-flight would send it straight back.
     @State private var flyingIDs: Set<Int> = []
 
-    private static let tileSize: CGFloat = 54
-    private static let tileSpacing = Spacing.xxs
+    /// A letter tile's face: 54 × 54 at most; a single long word narrows the tiles to fit one line.
+    private static let tileWidthMax: CGFloat = 54
+    private static let tileHeight: CGFloat = 54
+    private static let tileSpacing = Spacing.xxs + 2
     /// Keeps a tile's depth clear of the ruled line it sits above.
     private static let ruledLineGap = Spacing.xxs
-    private static let ruledRowHeight = tileSize + Spacing.tileDepth + Spacing.xs + ruledLineGap
+    private static let ruledRowHeight = tileHeight + Spacing.tileDepth + Spacing.xs + ruledLineGap
     private static let bankKeyOffset = 100_000
     private static let spaceName = "reorderSpace"
 
     var body: some View {
         TaskScaffold(attempt: attempt) {
-            VStack(spacing: Spacing.l) {
+            VStack(spacing: Spacing.xl) {
                 answerPanel
                     // Above the bank, so a tile leaving for the row isn't drawn under the gray slots.
                     .zIndex(1)
@@ -114,7 +116,7 @@ struct ReorderTaskView: View {
 
     /// Tile width shrinks so every letter of a single word fits one line, in the row and in the bank.
     private var tileWidth: CGFloat {
-        let full = Self.tileSize
+        let full = Self.tileWidthMax
         guard isSingleWord, let panel = frames[Self.panelKey]?.width, panel > 0 else { return full }
         let count = CGFloat(allTiles.count)
         let inner = panel
@@ -225,7 +227,7 @@ struct ReorderTaskView: View {
     @ViewBuilder private func slotPlaceholder(_ isActive: Bool) -> some View {
         if isActive {
             RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-                .fill(Color.stroke)
+                .fill(Color.neutralSurface)
                 .padding(.bottom, Spacing.tileDepth)
         }
     }
@@ -248,9 +250,9 @@ struct ReorderTaskView: View {
         return Text(verbatim: label)
             .font(.system(.title2, design: .monospaced, weight: .bold))
             .foregroundStyle(isRight ? Color.successInk : (isWrong ? Color.errorInk : Color.ink))
-            .frame(minWidth: tileWidth, minHeight: Self.tileSize)
+            .frame(minWidth: tileWidth, minHeight: Self.tileHeight)
             .background(isRight ? Color.successSurface : (isWrong ? Color.errorSurface : Color.surface), in: shape)
-            .overlay(shape.strokeBorder(isRight ? Color.success : (isWrong ? Color.error : Color.stroke), lineWidth: 1.5))
+            .overlay(shape.strokeBorder(isRight ? Color.success : (isWrong ? Color.error : Color.stroke), lineWidth: Borders.card))
             .background(shape.fill(isRight ? Color.successDepth : (isWrong ? Color.errorDepth : Color.tileDepth)).offset(y: Spacing.tileDepth))
             .padding(.bottom, Spacing.tileDepth)
     }
@@ -284,7 +286,7 @@ private struct RuledLines: View {
                 var path = Path()
                 path.move(to: CGPoint(x: 0, y: y))
                 path.addLine(to: CGPoint(x: size.width, y: y))
-                context.stroke(path, with: .color(Color.stroke), lineWidth: 1.5)
+                context.stroke(path, with: .color(Color.stroke), lineWidth: Borders.card)
             }
         }
         .allowsHitTesting(false)

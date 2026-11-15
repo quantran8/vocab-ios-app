@@ -17,31 +17,40 @@ struct RankingView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.l) {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    PunctuatedTitle(text: "Weekly ranking")
-                    if let mine = ranking.mine {
-                        Text(verbatim: weekSubtitle(mine))
-                            .font(Typography.secondary)
-                            .foregroundStyle(Color.mutedInk)
-                    }
+            VStack(alignment: .leading, spacing: 0) {
+                ScreenTitle("Weekly ranking")
+                if let mine = ranking.mine {
+                    Text(verbatim: weekSubtitle(mine))
+                        .font(Typography.secondary)
+                        .foregroundStyle(Color.mutedInk)
+                        .padding(.top, Spacing.xs - 2)
                 }
                 if let mine = ranking.mine {
                     statsCard(mine)
+                        .padding(.top, Spacing.l)
                 } else if ranking.isLoading {
-                    ProgressView().frame(maxWidth: .infinity)
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, Spacing.l)
                 }
                 if let error = ranking.error {
                     message(Text(verbatim: error))
+                        .padding(.top, Spacing.l)
                 }
                 if ranking.isBoardClosed {
                     closedCard
+                        .padding(.top, Spacing.l)
                 } else if ranking.mine != nil {
-                    if !isVisible { joinCard }
+                    if !isVisible {
+                        joinCard
+                            .padding(.top, Spacing.l)
+                    }
                     board
+                        .padding(.top, Spacing.l)
                 }
                 if let notice {
                     message(Text(verbatim: notice))
+                        .padding(.top, Spacing.m)
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
@@ -60,16 +69,11 @@ struct RankingView: View {
         .sheet(isPresented: $isEditingProfile) {
             EditPublicProfileSheet()
         }
-        .confirmationDialog(
-            Text("Report \(reportTarget?.username ?? "")?"),
-            isPresented: Binding(get: { reportTarget != nil }, set: { if !$0 { reportTarget = nil } }),
-            titleVisibility: .visible,
-            presenting: reportTarget
-        ) { row in
-            ForEach(ranking.reportReasons) { reason in
-                Button(reason.title) { report(row, reason) }
+        .sheet(item: $reportTarget) { row in
+            ReportPlayerSheet(username: row.username, reasons: ranking.reportReasons) { reason in
+                reportTarget = nil
+                report(row, reason)
             }
-            Button("Cancel", role: .cancel) {}
         }
     }
 
@@ -87,44 +91,46 @@ struct RankingView: View {
 
     private func statsCard(_ mine: MyRanking) -> some View {
         HStack(alignment: .top, spacing: 0) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+            VStack(alignment: .leading, spacing: 2) {
                 positionValue(mine)
-                    .frame(minHeight: 44, alignment: .bottomLeading)
                 Text(mine.position?.kind == .percentile ? "Estimated" : "Weekly rank")
-                    .font(Typography.micro)
+                    .font(Typography.micro.weight(.semibold))
                     .foregroundStyle(Color.mutedInk)
             }
+            .padding(Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
 
             Rectangle()
-                .fill(Color.stroke)
-                .frame(width: 1)
-                .padding(.horizontal, Spacing.m)
+                .fill(Color.divider)
+                .frame(width: Borders.hairline)
+                .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: Spacing.xs - 2) {
+                    Image(systemName: "bolt.fill")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Color.reward)
+                        .accessibilityHidden(true)
                     Text(mine.weeklyLP, format: .number.locale(AppLanguage.active.locale))
-                        .font(Typography.display.monospacedDigit())
-                    Text(verbatim: "LP")
-                        .font(Typography.emphasis.weight(.heavy))
+                        .font(Typography.stat.monospacedDigit())
+                        .tracking(Typography.tightTracking)
+                        .foregroundStyle(Color.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
-                .foregroundStyle(Color.ink)
-                .frame(minHeight: 44, alignment: .bottomLeading)
-                .accessibilityElement(children: .combine)
-                HStack(spacing: Spacing.xs) {
+                HStack(spacing: Spacing.xxs) {
                     Text("LP this week")
-                        .font(Typography.micro)
+                        .font(Typography.micro.weight(.semibold))
                         .foregroundStyle(Color.mutedInk)
                     lpInfoButton
                 }
             }
+            .padding(Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
-        .padding(.horizontal, Spacing.m + 2)
-        .padding(.vertical, Spacing.l - 2)
-        .cardSurface(radius: Radii.card)
+        .cardSurface()
     }
 
     @ViewBuilder
@@ -134,7 +140,8 @@ struct RankingView: View {
             if let rank = mine.position?.rank {
                 HStack(alignment: .firstTextBaseline, spacing: Spacing.xxs) {
                     Text(verbatim: "#\(rank)")
-                        .font(Typography.display.monospacedDigit())
+                        .font(Typography.stat.monospacedDigit())
+                        .tracking(Typography.tightTracking)
                         .foregroundStyle(Color.ink)
                     if let total = mine.totalListed, total >= rank {
                         Text(verbatim: "/ \(total)")
@@ -142,13 +149,15 @@ struct RankingView: View {
                             .foregroundStyle(Color.mutedInk)
                     }
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
             } else {
                 noPosition
             }
         case .percentile?:
             if let percentile = mine.position?.percentile {
                 Text("About top \(percentText(percentile))")
-                    .font(Typography.screenTitle)
+                    .font(Typography.screenTitle.weight(.heavy))
                     .foregroundStyle(Color.ink)
                     .lineLimit(2)
                     .minimumScaleFactor(0.7)
@@ -162,7 +171,7 @@ struct RankingView: View {
 
     private var noPosition: some View {
         Text(verbatim: "–")
-            .font(Typography.display)
+            .font(Typography.stat)
             .foregroundStyle(Color.mutedInk)
             .accessibilityLabel(Text("Not on the board"))
     }
@@ -171,11 +180,9 @@ struct RankingView: View {
         Button {
             showsLPInfo = true
         } label: {
-            Text(verbatim: "?")
-                .font(Typography.micro.weight(.heavy))
+            Image(systemName: "info.circle")
+                .font(Typography.micro.weight(.semibold))
                 .foregroundStyle(Color.mutedInk)
-                .frame(width: 22, height: 22)
-                .background(Color.neutralSurface, in: Circle())
                 .frame(minWidth: Spacing.minTouchTarget, minHeight: Spacing.minTouchTarget, alignment: .leading)
                 .contentShape(Rectangle())
         }
@@ -204,27 +211,27 @@ struct RankingView: View {
     }
 
     private var joinCard: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             Text("You’re not on the leaderboard")
                 .font(Typography.emphasis)
                 .foregroundStyle(Color.ink)
             Text("If you join, your name, avatar, Tier and LP this week are public.")
                 .font(Typography.secondary)
-                .foregroundStyle(Color.mutedInk)
+                .foregroundStyle(Color.bodyInk)
                 .fixedSize(horizontal: false, vertical: true)
             PrimaryButton(title: "Join the leaderboard") { setVisible(true) }
+                .padding(.top, Spacing.xs)
         }
         .padding(Spacing.m)
-        .cardSurface(radius: Radii.card)
+        .cardSurface()
     }
 
     private var board: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            Picker("Leaderboard", selection: $view) {
-                Text("All").tag(LeaderboardView.top)
-                Text("Around me").tag(LeaderboardView.around)
-            }
-            .pickerStyle(.segmented)
+            SegmentedControl(
+                options: [(value: LeaderboardView.top, title: "All"), (value: LeaderboardView.around, title: "Around me")],
+                selection: $view
+            )
 
             let rows = view == .top ? ranking.top : ranking.around
             if rows.isEmpty {
@@ -237,18 +244,39 @@ struct RankingView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                        if index > 0 { Divider().overlay(Color.neutralSurface) }
-                        LeaderboardRowView(row: row)
-                            .contextMenu {
-                                if !row.isMe {
-                                    Button("Report", systemImage: "flag") { reportTarget = row }
-                                }
+                        if index > 0 {
+                            if Self.skipsRanks(after: rows[index - 1], to: row) {
+                                CardDivider()
+                                rankGap
                             }
+                            CardDivider()
+                        }
+                        LeaderboardRowView(row: row, onMore: reportAction(for: row))
                     }
                 }
-                .cardSurface(radius: Radii.card)
+                .cardSurface()
             }
         }
+    }
+
+    /// The ⋯ button reports a player; the learner's own row has none.
+    private func reportAction(for row: LeaderboardRow) -> (() -> Void)? {
+        guard !row.isMe else { return nil }
+        return { reportTarget = row }
+    }
+
+    /// Ranks that aren't next to each other (top three, then the learner's neighbours) get a "···" gap.
+    private static func skipsRanks(after previous: LeaderboardRow, to row: LeaderboardRow) -> Bool {
+        guard let before = previous.rank, let rank = row.rank else { return false }
+        return rank > before + 1
+    }
+
+    private var rankGap: some View {
+        Text(verbatim: "···")
+            .font(Typography.secondary.weight(.bold))
+            .foregroundStyle(Color.ink300)
+            .frame(maxWidth: .infinity, minHeight: Spacing.xl)
+            .accessibilityHidden(true)
     }
 
     // MARK: Actions
@@ -288,36 +316,101 @@ struct RankingView: View {
 
 struct LeaderboardRowView: View {
     let row: LeaderboardRow
+    /// Opens the report sheet; nil for the learner's own row.
+    var onMore: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: Spacing.s) {
-            Group {
-                if let rank = row.rank { Text(verbatim: "\(rank)") } else { Text(verbatim: "–") }
-            }
-            .font(Typography.secondary.weight(.bold).monospacedDigit())
-            .foregroundStyle(Color.mutedInk)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .frame(width: 32, alignment: .leading)
-            AvatarView(key: row.avatarKey, size: 40, cornerRadius: Radii.chip)
-            HStack(spacing: Spacing.xs) {
+            HStack(spacing: Spacing.s) {
+                Group {
+                    if let rank = row.rank { Text(verbatim: "\(rank)") } else { Text(verbatim: "–") }
+                }
+                .font(Typography.body.weight(.heavy).monospacedDigit())
+                .foregroundStyle(row.rank == 1 ? Color.sun600 : Color.ink400)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .frame(width: Spacing.l + Spacing.xxs)
+                AvatarView(key: row.avatarKey, size: Spacing.iconBadge, initial: row.username)
                 Text(verbatim: row.username)
-                    .font(Typography.emphasis)
+                    .font(Typography.body.weight(.semibold))
                     .foregroundStyle(Color.ink)
                     .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 if row.isMe {
-                    Chip(text: "You", fill: .surface, foreground: .selectedInk)
+                    StatusPill("You", tone: .accentSolid)
                 }
+                Text("\(row.weeklyLP) LP")
+                    .font(Typography.secondary.weight(.bold).monospacedDigit())
+                    .foregroundStyle(Color.ink)
+                    .lineLimit(1)
             }
-            Spacer(minLength: Spacing.s)
-            Text("\(row.weeklyLP) LP")
-                .font(Typography.emphasis.monospacedDigit())
-                .foregroundStyle(Color.ink)
+            .accessibilityElement(children: .combine)
+            if let onMore {
+                Button(action: onMore) {
+                    Image(systemName: "ellipsis")
+                        .font(Typography.secondary.weight(.bold))
+                        .foregroundStyle(Color.ink400)
+                        .frame(width: Spacing.l, height: Spacing.minTouchTarget)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressScaleButtonStyle())
+                .padding(.trailing, -Spacing.xs)
+                .accessibilityLabel(Text("Actions for \(row.username)"))
+            }
         }
-        .padding(.horizontal, Spacing.m + 2)
-        .frame(minHeight: 66)
+        .padding(.horizontal, Spacing.m)
+        .frame(minHeight: Spacing.tileMinHeight)
         .background(row.isMe ? Color.selectedSurface : Color.clear)
-        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Report a player from the leaderboard's ⋯ button: one reason per row, Cancel always visible.
+struct ReportPlayerSheet: View {
+    let username: String
+    let reasons: [ReportReason]
+    let onReport: (ReportReason) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        FittedSheet {
+            VStack(alignment: .leading, spacing: 0) {
+                IconBadge(systemImage: "flag", tone: .error, size: Spacing.fieldHeight)
+                    .clipShape(Circle())
+                Text("Report \(username)?")
+                    .font(Typography.screenTitle.weight(.heavy))
+                    .tracking(Typography.tightTracking)
+                    .foregroundStyle(Color.ink)
+                    .padding(.top, Spacing.m)
+                    .accessibilityAddTraits(.isHeader)
+                VStack(spacing: 0) {
+                    ForEach(Array(reasons.enumerated()), id: \.element.id) { index, reason in
+                        if index > 0 { CardDivider() }
+                        Button {
+                            onReport(reason)
+                        } label: {
+                            CardRow {
+                                Text(reason.title)
+                                    .font(Typography.body.weight(.semibold))
+                                Spacer(minLength: Spacing.xs)
+                                Image(systemName: "chevron.right")
+                                    .font(Typography.micro.weight(.bold))
+                                    .foregroundStyle(Color.ink400)
+                                    .accessibilityHidden(true)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .cardSurface()
+                .padding(.top, Spacing.l)
+                SecondaryButton(title: "Cancel") { dismiss() }
+                    .padding(.top, Spacing.m)
+            }
+            .padding(.horizontal, Spacing.practiceGutter)
+            .padding(.top, Spacing.l)
+            .padding(.bottom, Spacing.m)
+        }
     }
 }
 
@@ -369,8 +462,8 @@ struct RankingIntroSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.m) {
-                HStack {
-                    PunctuatedTitle(text: "Weekly leaderboard", font: Typography.screenTitle)
+                HStack(alignment: .top) {
+                    SheetTitle("Weekly leaderboard")
                     Spacer(minLength: Spacing.xs)
                     SheetCloseButton()
                 }
@@ -380,13 +473,14 @@ struct RankingIntroSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if let profile = learner.profile, let username = profile.username {
                     HStack(spacing: Spacing.s) {
-                        AvatarView(key: profile.avatarKey ?? "", size: 48)
+                        AvatarView(key: profile.avatarKey ?? "", size: Spacing.fieldHeight, initial: username)
                         Text(verbatim: username)
                             .font(Typography.emphasis)
                             .foregroundStyle(Color.ink)
                     }
                     .padding(Spacing.m)
-                    .cardSurface(radius: Radii.card - 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .cardSurface()
                 }
                 Label("If you join, your name, avatar, Tier and LP this week are public. Your email, level and words are never shown.",
                       systemImage: "eye")

@@ -9,7 +9,7 @@ struct ExerciseHeading: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             title
                 .font(Typography.screenTitle)
-                .tracking(Typography.tightTracking)
+                .tracking(-0.4)
                 .foregroundStyle(Color.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)

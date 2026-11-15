@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syll App Redesign</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Segoe UI"', 'Roboto', 'sans-serif'] },
+      colors: {
+        ink:   { 50:'#F7F7F9',100:'#EFEFF2',200:'#E2E2E7',300:'#C8C8D0',400:'#A3A3AE',500:'#80808C',600:'#62626D',700:'#4A4A54',800:'#34343C',900:'#222228',950:'#131217' },
+        blue:  { 50:'#EEF3FD',100:'#DCE6FB',200:'#BACCF6',300:'#92AEEF',400:'#6A8DE6',500:'#3E68DB',600:'#3053C2',700:'#28449E',800:'#22387D',900:'#1A2A5B',950:'#0E1733' },
+        green: { 50:'#EAFBF1',100:'#CFF5DE',200:'#A0EABE',300:'#6BDC9A',400:'#45D17E',500:'#2BC86A',600:'#1FA857',700:'#188646',800:'#12673A',900:'#0E4A2A',950:'#062615' },
+        coral: { 50:'#FFF1EE',100:'#FFDFD8',200:'#FFBFB1',300:'#FF9883',400:'#FF7559',500:'#FF5A3C',600:'#E5432A',700:'#BA3421',800:'#8C2A1D',900:'#5E1E16',950:'#320E09' },
+        sun:   { 50:'#FFFBEA',100:'#FFF4C5',200:'#FFE88A',300:'#FFD84A',400:'#FFC81F',500:'#FFB800',600:'#E09A00',700:'#B47800',800:'#875A06',900:'#5C3E08',950:'#301F03' },
+        figma: '#E9E9EC',
+      },
+    },
+  },
+};
+</script>
+<style type="text/tailwindcss">
+/* Speaker playing: waves 1 → 2 → 3 → 1 … (280 ms a step, MotionTokens.speakerWaveStep). Reduce Motion: all three stay. */
+@keyframes wave2 { 0%, 33.3% { opacity: 0; } 33.4%, 100% { opacity: 1; } }
+@keyframes wave3 { 0%, 66.6% { opacity: 0; } 66.7%, 100% { opacity: 1; } }
+.playing .w2 { animation: wave2 .84s infinite; }
+.playing .w3 { animation: wave3 .84s infinite; }
+@media (prefers-reduced-motion: reduce) { .playing .w2, .playing .w3 { animation: none; } }
+@layer components {
+  /* Frames */
+  .frame { @apply relative w-[390px] h-[844px] bg-white overflow-hidden flex flex-col text-ink-950 shrink-0; }
+  .frame-label { @apply text-[12px] font-medium text-ink-500 mb-2 flex items-center gap-1.5; }
+  .note { @apply w-[250px] shrink-0 self-start bg-sun-100 text-ink-900 text-[13px] leading-[1.5] rounded-md p-4; }
+  .note b { @apply block text-[13px] mb-1; }
+  .note li { @apply ml-4 list-disc; }
+
+  /* Type */
+  .eyebrow { @apply text-[12px] font-bold tracking-[1.2px] uppercase text-ink-500; }
+  .h-display { @apply text-[34px] font-extrabold tracking-[-1.2px] leading-[1.1]; }
+  .h-sheet { @apply text-[26px] font-extrabold tracking-[-0.8px] leading-[1.15]; }
+
+  /* Cards & rows (2pt border, no shadow) */
+  .card { @apply bg-white border-2 border-ink-200 rounded-[20px]; }
+  .row { @apply flex items-center gap-3 px-4 min-h-[56px]; }
+  .row + .row { @apply border-t-[1.5px] border-ink-100; }
+
+  /* Buttons: practice = depth, product = flat */
+  .btn { @apply h-[50px] w-full rounded-full px-5 flex items-center justify-center gap-2 text-[16px] font-bold transition-transform select-none cursor-pointer; }
+  .btn-blue { @apply bg-blue-500 text-white shadow-[0_4px_0_#28449E] active:translate-y-1 active:shadow-none; }
+  .btn-green { @apply bg-green-600 text-white shadow-[0_4px_0_#12673A] active:translate-y-1 active:shadow-none; }
+  .btn-coral { @apply bg-coral-600 text-white shadow-[0_4px_0_#8C2A1D] active:translate-y-1 active:shadow-none; }
+  .btn-line3d { @apply bg-white text-ink-950 border-2 border-ink-200 shadow-[0_3px_0_#E2E2E7] active:translate-y-[3px] active:shadow-none; }
+  .btn-ink { @apply bg-ink-800 text-white shadow-[0_4px_0_#131217] active:translate-y-1 active:shadow-none; }
+  .btn-line { @apply bg-white text-ink-950 border-2 border-ink-200 active:scale-[.97]; }
+  .btn-danger { @apply bg-coral-600 text-white active:scale-[.97]; }
+  .btn-sm { @apply h-9 w-auto px-4 text-[14px]; }
+  .link { @apply text-[15px] font-semibold text-blue-600; }
+
+  /* Controls */
+  /* Native iOS controls, drawn as the system renders them (UISwitch, UISegmentedControl, compact DatePicker). */
+  .switch { @apply relative inline-block w-[51px] h-[31px] rounded-full bg-[#E9E9EB] shrink-0 cursor-pointer transition-colors; }
+  .switch::after { content: ""; @apply absolute top-[2px] left-[2px] w-[27px] h-[27px] rounded-full bg-white transition-transform shadow-[0_3px_8px_rgba(0,0,0,.15),0_3px_1px_rgba(0,0,0,.06)]; }
+  .switch.on { @apply bg-blue-500; }
+  .switch.on::after { @apply translate-x-[20px]; }
+  .seg { @apply flex p-[2px] rounded-[9px] bg-[rgba(118,118,128,.12)]; }
+  .seg > span { @apply flex-1 h-7 rounded-[7px] grid place-items-center text-[13px] font-medium text-ink-950 cursor-pointer; }
+  .seg > span.on { @apply bg-white font-semibold shadow-[0_3px_8px_rgba(0,0,0,.12),0_3px_1px_rgba(0,0,0,.04)]; }
+  .datepill { @apply inline-flex items-center h-[34px] px-3 rounded-[8px] bg-[rgba(118,118,128,.12)] text-[17px] tabular-nums; }
+  .chip { @apply inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border-[1.5px] border-ink-200 text-[14px] font-semibold; }
+  .chip.on { @apply border-2 border-blue-500 bg-blue-50 text-blue-700; }
+  .pill { @apply inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[12px] font-bold; }
+  .field { @apply h-12 w-full rounded-2xl border-2 border-ink-200 px-4 flex items-center gap-2.5 text-[16px]; }
+  .field.focus { @apply border-blue-500 ring-4 ring-blue-100; }
+  .icon-btn { @apply w-9 h-9 rounded-full bg-ink-100 grid place-items-center text-ink-800 shrink-0; }
+  .ico { @apply w-10 h-10 rounded-xl grid place-items-center shrink-0; }
+  .day { @apply flex-1 h-12 rounded-xl border-2 border-ink-200 grid place-items-center text-[14px] font-bold text-ink-600; }
+  .day.on { @apply border-blue-500 bg-blue-50 text-blue-700; }
+
+  /* Chrome */
+  .status { @apply h-[50px] shrink-0 px-8 flex items-end justify-between pb-2.5 text-[16px] font-semibold; }
+  .home-ind { @apply absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-ink-950 z-30; }
+  /* Native UITabBar: hairline top, 10pt labels, system gray when unselected, app tint when selected. */
+  .tabbar { @apply shrink-0 h-[83px] border-t-[0.5px] border-black/30 bg-white/95 flex justify-around pt-1.5; }
+  .tab { @apply flex flex-col items-center gap-[3px] text-[10px] font-medium text-[#999999] w-20; }
+  .tab.on { @apply text-blue-500; }
+  .scrim { @apply absolute inset-0 bg-ink-950/40 z-10; }
+  .sheet { @apply absolute inset-x-0 bottom-0 top-[54px] bg-white rounded-t-[28px] z-20 flex flex-col overflow-hidden; }
+  .grabber { @apply mx-auto mt-2 w-9 h-[5px] rounded-full bg-ink-200 shrink-0; }
+}
+[data-i] svg { width: 100%; height: 100%; }
+</style>
+</head>
+<body class="bg-figma font-sans antialiased text-ink-950">
+
+<!-- Figma-like top bar -->
+<header class="sticky top-0 z-50 h-12 bg-ink-950 text-white flex items-center gap-4 px-4 text-[13px]">
+  <span class="font-extrabold tracking-tight">Syll</span>
+  <span class="text-ink-400">/</span><span>App redesign v1</span>
+  <nav class="ml-auto flex gap-1 overflow-x-auto">
+    <a href="#foundations" class="px-3 py-1.5 rounded-md hover:bg-ink-800">Nền tảng</a>
+    <a href="#flow-auth" class="px-3 py-1.5 rounded-md hover:bg-ink-800">0 · Đăng nhập</a>
+    <a href="#flow-onboarding" class="px-3 py-1.5 rounded-md hover:bg-ink-800">0b · Onboarding</a>
+    <a href="#flow-daily" class="px-3 py-1.5 rounded-md hover:bg-ink-800">1 · Bài học</a>
+    <a href="#flow-templates" class="px-3 py-1.5 rounded-md hover:bg-ink-800">Dạng bài</a>
+    <a href="#flow-words" class="px-3 py-1.5 rounded-md hover:bg-ink-800">2 · Từ của tôi</a>
+    <a href="#flow-addword" class="px-3 py-1.5 rounded-md hover:bg-ink-800">3 · Thêm từ</a>
+    <a href="#flow-profile" class="px-3 py-1.5 rounded-md hover:bg-ink-800">4 · Hồ sơ</a>
+    <a href="#flow-ranking" class="px-3 py-1.5 rounded-md hover:bg-ink-800">5 · Xếp hạng</a>
+  </nav>
+</header>
+
+<main class="px-10 py-12 space-y-24 min-w-max">
+
+  <!-- Page intro -->
+  <section class="max-w-[780px]">
+    <h1 class="text-[40px] font-extrabold tracking-[-1.4px]">App redesign v1</h1>
+    <p class="mt-3 text-[16px] leading-relaxed text-ink-600">Thiết kế lại các màn còn mang kiểu iOS mặc định, theo bộ màu đã chốt (60 trắng · 30 Ink · 10 nhấn). Trong luyện tập lấy cảm hứng Duolingo (chỉ nguyên tắc: nút có cạnh dày, phản hồi rõ màu), không sao chép giao diện của họ. Ngoài luyện tập lấy cảm hứng Brilliant: gọn, nhiều khoảng trống. Nút Blue và nút Ink đều có cạnh dày. Các màn được xếp theo luồng, mũi tên xanh là thao tác dẫn sang màn kế. Ghi chú vàng dưới mỗi frame là những gì thay đổi so với app hiện tại. Frame ghi "cuộn" là màn dài, vẽ đủ chiều cao.</p>
+  </section>
+
+  <!-- ===================== FOUNDATIONS ===================== -->
+  <section id="foundations">
+    <div class="frame-label"><span data-i="frame" class="w-3.5 h-3.5"></span>Nền tảng / Token &amp; component</div>
+    <div class="bg-white w-[1200px] p-12 grid grid-cols-2 gap-x-16 gap-y-14">
+
+      <div class="col-span-2">
+        <div class="eyebrow mb-4">Màu</div>
+        <div id="ramps" class="space-y-2"></div>
+      </div>
+
+      <div>
+        <div class="eyebrow mb-4">Nút trong luyện tập · có cạnh dày</div>
+        <div class="space-y-4 max-w-[340px]">
+          <button class="btn btn-ink">Kiểm tra</button>
+          <button class="btn btn-line3d">Đóng</button>
+          <button class="btn btn-green">Tiếp tục</button>
+          <button class="btn btn-coral">Thử lại</button>
+        </div>
+        <p class="mt-4 text-[13px] text-ink-500 max-w-[340px]">Cao 50pt, bo tròn hoàn toàn. Kiểm tra, Tiếp tục trong buổi học là nút Ink; Green/Coral chỉ trong panel phản hồi đúng/sai.</p>
+      </div>
+
+      <div>
+        <div class="eyebrow mb-4">Nút ngoài luyện tập</div>
+        <div class="space-y-4 max-w-[340px]">
+          <button class="btn btn-ink">Lưu thay đổi</button>
+          <button class="btn btn-line">Đăng xuất</button>
+          <button class="btn btn-danger">Xóa tài khoản</button>
+          <div class="flex gap-6 items-center"><span class="link">Sửa</span><span class="text-[15px] font-semibold text-coral-700">Xóa tài khoản</span></div>
+        </div>
+        <p class="mt-4 text-[13px] text-ink-500 max-w-[340px]">Nút Ink: mặt Ink 800, cạnh dày Ink 950, nhấn lún xuống như nút Blue. Nút viền và nút xóa: phẳng, nhấn thu nhỏ 97%. Hành động vào luyện tập (Tiếp tục bài học, Luyện ngay) dùng Blue.</p>
+      </div>
+
+      <div>
+        <div class="eyebrow mb-4">Thành phần hệ thống iOS · dùng bản gốc</div>
+        <div class="space-y-5 max-w-[340px]">
+          <div class="flex items-center gap-4"><span class="switch on"></span><span class="switch"></span><span class="text-[13px] text-ink-500">Toggle (tint Blue 500)</span></div>
+          <div class="seg"><span class="on">Tất cả</span><span>Quanh tôi</span></div>
+          <div class="flex items-center gap-3"><span class="datepill">20:00</span><span class="text-[13px] text-ink-500">DatePicker compact</span></div>
+          <p class="text-[13px] text-ink-500 leading-relaxed">Cũng giữ bản iOS: tab bar, thanh điều hướng và nút quay lại, sheet, <code>.alert</code>, swipe action, context menu, Menu, pull-to-refresh. Chỉ được đặt tint theo bộ màu.</p>
+        </div>
+        <div class="eyebrow mt-10 mb-4">Thành phần riêng của Syll</div>
+        <div class="space-y-5 max-w-[340px]">
+          <div class="card p-4 flex items-center gap-4">
+            <span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center"><span data-i="minus" class="w-5 h-5"></span></span>
+            <div class="flex-1 text-center"><span class="text-[32px] font-extrabold tracking-tight">10</span> <span class="text-ink-500 font-semibold">từ</span></div>
+            <span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center"><span data-i="plus" class="w-5 h-5"></span></span>
+          </div>
+          <div class="flex gap-2"><span class="day on">T2</span><span class="day on">T3</span><span class="day">T4</span><span class="day on">T5</span><span class="day">T6</span><span class="day">T7</span><span class="day">CN</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow mb-4">Trường nhập, chip, nhãn trạng thái</div>
+        <div class="space-y-5 max-w-[340px]">
+          <div class="field"><span data-i="search" class="w-5 h-5 text-ink-400"></span><span class="text-ink-400">Tìm trong từ của bạn</span></div>
+          <div class="field focus"><span>resilient</span><span class="ml-auto w-[2px] h-5 bg-blue-500"></span></div>
+          <div class="flex flex-wrap gap-2"><span class="chip on"><span data-i="plane" class="w-4 h-4"></span>Travel</span><span class="chip"><span data-i="cart" class="w-4 h-4"></span>Shopping</span></div>
+          <div class="flex flex-wrap gap-2">
+            <span class="pill bg-green-50 text-green-800"><span data-i="check" class="w-3 h-3"></span>Đã học</span>
+            <span class="pill bg-ink-100 text-ink-600">Chưa học</span>
+            <span class="pill bg-coral-50 text-coral-800">Cần luyện lại</span>
+            <span class="pill bg-blue-50 text-blue-700">Bạn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-2">
+        <div class="eyebrow mb-4">Nút âm thanh · loa và micro</div>
+        <div id="sound-controls"></div>
+      </div>
+
+      <div class="col-span-2 grid grid-cols-3 gap-8 pt-2">
+        <div><div class="eyebrow mb-3">Card</div><p class="text-[14px] text-ink-600 leading-relaxed">Nền trắng, viền 2pt Ink 200, bo 20. Không shadow, không cạnh dày. Đường kẻ giữa các dòng 1.5pt Ink 100.</p></div>
+        <div><div class="eyebrow mb-3">Header trang con</div><p class="text-[14px] text-ink-600 leading-relaxed">Thanh điều hướng của iOS chỉ có nút quay lại (iOS 26 vẽ thành nút tròn kính), không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.</p></div>
+        <div><div class="eyebrow mb-3">Hộp thoại</div><p class="text-[14px] text-ink-600 leading-relaxed">Nút mặc định đủ dùng: <code>.alert</code> gốc của iOS. Cần nội dung hoặc nút theo design system (Syllie, nút có cạnh dày): <code>.sheet</code> + detent chiều cao cố định. Không bao giờ tự vẽ popup giữa màn hình. Swipe action và context menu giữ bản iOS. Luôn có nút hủy và nút xác nhận.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FLOWS ===================== -->
+  <div id="flows" class="space-y-24"></div>
+
+</main>
+
+<script>
+/* ---------- icons (Lucide-style strokes) ---------- */
+const I = {
+  frame: '<path d="M22 6H2M22 18H2M6 2v20M18 2v20"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>', check: '<path d="M20 6 9 17l-5-5"/>',
+  chev: '<path d="m9 18 6-6-6-6"/>', back: '<path d="m15 18-6-6 6-6"/>', down: '<path d="m6 9 6 6 6-6"/>', up: '<path d="m18 15-6-6-6 6"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  vol: '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path class="w1" d="M14.5 9.5a3.5 3.5 0 0 1 0 5"/><path class="w2" d="M17 7a7 7 0 0 1 0 10"/><path class="w3" d="M19.5 4.5a10.5 10.5 0 0 1 0 15"/>',
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M18 2H6v7a6 6 0 0 0 12 0V2ZM12 15v7"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  shuffle: '<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  vibrate: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M3 8v8M21 8v8"/>',
+  motion: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  flask: '<path d="M9 3h6M10 3v6L4 20h16L14 9V3"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/>',
+  trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  pencil: '<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>', undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  more: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  translate: '<path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/>',
+  cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1"/>',
+  plane: '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+  bubble: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
+  utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  headphones: '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/>',
+  layers: '<path d="m12 2 10 5-10 5L2 7l10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  apple: '<path d="M16.4 12.6c0-2.5 2-3.6 2.1-3.7-1.2-1.7-3-1.9-3.6-1.9-1.5-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.8-1.1-2.8-4.2ZM14 5.2c.7-.8 1.2-2 1-3.2-1 0-2.3.7-3 1.5-.7.7-1.2 1.9-1.1 3.1 1.2.1 2.4-.6 3.1-1.4Z" stroke="none"/>',
+  signal: '<path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16"/>', wifi: '<path d="M5 12.6a10 10 0 0 1 14 0M8.5 16.1a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 20 0M12 20h.01"/>',
+};
+const ic = (n, cls = "w-5 h-5", fill = false) => `<span data-done class="${cls} inline-block shrink-0"><svg viewBox="0 0 24 24" width="100%" height="100%" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg></span>`;
+function hydrateIcons() {
+  document.querySelectorAll('[data-i]:not([data-done])').forEach(el => {
+    const n = el.getAttribute('data-i'); if (!I[n]) return;
+    el.innerHTML = `<svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+    el.classList.add('inline-block'); el.setAttribute('data-done', '');
+  });
+}
+const SYLLIE = "../VocabFlow/Resources/Assets.xcassets/LaunchSyllieV2.imageset/LaunchSyllieV2@2x.png";
+const MARK = { everyday: "#2F9BF4", ielts: "#F0458A", business: "#14B8A6", toeic: "#FF8A1F", mine: "#FFB800" };
+
+/* ---------- board helpers ---------- */
+const status = () => `<div class="status"><span>9:41</span><span class="flex gap-1.5 items-center">${ic('signal', 'w-4 h-4')}${ic('wifi', 'w-4 h-4')}<span class="w-6 h-3 rounded-[4px] border-2 border-current relative after:absolute after:inset-[1px] after:right-[5px] after:bg-current after:rounded-[1px]"></span></span></div>`;
+const tabbar = on => `<nav class="tabbar">${[['home', 'Trang chủ'], ['book', 'Từ của tôi'], ['trophy', 'Xếp hạng'], ['user', 'Hồ sơ']].map(([i, t]) =>
+  `<span class="tab ${t === on ? 'on' : ''}">${ic(i, 'w-[26px] h-[26px]', t === on)}${t}</span>`).join('')}</nav>`;
+/* Native navigation bar: system back chevron only (iOS 26 draws it as its Liquid Glass circle). */
+const backHeader = `<div class="h-11 px-2 flex items-center text-ink-950">${ic('back', 'w-7 h-7')}</div>`;
+/* Native UIAlertController (alert style). Buttons: [label, 'cancel'|'destructive'|''] */
+const iosAlert = (title, msg, buttons) => `<div class="absolute inset-0 bg-black/20 z-30"></div>
+  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[270px] rounded-[14px] bg-[#F2F2F2]/95 backdrop-blur text-center overflow-hidden">
+    <div class="px-4 pt-[19px] pb-[18px]"><div class="text-[17px] font-semibold leading-snug">${title}</div><div class="mt-1 text-[13px] leading-snug">${msg}</div></div>
+    <div class="grid grid-cols-${buttons.length} border-t-[0.5px] border-black/20">${buttons.map(([b, role], i) => `<span class="h-11 grid place-items-center text-[17px] ${i ? 'border-l-[0.5px] border-black/20' : ''} ${role === 'destructive' ? 'text-[#FF3B30]' : 'text-[#007AFF]'} ${role === 'cancel' ? 'font-semibold' : ''}">${b}</span>`).join('')}</div>
+  </div>`;
+const sectionTitle = (t, right = '') => `<div class="flex items-baseline justify-between mb-3"><h3 class="text-[19px] font-bold tracking-tight">${t}</h3>${right}</div>`;
+const bar = (pct, color = 'bg-blue-500', h = 'h-2') => `<div class="${h} rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full ${color}" style="width:${pct}%"></div></div>`;
+
+/* A screen frame; h > 844 marks a scrolling screen drawn at full length. */
+function frame(id, label, body, notes = [], h = 844) {
+  return `<div class="shrink-0 w-[390px]">
+    <div class="frame-label">${ic('frame', 'w-3.5 h-3.5')}<span class="font-bold text-ink-700">${id}</span>${label}${h > 844 ? '<span class="ml-auto text-ink-400">cuộn</span>' : ''}</div>
+    <div class="frame" style="height:${h}px">${body}<span class="home-ind"></span></div>
+    ${notes.length ? `<div class="note mt-4 w-full"><b>Thay đổi</b><ul>${notes.map(n => `<li>${n}</li>`).join('')}</ul></div>` : ''}
+  </div>`;
+}
+const go = (action) => `<div class="shrink-0 w-[96px] self-start mt-[420px] flex flex-col items-center gap-1.5 text-center text-[12px] font-semibold text-blue-700">${ic('arrow', 'w-7 h-7')}<span>${action}</span></div>`;
+function flow(id, title, sub, items) {
+  return `<section id="${id}"><h2 class="text-[22px] font-extrabold tracking-tight">${title}</h2><p class="mt-1 mb-8 text-[14px] text-ink-600 max-w-[900px]">${sub}</p>
+    <div class="flex gap-6 items-start">${items.join('')}</div></section>`;
+}
+/* A sheet over a dimmed screen. `top` is the sheet's top edge; a short value makes a near-full sheet. */
+const sheetOver = (under, content, top = 54) => `${under}<div class="scrim"></div>
+  <div class="absolute inset-x-0 bottom-0 bg-white rounded-t-[28px] z-20 flex flex-col overflow-hidden" style="top:${top}px">
+    <div class="grabber"></div>${content}</div>`;
+const blankUnder = `<div class="absolute inset-0 bg-white">${status()}</div>`;
+</script>
+<script>
+/* ===================== PRACTICE SCREENS (inspired by Duolingo) ===================== */
+const practiceHeader = (pct) => `
+  <div class="px-5 pt-1 pb-3 flex items-center gap-4">
+    <span class="text-ink-400">${ic('x', 'w-6 h-6')}</span>
+    <div class="flex-1">${bar(pct, 'bg-blue-500', 'h-2.5')}</div>
+  </div>`;
+
+function wordIntro(known) {
+  return `${status()}${practiceHeader(38)}
+  <div class="flex-1 overflow-hidden px-6">
+    <div class="text-center pt-5">
+      <div class="text-[44px] font-extrabold tracking-[-1.6px] leading-none">resilient</div>
+      <div class="mt-4 flex items-center justify-center gap-3 text-[17px] text-ink-600">/rɪˈzɪliənt/
+        ${soundInline('l')}</div>
+    </div>
+    <div class="mt-7 card p-5">
+      <div class="eyebrow">Loại từ</div>
+      <div class="mt-1.5 text-[17px] font-semibold">tính từ</div>
+      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
+        <div class="eyebrow">Nghĩa</div>
+        <div class="mt-1.5 text-[26px] font-extrabold tracking-tight leading-tight">kiên cường, mau phục hồi</div>
+      </div>
+      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
+        <div class="eyebrow">Định nghĩa</div>
+        <p class="mt-1.5 text-[16px] leading-snug text-ink-700">able to recover quickly from difficult conditions</p>
+      </div>
+      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
+        <div class="eyebrow">Trong ngữ cảnh</div>
+        <p class="mt-1.5 text-[16px] leading-snug text-ink-700">Children are often more <mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">resilient</mark> than adults.</p>
+        <p class="mt-2 text-[14px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-0.5')}Trẻ em thường kiên cường hơn người lớn.</p>
+      </div>
+    </div>
+    ${known ? '' : `<button class="mt-2 w-full h-11 flex items-center gap-2 text-[15px] font-semibold text-blue-600">${ic('book', 'w-5 h-5')}Nghĩa khác<span class="pill bg-blue-50 text-blue-700">2</span><span class="ml-auto">${ic('chev', 'w-4 h-4')}</span></button>`}
+  </div>
+  <div class="px-6 pt-3 pb-10 space-y-3">
+    <button class="btn btn-ink">Tiếp tục</button>
+    ${known ? '<button class="btn btn-line">Tôi biết từ này</button>' : ''}
+  </div>`;
+}
+
+/* Other meanings of the word being introduced: reference only, grouped by part of speech, one row open. */
+function otherMeaningsSheet() {
+  /* Same meaning card as Chi tiết từ (3.x), without the learned pill and skills: these meanings aren't being learned. */
+  const meaning = (m, open, def, ex, tr) => `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="font-bold text-[16px] flex-1">${m}</span>${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
+    ${open ? `<div class="px-4 pb-4 space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
+      <div><div class="eyebrow mb-1.5">Trong ngữ cảnh</div><p class="text-[15px] leading-snug">${ex}</p>
+        <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div></div>` : ''}</div>`;
+  const hl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
+  return sheetOver(wordIntro(false), `
+    <div class="flex items-start gap-3 px-5 pt-3">
+      <div class="flex-1"><h2 class="text-[26px] font-extrabold tracking-[-0.6px] leading-tight">Các nghĩa khác của “resilient”</h2>
+        <p class="mt-1.5 text-[15px] text-ink-600">Chỉ để tham khảo · Không thuộc bài học này</p></div>
+      <span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5 pt-6">
+      <div class="eyebrow">tính từ</div>
+      ${meaning('đàn hồi, bền (vật liệu)', true, 'able to return to its original shape after being bent or stretched', `A ${hl('resilient')} rubber sole absorbs the shock.`, 'Đế cao su đàn hồi giúp giảm chấn.')}
+      ${meaning('lạc quan, không nản lòng', false)}
+    </div>`, 300);
+}
+
+/* ---------- task scaffold: heading, prompt, content, bottom panel ---------- */
+const syllieSm = `<img src="${SYLLIE}" alt="" class="w-[60px] shrink-0">`;
+const revealLink = `<div class="text-right text-[14px] font-bold text-ink-500 mb-3">Xem đáp án</div>`;
+const disabledBtn = t => `<button class="btn bg-ink-100 text-ink-400 cursor-default">${t}</button>`;
+
+/* kind: answer | ok | wrong | reveal | exhausted | match | custom */
+function panel(kind, o = {}) {
+  const head = (tone, icon, title, msg) => `<div class="flex items-center gap-2.5 text-[19px] font-extrabold ${tone.text}"><span class="w-7 h-7 rounded-full ${tone.dot} text-white grid place-items-center">${ic(icon, 'w-4 h-4')}</span>${title}</div>
+    ${msg ? `<p class="mt-1.5 text-[15px] ${tone.text}">${msg}</p>` : ''}`;
+  const T = { ok: { bg: 'bg-green-50', text: 'text-green-800', dot: 'bg-green-500' }, err: { bg: 'bg-coral-50', text: 'text-coral-800', dot: 'bg-coral-500' }, info: { bg: 'bg-blue-50', text: 'text-blue-800', dot: 'bg-blue-500' } };
+  const body = inner => `<div class="flex items-end gap-3">${syllieSm}<div class="flex-1">${inner}</div></div>`;
+  if (kind === 'answer') {
+    const hint = o.hint ? `<div class="flex items-center justify-between mb-2"><span class="text-[14px] font-extrabold text-blue-700">Hiện gợi ý ${o.hint[0]}/2</span><span class="text-[14px] font-bold text-ink-500">Xem đáp án</span></div>
+      ${o.hint[1] ? `<div class="mb-3 inline-flex h-8 px-3 rounded-lg bg-blue-50 text-blue-700 font-mono font-bold tracking-[3px] items-center">${o.hint[1]}</div>` : ''}` : '';
+    return `<div class="px-6 pt-3 pb-10">${body(`${hint}${!o.hint && o.reveal !== false ? revealLink : ''}${o.enabled === false ? disabledBtn(o.check || 'Kiểm tra') : `<button class="btn btn-ink">${o.check || 'Kiểm tra'}</button>`}`)}</div>`;
+  }
+  if (kind === 'match') return `<div class="px-6 pt-3 pb-10">${body(`${revealLink}<div class="h-[46px] grid place-items-center text-[15px] font-semibold text-ink-500">${o.text}</div>`)}</div>`;
+  if (kind === 'custom') return `<div class="px-6 pt-3 pb-10">${body(o.html)}</div>`;
+  const map = {
+    ok: [T.ok, 'check', 'Chính xác!', o.msg, '<button class="btn btn-green">Tiếp tục</button>'],
+    wrong: [T.err, 'x', 'Chưa đúng', 'Thử lại, hoặc xem đáp án.', `${revealLink.replace('text-ink-500', 'text-coral-700')}<button class="btn btn-coral">Thử lại</button>`],
+    reveal: [T.info, 'info', 'Đáp án đây', o.msg, '<button class="btn btn-ink">Tiếp tục</button>'],
+    exhausted: [T.info, 'info', 'Đáp án đúng', o.msg, '<button class="btn btn-ink">Tiếp tục</button>'],
+  }[kind];
+  const [tone, icon, title, msg, btn] = map;
+  return `<div class="${tone.bg} rounded-t-[24px] px-6 pt-5 pb-10">${head(tone, icon, title, msg)}<div class="mt-4">${body(btn)}</div></div>`;
+}
+
+function taskScreen({ pct = 55, question, prompt = '', content = '', panelHtml }) {
+  return `${status()}${practiceHeader(pct)}
+  <div class="flex-1 overflow-hidden px-6 pt-4">
+    ${question ? `<div class="text-[22px] font-bold tracking-tight">${question}</div>` : ''}
+    ${prompt}
+    ${content}
+  </div>${panelHtml}`;
+}
+const textPrompt = (t, size = 36) => `<div class="mt-6 mb-2 min-h-[96px] grid place-items-center text-center font-extrabold tracking-[-1px] leading-tight" style="font-size:${size}px">${t}</div>`;
+/* Sound controls: one family. Inline speakers sit next to an IPA; the centre control is the one big sound
+   control of a task, shared by the listening prompt (vol) and Đọc to (mic). */
+const SOUND_INLINE = { s: ['w-7 h-7', 'w-4 h-4'], m: ['w-9 h-9', 'w-[18px] h-[18px]'], l: ['w-11 h-11', 'w-[22px] h-[22px]'] };
+/* state: rest | active | off. A playing speaker loops its icon's waves 1 → 2 → 3 (class "playing"); nothing else changes. */
+const soundInline = (size = 'm', state = 'rest') => `<span class="${SOUND_INLINE[size][0]} rounded-full ${state === 'off' ? 'bg-ink-100 text-ink-400' : 'bg-blue-50 text-blue-600'} ${state === 'active' ? 'playing' : ''} grid place-items-center">${ic('vol', SOUND_INLINE[size][1])}</span>`;
+/* Same states for the centre control. No disc at rest. The mic's active state is recording: ■ stop inside the
+   filled halo (Blue 100 disc + Blue 50 band) that grows with the voice, as RecordingPulseButton draws it. */
+function soundCenter(kind, state = 'rest') {
+  const off = state === 'off', active = state === 'active';
+  const icon = kind === 'mic' && active ? ic('stop', 'w-12 h-12') : ic(kind, 'w-12 h-12');
+  const face = off ? 'bg-ink-100 text-ink-400' : 'bg-blue-500 text-white shadow-[0_5px_0_#28449E]';
+  const halo = active && kind === 'mic' ? 'rounded-full bg-blue-100 ring-[14px] ring-blue-50' : '';
+  return `<div class="relative w-44 h-44 ${halo} grid place-items-center"><span class="relative w-32 h-32 rounded-full ${face} ${active && kind === 'vol' ? 'playing' : ''} grid place-items-center">${icon}</span></div>`;
+}
+const audioPrompt = `<div class="mt-4 mb-2 grid place-items-center">${soundCenter('vol')}</div>`;
+
+/* answer tiles: rest keeps its depth edge; state recolours it */
+const TILE = {
+  rest: 'border-ink-200 bg-white shadow-[0_3px_0_#E2E2E7]',
+  sel: 'border-blue-500 bg-blue-50 text-blue-700 shadow-[0_3px_0_#BACCF6]',
+  ok: 'border-green-500 bg-green-50 text-green-800 shadow-[0_3px_0_#A0EABE]',
+  err: 'border-coral-500 bg-coral-50 text-coral-800 shadow-[0_3px_0_#FFBFB1]',
+  off: 'border-ink-200 bg-white text-ink-400 shadow-[0_3px_0_#E2E2E7]',
+};
+const choices = (opts, states) => `<div class="mt-6 space-y-3">${opts.map((o, i) => {
+  const st = states[i] || 'rest';
+  return `<div class="h-[60px] rounded-2xl border-2 px-4 flex items-center justify-center text-center text-[22px] ${TILE[st]}">${o}</div>`;
+}).join('')}</div>`;
+
+/* ---------- select (choice), the review task of the daily flow ---------- */
+const OPTS = ['kiên cường', 'mong manh', 'cẩn thận', 'hào phóng'];
+function selectTask(state, audio = false) {
+  const st = { sel: ['sel'], ok: ['ok', 'off', 'off', 'off'], wrong: ['rest', 'err'], exhausted: ['off', 'err', 'off', 'off'] }[state];
+  const p = { sel: panel('answer'), ok: panel('ok', { msg: 'kiên cường' }), wrong: panel('wrong'), exhausted: panel('exhausted', { msg: 'kiên cường' }) }[state];
+  return taskScreen({ pct: state === 'sel' ? 30 : 36, question: audio ? 'Nghe và chọn nghĩa đúng' : 'Từ này nghĩa là gì?', prompt: audio ? audioPrompt : textPrompt('resilient'), content: choices(OPTS, st), panelHtml: p });
+}
+
+function exitSheet() {
+  return sheetOver(selectTask('sel'), `
+    <div class="px-6 pt-6 pb-10 text-center flex flex-col">
+      <img src="${SYLLIE}" alt="" class="w-20 mx-auto">
+      <div class="mt-3 text-[22px] font-extrabold tracking-tight">Rời buổi học?</div>
+      <p class="mt-2 text-[15px] text-ink-600 leading-snug">Tiến độ chỉ được tính khi bạn hoàn thành cả buổi học.</p>
+      <div class="mt-6 space-y-3"><button class="btn btn-ink">Tiếp tục luyện tập</button><button class="btn btn-line3d text-coral-700">Rời đi không lưu</button></div>
+    </div>`, 470);
+}
+
+/* ---------- review preview & review finished ---------- */
+function reviewPreview() {
+  const words = [['prevalence', 'Health'], ['endure', 'Feelings'], ['vivid', 'Travel'], ['scarce', 'Shopping'], ['chronic', 'Health'], ['diagnose', 'Health'], ['thrive', 'Work'], ['adapt', 'Travel'], ['remedy', 'Health']];
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-6 pt-6">
+    <h1 class="h-sheet">Ôn từ bạn đã học</h1>
+    <p class="mt-2 text-[16px] text-ink-600 leading-snug">Cùng ôn lại những từ bạn đã học trước khi khám phá từ mới nhé.</p>
+    <img src="${SYLLIE}" alt="" class="w-[130px] mx-auto mt-6">
+    <div class="mt-6 flex flex-wrap gap-2.5 justify-center">${words.map(([w, t], i) => `<div class="min-h-[54px] px-3.5 py-2 rounded-2xl border-2 border-ink-200 bg-white shadow-[0_3px_0_#E2E2E7] ${i === 4 ? 'rotate-[-3deg]' : ''}"><div class="text-[18px] font-bold leading-tight">${w}</div><div class="text-[11px] font-semibold text-ink-500">${t}</div></div>`).join('')}</div>
+  </div>
+  <div class="px-6 pt-3 pb-10 space-y-3"><button class="btn btn-ink">Tiếp tục</button><button class="btn btn-line3d">Đóng</button></div>`;
+}
+
+function reviewFinished() {
+  const next = [['symptom', 'triệu chứng'], ['recover', 'hồi phục'], ['immune', 'miễn dịch'], ['fatigue', 'mệt mỏi'], ['doctor', 'bác sĩ']];
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-6 pt-8">
+    <div class="text-center"><div class="text-[30px] font-extrabold tracking-[-1px]">Đã ôn xong</div>
+      <img src="${SYLLIE}" alt="" class="w-[130px] mx-auto mt-4">
+      <p class="mt-5 text-[15px] text-ink-500">Giờ đến từ mới của Health và Daily conversation</p></div>
+    <div class="mt-6 font-bold text-[17px]">Tiếp theo: 5 từ mới</div>
+    <div class="mt-3 card">${next.map(([w, m]) => `<div class="row"><span class="font-bold flex-1">${w}</span><span class="text-ink-500 text-[15px]">${m}</span></div>`).join('')}</div>
+  </div>
+  <div class="px-6 pt-3 pb-10"><button class="btn btn-ink">Học từ mới</button></div>`;
+}
+
+/* ---------- results + detail sheet ---------- */
+/* collectionDone: this session used up the collection. The completion card sits under the LP card and its
+   actions replace "Xong", so the screen keeps one main action. */
+function results(collectionDone = false) {
+  const tile = (title, num, cap) => `<div class="card p-4 flex-1 min-w-0">
+    <div class="text-[13px] font-semibold text-ink-500">${title}</div>
+    <div class="mt-1 text-[30px] font-extrabold tracking-tight tabular-nums">${num}</div>
+    <div class="text-[13px] text-ink-500 -mt-0.5">${cap}</div>
+    <div class="mt-4 pt-3 border-t-[1.5px] border-ink-100 flex items-center gap-1 text-[14px] font-semibold text-blue-600">Xem chi tiết${ic('chev', 'w-4 h-4')}</div></div>`;
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-6">
+    <div class="text-center ${collectionDone ? 'pt-2' : 'pt-6'}"><img src="${SYLLIE}" alt="" class="${collectionDone ? 'w-20' : 'w-28'} mx-auto">
+      <span class="${collectionDone ? 'mt-3' : 'mt-4'} pill h-7 px-3 text-[13px] bg-sun-100 text-sun-800">Hoàn thành buổi học</span>
+      <div class="mt-2 h-display">Làm tốt lắm</div></div>
+    <div class="${collectionDone ? 'mt-5' : 'mt-7'} flex gap-3">${tile('Ôn tập', '7/9', 'nhớ chắc')}${tile('Từ mới', '2/4', 'nắm ngay')}</div>
+    <div class="mt-3 card p-4">
+      <div class="flex items-center gap-2"><span class="text-sun-500">${ic('zap', 'w-6 h-6', true)}</span><span class="text-[24px] font-extrabold tracking-tight flex-1">+45 LP</span><span class="text-[13px] text-ink-500">Tổng 1.285 LP</span></div>
+      <div class="mt-3 flex gap-2"><span class="pill bg-ink-100 text-ink-700">Từ mới +30</span><span class="pill bg-ink-100 text-ink-700">Ôn tập +15</span></div>
+    </div>
+    ${collectionDone ? `<div class="mt-3 card p-4 flex items-start gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy', 'w-5 h-5')}</span>
+      <div class="flex-1"><div class="text-[17px] font-bold leading-snug">Bạn đã học hết mọi từ trong Everyday</div>
+        <p class="mt-1 text-[14px] text-ink-600 leading-snug">Từ đã học vẫn được ôn đều. Chọn bộ từ khác để học thêm từ mới.</p></div></div>` : ''}
+  </div>
+  <div class="px-6 pt-3 pb-10 ${collectionDone ? 'space-y-3' : ''}">${collectionDone ? '<button class="btn btn-ink">Chọn bộ từ khác</button><button class="btn btn-line3d">Để sau</button>' : '<button class="btn btn-ink">Xong</button>'}</div>`;
+}
+
+const STRIPE = 'background:repeating-linear-gradient(135deg,#92AEEF 0 3px,#EEF3FD 3px 6px)';
+const sw = level => level === 'strong' ? '<i class="w-3.5 h-2.5 rounded-sm bg-blue-600"></i>' : level === 'mid' ? '<i class="w-3.5 h-2.5 rounded-sm bg-blue-300"></i>' : level === 'weak' ? `<i class="w-3.5 h-2.5 rounded-sm" style="${STRIPE}"></i>` : '<i class="w-3.5 h-2.5"></i>';
+const segBar = (a, b, c) => `<div class="mt-2.5 h-2.5 rounded-full bg-ink-100 flex overflow-hidden gap-[2px]"><i class="bg-blue-600" style="flex:${a}"></i><i class="bg-blue-300" style="flex:${b}"></i><i style="flex:${c};${STRIPE}"></i></div>`;
+const group = (level, head, sub, open, rows = []) => `<div class="border-t-[1.5px] border-ink-100 first:border-0">
+  <div class="flex items-center gap-2.5 px-4 py-3">${sw(level)}<div class="flex-1"><div class="font-bold text-[15px]">${head}</div><div class="text-[12px] text-ink-500">${sub}</div></div>${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
+  ${open ? rows.map(([w, g, tag, det]) => `<div class="flex items-start gap-3 px-4 pb-3 pl-10"><div class="flex-1"><div class="font-semibold">${w}</div><div class="text-[13px] text-ink-500">${g}</div></div><div class="text-right"><div class="text-[13px] font-semibold text-blue-700">${tag}</div><div class="text-[12px] text-ink-500">${det}</div></div></div>`).join('') : ''}</div>`;
+function resultDetail() {
+  return sheetOver(results(), `
+    <div class="flex items-center justify-between px-5 pt-3"><h2 class="text-[20px] font-extrabold tracking-tight">Chi tiết buổi học</h2><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5 pt-4">
+      <div class="eyebrow">Ôn tập</div>${segBar(7, 1, 1)}
+      <div class="mt-3 card overflow-hidden">
+        ${group('weak', 'Học lại (1)', 'Chưa tự nhớ ra được · Gặp lại tối nay', true, [['chronic', 'mãn tính', 'Chọn nhầm đáp án', 'khi nghe · học Thứ Tư']])}
+        ${group('mid', 'Chưa chắc (1)', 'Đúng nhưng chưa hoàn toàn tự nhớ · Gặp lại tối nay', true, [['diagnose', 'chẩn đoán', 'Dùng gợi ý', 'khi viết · học Thứ Ba']])}
+        ${group('strong', 'Nhớ chắc (7)', 'Tự nhớ ra, không cần trợ giúp · Gặp lại sau 11 ngày', false)}
+      </div>
+      <div class="mt-7 eyebrow">Từ mới</div>${segBar(2, 1, 1)}
+      <div class="mt-3 card overflow-hidden">
+        ${group('weak', 'Xem đáp án (1)', 'Xem đáp án hoặc hết lượt thử · Gặp lại tối nay', true, [['immune', 'miễn dịch', 'Xem đáp án', 'khi viết']])}
+        ${group('mid', 'Cần thử lại (1)', 'Đúng sau gợi ý hoặc thử lại · Gặp lại tối nay', false)}
+      </div>
+    </div>`, 110);
+}
+
+/* ---------- other templates ---------- */
+function clozeTask() {
+  const bank = [['appreciate', true], ['apologize'], ['accept']];
+  return taskScreen({
+    question: 'Chọn từ để hoàn thành câu.',
+    prompt: `<div class="mt-5 text-center text-[17px] text-ink-600">Tôi rất trân trọng sự giúp đỡ của bạn.</div>`,
+    content: `<div class="mt-8 text-[24px] font-semibold leading-[2.2] text-center">I really <span class="inline-block px-3 h-11 leading-[40px] rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-bold shadow-[0_3px_0_#BACCF6]">appreciate</span> your help.</div>
+      <div class="mt-10 flex flex-wrap gap-2.5 justify-center">${bank.map(([w, away]) => away ? `<span class="h-12 px-4 rounded-xl bg-ink-100 text-transparent text-[18px] font-semibold grid place-items-center">${w}</span>` : `<span class="h-12 px-4 rounded-xl border-2 border-ink-200 bg-white shadow-[0_3px_0_#E2E2E7] text-[18px] font-semibold grid place-items-center">${w}</span>`).join('')}</div>`,
+    panelHtml: panel('answer'),
+  });
+}
+
+function typingTask() {
+  return taskScreen({
+    question: 'Gõ từ tiếng Anh.',
+    prompt: textPrompt('trân trọng, đánh giá cao', 28),
+    content: `<div class="mt-6 eyebrow">Câu trả lời của bạn</div>
+      <div class="mt-2 field focus h-14 text-[20px] font-semibold">app<span class="w-[2px] h-6 bg-blue-500 -ml-1.5"></span></div>`,
+    panelHtml: panel('answer', { hint: [1, 'a _ _ _ _ _ _ _ _ _'] }),
+  });
+}
+
+function reorderTask() {
+  const bank = ['v', 'a', 'r', 'b', 'e'];
+  const placed = ['b', 'r'];
+  const used = new Set([2, 3]);
+  /* 54×54 at most; a long word narrows every tile so the word stays on one line (342pt content width, 6pt gaps). */
+  const w = Math.min(54, Math.floor((342 - 6 * (bank.length - 1)) / bank.length) - 1);
+  const letter = (l, cls) => `<span class="h-[54px] rounded-xl grid place-items-center font-mono text-[22px] font-bold ${cls}" style="width:${w}px">${l}</span>`;
+  return taskScreen({
+    question: 'Đánh vần từ tiếng Anh.',
+    prompt: textPrompt('dũng cảm', 30),
+    content: `<div class="mt-4 h-[70px] border-b-2 border-ink-200 flex items-end gap-1.5 pb-2">${placed.map(l => letter(l, 'border-2 border-ink-200 bg-white shadow-[0_3px_0_#E2E2E7]')).join('')}</div>
+      <div class="mt-8 flex gap-1.5 justify-center">${bank.map((l, i) => used.has(i) ? letter('', 'bg-ink-100') : letter(l, 'border-2 border-ink-200 bg-white shadow-[0_3px_0_#E2E2E7]')).join('')}</div>`,
+    panelHtml: panel('answer', { hint: [0] }),
+  });
+}
+
+function matchTask() {
+  const L = [['appreciate', 'ok'], ['consider', 'sel'], ['accept', 'rest']];
+  const R = [['cân nhắc', 'rest'], ['chấp nhận', 'rest'], ['trân trọng', 'ok']];
+  const t = ([w, st]) => `<div class="min-h-[84px] rounded-2xl border-2 px-3 grid place-items-center text-center text-[18px] ${TILE[st === 'ok' ? 'ok' : st]}">${w}</div>`;
+  return taskScreen({
+    prompt: `<div class="mt-4 text-center text-[22px] font-bold">Nối mỗi từ với nghĩa của nó.</div>`,
+    content: `<div class="mt-8 grid grid-cols-2 gap-3"><div class="space-y-3">${L.map(t).join('')}</div><div class="space-y-3">${R.map(t).join('')}</div></div>`,
+    panelHtml: panel('match', { text: 'Đã ghép 1 cặp' }),
+  });
+}
+
+function surgeryTask() {
+  const word = 'seperate'.split('');
+  const keys = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  return taskScreen({
+    question: 'Tìm và sửa lỗi chính tả.',
+    content: `<div class="mt-10 flex gap-1.5 justify-center">${word.map((l, i) => `<span class="w-[38px] h-[50px] rounded-xl border-2 grid place-items-center font-mono text-[22px] font-bold ${i === 3 ? 'border-blue-500 bg-blue-50 text-blue-700 ring-4 ring-blue-100' : 'border-ink-200 bg-white'}">${l}</span>`).join('')}</div>
+      <div class="mt-6 card p-3">
+        <div class="eyebrow mb-2.5 px-1">Thay bằng</div>
+        <div class="space-y-1.5">${keys.map((r, ri) => `<div class="flex gap-1 justify-center">${r.split('').map(k => `<span class="w-[26px] h-9 rounded-lg bg-ink-100 grid place-items-center text-[15px] font-semibold">${k}</span>`).join('')}${ri === 2 ? `<span class="w-[60px] h-9 rounded-lg bg-ink-200 grid place-items-center text-[13px] font-semibold">Xoá</span>` : ''}</div>`).join('')}</div>
+      </div>`,
+    panelHtml: panel('answer', { check: 'Kiểm tra bản sửa', enabled: false }),
+  });
+}
+
+function recordingTask() {
+  return taskScreen({
+    question: 'Đọc to từ này.',
+    prompt: textPrompt('appreciate'),
+    content: `<div class="mt-8 flex flex-col items-center">
+      ${soundCenter('mic')}
+      <p class="mt-5 text-[15px] text-ink-600">Chạm vào micro và đọc to.</p></div>`,
+    panelHtml: panel('custom', { html: '<button class="btn btn-line3d">Không thể nói lúc này</button>' }),
+  });
+}
+
+/* ===================== PRODUCT SCREENS (inspired by Brilliant) ===================== */
+/* done: every new word of the collection is learned (scope exhausted, all topics chosen, no added words left). */
+function home(done = false) {
+  const topics = done ? [['bubble', 'Daily conversation', 40, 40], ['cart', 'Shopping', 30, 30], ['plane', 'Travel', 30, 30]] : [['bubble', 'Daily conversation', 24, 40], ['cart', 'Shopping', 12, 30], ['plane', 'Travel', 5, 30]];
+  const daily = done ? `<div class="mt-7 card p-5">
+      <div class="eyebrow">Bài học hôm nay</div>
+      <div class="mt-3 flex items-start gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy', 'w-5 h-5')}</span>
+        <div class="flex-1 min-w-0"><div class="text-[21px] font-extrabold tracking-tight leading-tight">Bạn đã học hết Everyday</div>
+          <p class="mt-1.5 text-[15px] text-ink-600 leading-snug">Từ đã học vẫn được ôn đều. Chọn bộ từ khác để học thêm từ mới.</p></div></div>
+      <button class="btn btn-blue mt-5">Ôn 10 từ</button>
+      <button class="btn btn-line mt-3">Chọn bộ từ khác</button>
+    </div>` : `<div class="mt-7 card">
+      <div class="p-5">
+        <div class="eyebrow">Bài học hôm nay</div>
+        <div class="mt-1 text-[21px] font-extrabold tracking-tight">10 từ ôn · 8 từ mới</div>
+        <button class="btn btn-blue mt-5">Bắt đầu</button>
+      </div>
+      <div class="flex items-center gap-3 px-5 py-4 border-t-[1.5px] border-ink-100"><span class="ico bg-green-50 text-green-700">${ic('rotate')}</span>
+        <div class="flex-1 min-w-0"><div class="font-bold text-[15px]">Còn 24 từ khác chờ ôn</div><div class="text-[13px] text-ink-500">Ôn riêng 10 từ, không có từ mới</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
+    </div>`;
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <div class="flex items-center justify-between pt-2">
+      <span class="text-[22px] font-black tracking-tight">Syll</span>
+      <span class="pill h-8 px-3 text-[14px] bg-sun-50 text-sun-800">${ic('zap', 'w-4 h-4 text-sun-500', true)}1.240</span>
+    </div>
+    <div class="mt-8 flex items-end justify-between gap-3">
+      <div class="min-w-0 flex-1"><div class="text-[17px] font-semibold text-ink-500">Chào buổi sáng</div>
+        <h1 class="mt-0.5 text-[26px] font-extrabold tracking-[-0.8px] leading-tight truncate">mellow_puffin_5001</h1></div>
+      <img src="${SYLLIE}" alt="" class="w-[88px] mb-1 shrink-0"></div>
+    ${daily}
+    <div class="mt-10">${sectionTitle('Đang học', '<span class="link">Đổi</span>')}
+      <div class="card">
+        <div class="p-4">
+          <div class="flex items-center gap-2"><i class="w-2.5 h-2.5 rounded-full" style="background:${MARK.everyday}"></i><span class="font-bold text-[17px] flex-1">Everyday</span>${done ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Hoàn thành</span>` : ''}<span class="text-[14px] text-ink-500 tabular-nums">${done ? '600' : '128'} / 600 từ</span></div>
+          <div class="mt-3 h-2.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${MARK.everyday};width:${done ? 100 : 21}%"></div></div>
+        </div>
+        ${topics.map(([i, n, a, b]) => `<div class="flex items-center gap-3 px-4 py-3.5 border-t-[1.5px] border-ink-100">
+          <span class="ico w-9 h-9 bg-ink-50 text-ink-700">${ic(i, 'w-[18px] h-[18px]')}</span>
+          <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${n}</div><div class="mt-1.5 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${MARK.everyday};width:${a / b * 100}%"></div></div></div>
+          <span class="text-[13px] text-ink-500 tabular-nums w-12 text-right">${a}/${b}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>${tabbar('Trang chủ')}`;
+}
+
+function myWords() {
+  const words = [['resilient', '/rɪˈzɪliənt/', 2, 3], ['meticulous', '/məˈtɪkjələs/', 1, 1], ['ambiguous', '/æmˈbɪɡjuəs/', 1, 2], ['commute', '/kəˈmjuːt/', 2, 2], ['negotiate', '/nɪˈɡoʊʃieɪt/', 1, 1], ['thrive', '/θraɪv/', 1, 1]];
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <div class="flex items-center justify-between pt-6"><h1 class="h-display">Từ của tôi</h1><button class="btn btn-line btn-sm">${ic('plus', 'w-4 h-4')}Thêm từ</button></div>
+    <div class="mt-6 card grid grid-cols-2">
+      <div class="p-4"><div class="text-[30px] font-extrabold tracking-tight tabular-nums">248</div><div class="text-[13px] text-ink-500 font-semibold">Từ đã học</div></div>
+      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums text-coral-600">12</div><div class="text-[13px] text-ink-500 font-semibold">Cần luyện thêm</div></div>
+    </div>
+    <div class="mt-9">${sectionTitle('Luyện tập')}
+      <div class="card">
+        <div class="flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('shuffle')}</span><div class="flex-1"><div class="font-bold">Luyện tập ngẫu nhiên</div><div class="text-[13px] text-ink-500">Tổng hợp hoặc theo kỹ năng</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
+        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-coral-50 text-coral-600">${ic('target')}</span><div class="flex-1"><div class="font-bold">Từ còn yếu</div><div class="text-[13px] text-ink-500">Luyện lại kỹ năng đang yếu</div></div><button class="btn btn-blue btn-sm">Luyện ngay</button></div>
+      </div>
+    </div>
+    <div class="mt-9">${sectionTitle('Tất cả từ', '<span class="link">Quản lý từ đã thêm</span>')}
+      <div class="field">${ic('search', 'w-5 h-5 text-ink-400')}<span class="text-ink-400">Tìm trong từ của bạn</span></div>
+      <div class="mt-2">${words.map(([w, ipa, l, t]) => `
+        <div class="flex items-center gap-3 py-3 border-b-[1.5px] border-ink-100">
+          <div class="flex-1 min-w-0"><div class="text-[17px] font-bold">${w}</div><div class="text-[14px] text-ink-500">${ipa}</div></div>
+          <span class="flex gap-1" title="Đã học ${l} / ${t} nghĩa">${Array.from({ length: t }, (_, i) => `<i class="w-2 h-2 rounded-full ${i < l ? 'bg-green-500' : 'bg-ink-200'}"></i>`).join('')}</span>
+          ${ic('chev', 'w-4 h-4 text-ink-300')}
+        </div>`).join('')}</div>
+    </div>
+  </div>${tabbar('Từ của tôi')}`;
+}
+
+/* Word detail. IPA and audio belong to a Meaning: when every meaning sounds the same the hero carries them,
+   otherwise (heteronyms like lead /liːd/ · /led/) each meaning card does, already in its collapsed row. */
+const WD_SKILLS = [['Đọc', 'Đã xác minh', 'bg-green-50 text-green-800'], ['Viết', 'Cần luyện lại', 'bg-coral-50 text-coral-800'], ['Nghe', 'Đã thể hiện', 'bg-blue-50 text-blue-700'], ['Nói', 'Chưa xác minh', 'bg-ink-100 text-ink-600']];
+const wdHl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
+function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
+  const pill = learned ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã học</span>` : '<span class="pill bg-ink-100 text-ink-600">Chưa học</span>';
+  /* Its own line under the meaning, indented past the number: the pill and chevron stay on the meaning's line. */
+  const sound = ipa ? `<div class="-mt-2 pb-3 pl-11 pr-4 flex items-center gap-2 text-[15px] text-ink-600">${ipa}${soundInline('s')}</div>` : '';
+  return `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="text-ink-400 font-bold w-4">${n}</span>
+      <span class="font-bold text-[16px] flex-1 min-w-0">${m}</span>${pill}${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>${sound}
+    ${open ? `<div class="px-4 pb-4 pl-11 space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
+      <div><div class="eyebrow mb-1.5">Ví dụ</div><p class="text-[15px] leading-snug">${ex}</p>
+        <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div>
+      ${learned ? `<div><div class="eyebrow mb-2">Kỹ năng</div><div class="grid grid-cols-2 gap-2">${WD_SKILLS.map(([s, v, t]) => `<div class="rounded-xl ${t} px-3 py-2"><div class="text-[13px] font-bold">${s}</div><div class="text-[12px] opacity-90">${v}</div></div>`).join('')}</div></div>
+      <div class="text-[13px] text-ink-500">Đã học ${date}</div>` : ''}</div>` : ''}</div>`;
+}
+const wdHero = (w, ipa) => `<div class="text-center"><div class="text-[38px] font-extrabold tracking-[-1.2px]">${w}</div>
+  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-2.5 text-ink-600">${ipa}${soundInline('m')}</div>` : ''}</div>`;
+const wdSheet = (hero, learned, total, body) => sheetOver(blankUnder, `
+    <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5">${hero}
+      <div class="mt-8 flex items-baseline justify-between"><h3 class="text-[19px] font-bold">Các nghĩa</h3><span class="text-[14px] text-ink-500 font-semibold">Đã học ${learned} / ${total}</span></div>
+      ${body}
+    </div>`);
+function wordDetail() {
+  return wdSheet(wdHero('resilient', '/rɪˈzɪliənt/'), 2, 3, `<div class="mt-3 eyebrow">tính từ</div>
+      ${wdMeaning({ n: 1, m: 'kiên cường', learned: true, open: true, def: 'able to recover quickly from difficult conditions', ex: `Children are often more ${wdHl('resilient')} than adults.`, tr: 'Trẻ em thường kiên cường hơn người lớn.', date: '02/11' })}
+      ${wdMeaning({ n: 2, m: 'bền, đàn hồi (vật liệu)', learned: true })}${wdMeaning({ n: 3, m: 'lạc quan, không nản', learned: false })}`);
+}
+function wordDetailHeteronym() {
+  return wdSheet(wdHero('lead'), 2, 3, `<div class="mt-3 eyebrow">động từ</div>
+      ${wdMeaning({ n: 1, m: 'dẫn đường, dẫn dắt', ipa: '/liːd/', learned: true, open: true, def: 'to show someone the way by going in front of them', ex: `Can you ${wdHl('lead')} the way?`, tr: 'Bạn dẫn đường được không?', date: '05/11' })}
+      <div class="mt-6 eyebrow">danh từ</div>
+      ${wdMeaning({ n: 1, m: 'chì (kim loại)', ipa: '/led/', learned: true })}${wdMeaning({ n: 2, m: 'vị trí dẫn đầu', ipa: '/liːd/', learned: false })}`);
+}
+
+function randomPractice() {
+  const skills = [['book', 'Đọc', true], ['pen', 'Viết', true], ['headphones', 'Nghe', false], ['mic', 'Nói', true]];
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display mt-2">Chọn kỹ năng</h1>
+    <div class="mt-8">${sectionTitle('Kỹ năng', '<span class="link">Chọn tất cả</span>')}
+      <div class="grid grid-cols-2 gap-3">${skills.map(([i, s, on]) => `<div class="rounded-[20px] border-2 p-4 ${on ? 'border-blue-500 bg-blue-50' : 'border-ink-200'}">
+        <div class="flex items-start justify-between"><span class="ico ${on ? 'bg-white text-blue-600' : 'bg-ink-50 text-ink-700'}">${ic(i)}</span>
+        ${on ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300"></span>'}</div>
+        <div class="mt-4 font-bold text-[17px] ${on ? 'text-blue-800' : ''}">${s}</div></div>`).join('')}</div></div>
+    <div class="mt-8">${sectionTitle('Nguồn từ')}
+      <div class="card flex items-center gap-3 p-4"><span class="ico bg-ink-50 text-ink-700">${ic('layers')}</span><div class="flex-1"><div class="font-bold">Tất cả từ đã học</div><div class="text-[13px] text-ink-500">248 từ đã học</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div></div>
+  </div>
+  <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Bắt đầu</button></div>`;
+}
+
+function wordSource() {
+  const radio = sel => sel ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300 shrink-0"></span>';
+  const opt = (title, sub, sel, dot, first) => `<div class="flex items-center gap-3 p-4 ${first ? '' : 'border-t-[1.5px] border-ink-100'}">
+    ${dot ? `<i class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${dot}"></i>` : `<span class="text-ink-700">${ic('layers', 'w-[18px] h-[18px]')}</span>`}
+    <div class="flex-1"><div class="font-bold">${title}</div><div class="text-[13px] text-ink-500">${sub}</div></div>${radio(sel)}</div>`;
+  const topics = `<div class="px-4 pb-4 -mt-1 bg-blue-50/60">
+    <div class="flex items-center justify-between pt-3 pb-2.5"><span class="eyebrow">Chủ đề · 2/6</span><span class="link text-[14px]">Chọn tất cả</span></div>
+    <div class="flex flex-wrap gap-2"><span class="chip on bg-white">${ic('bubble', 'w-4 h-4')}Daily conversation</span><span class="chip on bg-white">${ic('cart', 'w-4 h-4')}Shopping</span><span class="chip bg-white">${ic('plane', 'w-4 h-4')}Travel</span><span class="chip bg-white">${ic('utensils', 'w-4 h-4')}Food</span><span class="chip bg-white">${ic('heart', 'w-4 h-4')}Feelings</span><span class="chip bg-white">${ic('home', 'w-4 h-4')}Home</span></div>
+  </div>`;
+  return sheetOver(randomPractice(), `
+    <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5">
+      <h2 class="h-sheet">Nguồn từ</h2>
+      <div class="mt-6 card overflow-hidden">
+        ${opt('Tất cả từ đã học', '248 từ đã học', false, null, true)}
+        ${opt('Everyday', '180 từ đã học', true, MARK.everyday)}${topics}
+        ${opt('IELTS', '50 từ đã học', false, MARK.ielts)}
+        ${opt('Business', '24 từ đã học', false, MARK.business)}
+        ${opt('TOEIC', '12 từ đã học', false, MARK.toeic)}
+        ${opt('Từ bạn đã thêm', '18 từ', false, MARK.mine)}
+      </div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Xong</button></div>`, 110);
+}
+
+function customWords(swiped, confirm) {
+  const rows = [['resilient', 'kiên cường', ''], ['quarantine', '', 'translating'], ['ubiquitous', 'có mặt khắp nơi', ''], ['fetch', '', 'gone'], ['serendipity', 'sự tình cờ may mắn', '']];
+  const actions = `<div class="absolute right-0 inset-y-0 flex text-white text-[12px] font-medium">
+    <span class="w-[74px] bg-ink-500 flex flex-col items-center justify-center gap-1">${ic('undo', 'w-5 h-5')}Khôi phục</span>
+    <span class="w-[74px] bg-blue-500 flex flex-col items-center justify-center gap-1">${ic('pencil', 'w-5 h-5')}Sửa</span>
+    <span class="w-[74px] bg-coral-600 flex flex-col items-center justify-center gap-1">${ic('trash', 'w-5 h-5')}Xóa</span></div>`;
+  const list = `
+    <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden">
+      <h2 class="h-sheet px-5">Từ bạn đã thêm</h2>
+      <div class="mt-5">${rows.map(([w, m, s], i) => `
+        <div class="relative overflow-hidden">
+          ${swiped && i === 0 ? actions : ''}
+          <div class="relative bg-white flex items-center gap-3 px-5 py-3.5 border-b-[1.5px] border-ink-100 ${swiped && i === 0 ? '-translate-x-[222px]' : ''}">
+            <div class="flex-1 min-w-0"><div class="text-[17px] font-bold ${s === 'gone' ? 'text-ink-400' : ''}">${w}</div>
+              <div class="text-[14px] mt-0.5 ${s === 'gone' ? 'text-coral-700' : 'text-ink-500'}">${s === 'translating' ? '<span class="pill bg-sun-50 text-sun-800">Đang dịch</span>' : s === 'gone' ? 'Không còn khả dụng' : m}</div></div>
+            ${ic('chev', 'w-4 h-4 text-ink-300')}
+          </div></div>`).join('')}</div>
+    </div>`;
+  let out = sheetOver(blankUnder, list);
+  if (confirm) out += iosAlert('Xóa từ này?', 'Từ sẽ không được xếp lịch ôn và các chỉnh sửa của bạn sẽ bị xóa. Lịch sử học vẫn được giữ.', [['Hủy', 'cancel'], ['Xóa', 'destructive']]);
+  return out;
+}
+
+function profile() {
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <div class="flex items-center justify-between pt-6"><h1 class="h-display">Hồ sơ</h1><span class="w-11 h-11 grid place-items-center text-ink-950">${ic('gear', 'w-6 h-6')}</span></div>
+    <div class="mt-6 flex items-center gap-4">
+      <span class="w-16 h-16 rounded-[20px] bg-blue-100 text-blue-700 grid place-items-center text-[26px] font-extrabold">Q</span>
+      <div class="flex-1 text-[20px] font-extrabold tracking-tight">quan.tran</div>
+      <span class="link">Sửa</span>
+    </div>
+    <div class="mt-5 card p-4">
+      <div class="flex items-center gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy')}</span><div class="flex-1"><div class="font-bold">Silver</div><div class="text-[13px] text-ink-500">Tiến độ lên Gold</div></div><span class="text-[14px] font-bold tabular-nums">1.240 / 2.000 LP</span></div>
+      <div class="mt-3">${bar(62, 'bg-sun-500', 'h-2.5')}</div>
+    </div>
+    <div class="mt-9">${sectionTitle('Trình độ của bạn', '<span class="link">Sửa</span>')}<div class="card"><div class="row"><span class="flex-1">Trình độ tiếng Anh</span><span class="font-bold">B1</span></div></div></div>
+    <div class="mt-8">${sectionTitle('Trọng tâm của bạn', '<span class="link">Sửa</span>')}
+      <div class="flex items-center gap-2 text-[14px] font-semibold text-ink-600 mb-3"><i class="w-2 h-2 rounded-full" style="background:${MARK.everyday}"></i>Everyday</div>
+      <div class="flex flex-wrap gap-2"><span class="chip">${ic('bubble', 'w-4 h-4')}Daily conversation</span><span class="chip">${ic('cart', 'w-4 h-4')}Shopping</span><span class="chip">${ic('plane', 'w-4 h-4')}Travel</span><span class="chip bg-ink-100 border-ink-100">+3 nữa</span></div></div>
+    <div class="mt-8">${sectionTitle('Lịch học của bạn', '<span class="link">Sửa</span>')}
+      <div class="card">
+        <div class="row"><span class="flex-1">Từ mới / ngày</span><span class="font-bold">10 từ</span></div>
+        <div class="row"><span class="flex-1">Từ ôn / buổi</span><span class="font-bold">20 từ</span></div>
+        <div class="row"><span class="flex-1">Ngày học</span><span class="font-bold">Mỗi ngày</span></div>
+        <div class="row"><span class="flex-1">Nhắc nhở</span><span class="font-bold">20:00</span></div>
+        <div class="row py-3"><div class="flex-1"><div>Tự cân bằng ôn và từ mới</div><div class="text-[13px] text-ink-500">Bớt từ mới khi có nhiều từ chờ ôn</div></div><span class="switch on"></span></div>
+      </div></div>
+    <div class="mt-8">${sectionTitle('Ôn tập')}
+      <div class="card">
+        <div class="row py-3"><i class="w-2.5 h-2.5 rounded-full" style="background:${MARK.everyday}"></i><div class="flex-1"><div class="font-semibold">Everyday</div><div class="text-[13px] text-ink-500">Bộ bạn đang học luôn được ôn</div></div><span class="switch on opacity-50"></span></div>
+        <div class="row py-3"><i class="w-2.5 h-2.5 rounded-full" style="background:${MARK.ielts}"></i><div class="flex-1"><div class="font-semibold">IELTS</div><div class="text-[13px] text-ink-500">Đã học 50 từ</div></div><span class="switch on"></span></div>
+      </div></div>
+  </div>${tabbar('Hồ sơ')}`;
+}
+
+function editRoutine() {
+  const stepper = n => `<div class="card p-3 flex items-center gap-4"><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('minus')}</span><div class="flex-1 text-center"><span class="text-[30px] font-extrabold tracking-tight">${n}</span> <span class="text-ink-500 font-semibold">từ</span></div><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('plus')}</span></div>`;
+  return sheetOver(blankUnder, `
+    <div class="flex items-center justify-between px-5 pt-3"><span class="eyebrow">Kế hoạch học</span><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5">
+      <h2 class="h-sheet mt-2">Lịch học của bạn</h2>
+      <div class="mt-7"><div class="font-bold mb-2.5">Từ mới / ngày</div>${stepper(10)}</div>
+      <div class="mt-6"><div class="flex justify-between items-baseline mb-2.5"><span class="font-bold">Từ ôn / buổi</span><span class="link text-[14px]">Theo số từ mới</span></div>${stepper(20)}</div>
+      <div class="mt-6"><div class="flex justify-between items-baseline mb-2.5"><span class="font-bold">Ngày học</span><span class="text-[14px] text-ink-500 font-semibold">Mỗi ngày</span></div>
+        <div class="flex gap-1.5">${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => `<span class="day on">${d}</span>`).join('')}</div></div>
+      <div class="mt-6 card">
+        <div class="row"><span class="flex-1 font-bold">Nhắc tôi</span><span class="switch on"></span></div>
+        <div class="row">${ic('clock', 'w-5 h-5 text-ink-500')}<span class="flex-1 text-ink-600">Giờ nhắc</span><span class="datepill">20:00</span></div>
+      </div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Lưu thay đổi</button></div>`);
+}
+
+function settings() {
+  const group = (title, rows) => `<div class="mt-7"><div class="eyebrow mb-2.5">${title}</div><div class="card">${rows.join('')}</div></div>`;
+  const r = (icon, title, trail, sub = '') => `<div class="row py-3">${ic(icon, 'w-5 h-5 text-ink-700')}<div class="flex-1 min-w-0"><div class="font-semibold">${title}</div>${sub ? `<div class="text-[13px] text-ink-500 leading-snug mt-0.5">${sub}</div>` : ''}</div>${trail}</div>`;
+  const chev = v => `<span class="flex items-center gap-1.5 text-ink-500 text-[15px]">${v}${ic('chev', 'w-4 h-4 text-ink-400')}</span>`;
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display mt-2">Cài đặt</h1>
+    ${group('Tương tác', [r('vibrate', 'Rung phản hồi', '<span class="switch on"></span>'), r('motion', 'Giảm chuyển động', '<span class="switch"></span>')])}
+    ${group('Bảng xếp hạng', [r('trophy', 'Hiện tôi trên bảng xếp hạng', '<span class="switch on"></span>', 'Tên, ảnh đại diện, Tier và LP tuần này của bạn sẽ công khai')])}
+    ${group('Ứng dụng', [r('globe', 'Ngôn ngữ', chev('Tiếng Việt')), r('flask', 'Practice Lab', chev('')), r('info', 'Về Syll', '<span class="text-ink-500 text-[15px]">v1.0</span>')])}
+    ${group('Tài khoản', [r('key', 'Đổi mật khẩu', chev(''))])}
+    <div class="mt-8 flex flex-col items-center gap-5"><button class="btn btn-line">Đăng xuất</button><span class="text-[15px] font-semibold text-coral-700">Xóa tài khoản</span></div>
+  </div>`;
+}
+
+function deleteAccount() {
+  return settings() + iosAlert('Xóa tài khoản của bạn?', 'Tiến độ, từ vựng và cài đặt của bạn sẽ bị xóa vĩnh viễn. Không thể hoàn tác.', [['Hủy', 'cancel'], ['Xóa tài khoản', 'destructive']]);
+}
+
+function ranking() {
+  const rows = [[1, 'linh.ng', 'L', 2840, true], [2, 'minh_k', 'M', 2610], [3, 'thao.vu', 'T', 2395], [11, 'an.pham', 'A', 1290], [12, 'quan.tran', 'Q', 1240, false, true], [13, 'huy.do', 'H', 1185]];
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display pt-6">Xếp hạng tuần</h1>
+    <div class="mt-1.5 text-[14px] text-ink-500">09–15/11 · Đặt lại Thứ Hai, 07:00</div>
+    <div class="mt-6 card grid grid-cols-2">
+      <div class="p-4"><div class="text-[28px] font-extrabold tracking-tight">#12</div><div class="text-[13px] text-ink-500 font-semibold">Hạng tuần</div></div>
+      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="flex items-center gap-1.5 text-[28px] font-extrabold tracking-tight">${ic('zap', 'w-6 h-6 text-sun-500', true)}1.240</div><div class="text-[13px] text-ink-500 font-semibold flex items-center gap-1">LP tuần này ${ic('info', 'w-3.5 h-3.5')}</div></div>
+    </div>
+    <div class="mt-6 seg"><span class="on">Tất cả</span><span>Quanh tôi</span></div>
+    <div class="mt-4 card overflow-hidden">${rows.map(([n, name, ini, lp, top, me], i) => `
+      ${i === 3 ? '<div class="h-8 grid place-items-center text-ink-300 border-t-[1.5px] border-ink-100">···</div>' : ''}
+      <div class="flex items-center gap-3 px-4 h-[60px] ${i ? 'border-t-[1.5px] border-ink-100' : ''} ${me ? 'bg-blue-50' : ''}">
+        <span class="w-7 text-center font-extrabold ${top ? 'text-sun-600' : 'text-ink-400'}">${n}</span>
+        <span class="w-10 h-10 rounded-full ${me ? 'bg-blue-100 text-blue-700' : 'bg-ink-100 text-ink-700'} grid place-items-center font-bold">${ini}</span>
+        <span class="flex-1 font-semibold">${name}</span>${me ? '<span class="pill bg-blue-500 text-white">Bạn</span>' : ''}
+        <span class="font-bold tabular-nums text-[15px]">${lp.toLocaleString('vi-VN')} LP</span>
+      </div>`).join('')}</div>
+  </div>${tabbar('Xếp hạng')}`;
+}
+
+/* ===================== ADD WORD (one sheet, steps pushed inside it) ===================== */
+const kb = () => {
+  const key = (k, w = 'flex-1') => `<span class="${w} h-[42px] rounded-[6px] bg-white grid place-items-center text-[19px] shadow-[0_1px_0_#8E9097]">${k}</span>`;
+  const row = (ks, pad = '') => `<div class="flex gap-[6px] ${pad}">${ks.split('').map(k => key(k)).join('')}</div>`;
+  return `<div class="shrink-0 bg-[#D3D5DB] px-[3px] pt-2 pb-10 space-y-[11px]">
+    ${row('qwertyuiop')}${row('asdfghjkl', 'px-[18px]')}
+    <div class="flex gap-[6px]">${key('⇧', 'w-[44px]')}<div class="flex-1 flex gap-[6px]">${'zxcvbnm'.split('').map(k => key(k)).join('')}</div>${key('⌫', 'w-[44px]')}</div>
+    <div class="flex gap-[6px]">${key('123', 'w-[88px] text-[15px]')}${key('', 'flex-1')}${key('tra', 'w-[88px] text-[15px]')}</div></div>`;
+};
+const addHeader = (back = true) => `<div class="flex items-center justify-between px-5 pt-2">${back ? `<span class="icon-btn">${ic('back', 'w-4 h-4')}</span>` : '<span></span>'}<span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>`;
+/* ipa null: the senses sound different, so the hero has no IPA or speaker (each sense card carries its own). */
+const wordHero = (w = 'serendipity', ipa = '/ˌserənˈdɪpəti/') => `<div class="text-center"><div class="text-[36px] font-extrabold tracking-[-1.2px]">${w}</div>
+  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-2.5 text-ink-600">${ipa}${soundInline('m')}</div>` : ''}</div>`;
+const area = (label, value, rows = 1, focus = false) => `<div><div class="eyebrow mb-2">${label}</div>
+  <div class="rounded-2xl border-2 ${focus ? 'border-blue-500 ring-4 ring-blue-100' : 'border-ink-200'} px-4 py-3 text-[16px] leading-snug" style="min-height:${rows === 1 ? 48 : 76}px">${value}</div></div>`;
+
+function addEntry() {
+  return sheetOver(myWords(), `${addHeader(false)}
+    <div class="flex-1 px-5">
+      <h2 class="h-sheet mt-1">Bạn muốn học từ nào?</h2>
+      <p class="mt-2 text-[15px] text-ink-600">Chúng tôi sẽ tìm hoặc chuẩn bị từ này cho bạn.</p>
+      <div class="mt-6 field focus h-14 text-[20px] font-semibold">serendipity<span class="w-[2px] h-6 bg-blue-500 -ml-1.5"></span></div>
+    </div>
+    <div class="px-5 pb-3"><button class="btn btn-ink">Tra từ</button></div>${kb()}`);
+}
+
+function addLoading() {
+  return sheetOver(myWords(), `${addHeader(false)}
+    <div class="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-10">
+      <img src="${SYLLIE}" alt="" class="w-28">
+      <div class="mt-5 text-[20px] font-extrabold tracking-tight">Đang tra từ của bạn…</div>
+      <p class="mt-2 text-[15px] text-ink-600">Từ mới có thể mất đến một phút để chuẩn bị.</p>
+    </div>`);
+}
+
+/* Lookup result: every sense is a selectable card (tick like Chọn kỹ năng), several can be added at once.
+   The open card shows the details and its own "Sửa"; the button counts the selection. */
+const tick = on => on ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300 shrink-0"></span>';
+const hlWord = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
+function addSense({ m, on, open, edited, def, ex, tr, ipa }) {
+  return `<div class="mt-3 rounded-[20px] border-2 ${on ? 'border-blue-500 bg-blue-50' : 'border-ink-200 bg-white'}">
+    <div class="flex items-center gap-3 px-4 min-h-14 py-3">${tick(on)}<span class="flex-1 font-bold text-[16px] ${on ? 'text-blue-800' : ''}">${m}</span>${edited ? '<span class="pill bg-white text-blue-700">Đã sửa</span>' : ''}${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
+    ${ipa ? `<div class="-mt-2 pb-3 pl-[52px] pr-4 flex items-center gap-2 text-[15px] ${on ? 'text-blue-800' : 'text-ink-600'}">${ipa}${on ? soundInline('s').replace('bg-blue-50', 'bg-white') : soundInline('s')}</div>` : ''}
+    ${open ? `<div class="px-4 pb-4 pl-[52px] space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
+      <div><div class="eyebrow mb-1.5">Ví dụ</div><p class="text-[15px] leading-snug">${ex}</p>
+        <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div>
+      <span class="link inline-flex items-center gap-1.5">${ic('pencil', 'w-4 h-4')}Sửa nghĩa này</span></div>` : ''}</div>`;
+}
+function addResult() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 overflow-hidden px-5">
+      ${wordHero()}
+      <div class="mt-7 flex items-baseline justify-between"><h3 class="text-[19px] font-bold">Chọn nghĩa muốn thêm</h3><span class="pill bg-ink-100 text-ink-600">Do AI tạo</span></div>
+      <div class="mt-3 eyebrow">danh từ</div>
+      ${addSense({ m: 'sự tình cờ may mắn', on: true, open: true, def: 'the fact of finding good things by chance', ex: `Meeting her was pure ${hlWord('serendipity')}.`, tr: 'Gặp cô ấy hoàn toàn là một sự tình cờ may mắn.' })}
+      ${addSense({ m: 'khả năng tình cờ phát hiện', on: true, edited: true })}
+      ${addSense({ m: 'sự trùng hợp thú vị', on: false })}
+      <div class="mt-4 flex justify-center"><span class="link inline-flex items-center gap-1.5">${ic('search', 'w-4 h-4')}Tìm nghĩa khác</span></div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Thêm 2 nghĩa</button></div>`);
+}
+
+/* Senses that sound different (tear /tɪr/ · /ter/): same rule as Chi tiết từ 2.2a. */
+function addResultHeteronym() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 overflow-hidden px-5">
+      ${wordHero('tear', null)}
+      <div class="mt-7 flex items-baseline justify-between"><h3 class="text-[19px] font-bold">Chọn nghĩa muốn thêm</h3><span class="pill bg-ink-100 text-ink-600">Do AI tạo</span></div>
+      <div class="mt-3 eyebrow">danh từ</div>
+      ${addSense({ m: 'giọt nước mắt', ipa: '/tɪr/', on: true, open: true, def: 'a drop of liquid that comes from your eye when you cry', ex: `A ${hlWord('tear')} ran down her cheek.`, tr: 'Một giọt nước mắt lăn trên má cô ấy.' })}
+      ${addSense({ m: 'vết rách', ipa: '/ter/', on: false })}
+      <div class="mt-6 eyebrow">động từ</div>
+      ${addSense({ m: 'xé, làm rách', ipa: '/ter/', on: true })}
+      <div class="mt-4 flex justify-center"><span class="link inline-flex items-center gap-1.5">${ic('search', 'w-4 h-4')}Tìm nghĩa khác</span></div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Thêm 2 nghĩa</button></div>`);
+}
+
+function addDone() {
+  return sheetOver(myWords(), `${addHeader(false)}
+    <div class="flex-1 flex flex-col items-center justify-center px-6 text-center -mt-10">
+      <div class="relative"><img src="${SYLLIE}" alt="" class="w-28"><span class="absolute -right-2 -bottom-1 w-10 h-10 rounded-full bg-green-500 text-white grid place-items-center ring-4 ring-white">${ic('check', 'w-5 h-5')}</span></div>
+      <div class="mt-6 text-[24px] font-extrabold tracking-tight">Đã thêm serendipity</div>
+      <div class="mt-5 w-full card text-left">${['sự tình cờ may mắn', 'khả năng tình cờ phát hiện'].map((m, i) => `<div class="flex items-center gap-3 px-4 py-3 ${i ? 'border-t-[1.5px] border-ink-100' : ''}"><span class="w-6 h-6 rounded-full bg-green-50 text-green-700 grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span><span class="text-[15px] font-semibold">${m}</span></div>`).join('')}</div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Xong</button></div>`);
+}
+
+/* Edit one sense. The highlighted word is always the word being added: no picker. */
+function addEdit() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 overflow-hidden px-5">
+      <div class="eyebrow mt-1">Sửa nghĩa</div>
+      <div class="mt-1 text-[30px] font-extrabold tracking-[-1px]">serendipity</div>
+      <div class="mt-6 space-y-5">
+        ${area('Nghĩa', 'sự tình cờ may mắn', 1, true)}
+        ${area('Định nghĩa', 'the fact of finding good things by chance', 2)}
+        ${area('Ví dụ', `Meeting her was pure ${hlWord('serendipity')}.`, 2)}
+        ${area('Bản dịch', 'Gặp cô ấy hoàn toàn là một sự tình cờ may mắn.', 2)}
+      </div>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Lưu</button></div>`);
+}
+
+/* The example no longer contains the word: the field turns Coral and says so; Lưu waits. */
+function addEditMissing() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 overflow-hidden px-5">
+      <div class="eyebrow mt-1">Sửa nghĩa</div>
+      <div class="mt-1 text-[30px] font-extrabold tracking-[-1px]">serendipity</div>
+      <div class="mt-6 space-y-5">
+        ${area('Nghĩa', 'sự tình cờ may mắn', 1)}
+        <div><div class="eyebrow mb-2">Ví dụ</div>
+          <div class="rounded-2xl border-2 border-coral-500 px-4 py-3 text-[16px] leading-snug" style="min-height:76px">Meeting her was pure luck.<span class="inline-block w-[2px] h-5 bg-blue-500 align-middle ml-0.5"></span></div>
+          <p class="mt-2 text-[13px] font-semibold text-coral-700 flex gap-1.5">${ic('info', 'w-4 h-4 mt-px')}Câu ví dụ cần có từ “serendipity”.</p></div>
+      </div>
+    </div>
+    <div class="px-5 pb-3">${disabledBtn('Lưu')}</div>${kb()}`);
+}
+
+function addOtherMeaning() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 px-5">
+      ${wordHero()}
+      <div class="mt-8">${area('Nghĩa cần tìm', 'khả năng tình cờ phát hiện ra điều hay', 2, true)}</div>
+    </div>
+    <div class="px-5 pb-3"><button class="btn btn-ink">Tìm nghĩa</button></div>${kb()}`);
+}
+
+function addInvalid() {
+  return sheetOver(myWords(), `${addHeader()}
+    <div class="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-10">
+      <img src="${SYLLIE}" alt="" class="w-24 rotate-[-8deg]">
+      <div class="mt-5 inline-flex h-9 px-4 rounded-full bg-ink-100 items-center text-[16px] font-semibold text-ink-600">srndpty</div>
+      <div class="mt-4 text-[22px] font-extrabold tracking-tight">Có vẻ đây không phải là một từ</div>
+      <p class="mt-2 text-[15px] text-ink-600">Hãy kiểm tra chính tả hoặc thử từ khác.</p>
+    </div>
+    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Thử từ khác</button></div>`);
+}
+
+/* ===================== AUTH ===================== */
+const label = t => `<div class="text-[14px] font-semibold mb-2">${t}</div>`;
+const authField = (lbl, value, { focus = false, error = false, placeholder = false, eye = false, mono = false } = {}) => `<div>${label(lbl)}
+  <div class="field ${focus ? 'focus' : ''} ${error ? 'border-coral-500' : ''} ${mono ? 'font-mono tracking-[6px] text-[20px]' : ''}">
+    <span class="flex-1 ${placeholder ? 'text-ink-400' : ''}">${value}</span>${focus ? '<span class="w-[2px] h-5 bg-blue-500 -ml-2"></span>' : ''}
+    ${eye ? ic('eye', 'w-5 h-5 text-ink-500') : ''}</div></div>`;
+const rules = met => `<div class="mt-3 space-y-1.5">${[['Ít nhất 8 ký tự', met[0]], ['Có ít nhất một chữ cái', met[1]], ['Có ít nhất một chữ số', met[2]], ['Tối đa 72 ký tự', met[3]]].map(([r, ok]) =>
+  `<div class="flex items-center gap-2 text-[14px] ${ok ? 'text-ink-950' : 'text-ink-500'}">${ok ? `<span class="w-[18px] h-[18px] rounded-full bg-green-500 text-white grid place-items-center">${ic('check', 'w-3 h-3')}</span>` : '<span class="w-[18px] h-[18px] rounded-full border-2 border-ink-300"></span>'}${r}</div>`).join('')}</div>`;
+const brand = `<div class="flex flex-col items-center pt-6"><img src="${SYLLIE}" alt="" class="w-[96px]"><div class="mt-2 text-[28px] font-black tracking-tight">Syll</div></div>`;
+const appleBtn = `<button class="btn bg-black text-white">${ic('apple', 'w-[18px] h-[18px]', true)}Tiếp tục với Apple</button>`;
+const googleBtn = `<button class="btn btn-line"><span class="w-[18px] h-[18px] rounded-full grid place-items-center text-[13px] font-black" style="background:conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0);color:#fff">G</span>Tiếp tục với Google</button>`;
+
+function login(error) {
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-6">
+    ${brand}
+    <div class="mt-8 space-y-4">
+      ${authField('Email', 'linh.nguyen@gmail.com', { error })}
+      ${authField('Mật khẩu', '••••••••', { error, eye: true, focus: !error })}
+    </div>
+    ${error ? `<p class="mt-3 text-[14px] font-semibold text-coral-700 flex items-center gap-1.5">${ic('info', 'w-4 h-4')}Sai email hoặc mật khẩu.</p>` : ''}
+    <div class="mt-3 text-right"><span class="link text-[14px]">Quên mật khẩu?</span></div>
+    <button class="btn btn-ink mt-5">Đăng nhập</button>
+    <div class="mt-6 flex items-center gap-3 text-[13px] text-ink-500"><i class="flex-1 h-[1.5px] bg-ink-100"></i>hoặc<i class="flex-1 h-[1.5px] bg-ink-100"></i></div>
+    <div class="mt-5 space-y-3">${appleBtn}${googleBtn}</div>
+  </div>
+  <div class="pb-12 text-center text-[15px] text-ink-600">Mới dùng lần đầu? <span class="link">Tạo tài khoản</span></div>`;
+}
+
+function signUp() {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-6">
+    <h1 class="h-display mt-2">Tạo tài khoản</h1>
+    <div class="mt-8 space-y-4">
+      ${authField('Email', 'linh.nguyen@gmail.com')}
+      <div>${authField('Mật khẩu', '••••••', { focus: true, eye: true })}${rules([false, true, true, true])}</div>
+    </div>
+    <button class="btn bg-ink-100 text-ink-400 cursor-default mt-7">Đăng ký</button>
+  </div>
+  <div class="pb-12 text-center text-[15px] text-ink-600">Đã có tài khoản? <span class="link">Đăng nhập</span></div>`;
+}
+
+function checkEmail() {
+  return `${status()}${backHeader}
+  <div class="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-16">
+    <div class="relative"><img src="${SYLLIE}" alt="" class="w-28"><span class="absolute -right-3 -bottom-1 w-11 h-11 rounded-full bg-blue-500 text-white grid place-items-center ring-4 ring-white">${ic('mail', 'w-5 h-5')}</span></div>
+    <h1 class="mt-7 text-[26px] font-extrabold tracking-tight">Kiểm tra email của bạn</h1>
+    <p class="mt-2 text-[16px] text-ink-600 leading-snug">Chúng tôi đã gửi liên kết xác nhận tới <b class="text-ink-950">linh.nguyen@gmail.com</b>. Hãy mở liên kết rồi đăng nhập.</p>
+  </div>
+  <div class="px-6 pb-12"><button class="btn btn-ink">Quay lại đăng nhập</button></div>`;
+}
+
+function resetEmail() {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-6">
+    <h1 class="h-display mt-2">Đặt lại mật khẩu</h1>
+    <p class="mt-3 text-[16px] text-ink-600 leading-snug">Nhập email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi mã để bạn đặt mật khẩu mới.</p>
+    <div class="mt-7">${authField('Email', 'linh.nguyen@gmail.com', { focus: true })}</div>
+    <button class="btn btn-ink mt-7">Gửi mã</button>
+  </div>`;
+}
+
+function resetCode() {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-6">
+    <h1 class="h-display mt-2">Đặt lại mật khẩu</h1>
+    <p class="mt-3 text-[16px] text-ink-600 leading-snug">Chúng tôi đã gửi mã tới <b class="text-ink-950">linh.nguyen@gmail.com</b>. Nhập mã và chọn mật khẩu mới.</p>
+    <div class="mt-7 space-y-4">
+      <div>${authField('Mã', '482 913', { mono: true })}<div class="mt-2 text-right"><span class="link text-[14px]">Gửi lại mã</span></div></div>
+      <div>${authField('Mật khẩu mới', '••••••••••', { focus: true, eye: true })}${rules([true, true, true, true])}</div>
+    </div>
+    <button class="btn btn-ink mt-7">Đặt mật khẩu mới</button>
+  </div>`;
+}
+
+/* ===================== FLOWS ===================== */
+/* ===================== ONBOARDING (product area) ===================== */
+const obRadio = on => on ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="block w-6 h-6 rounded-full border-2 border-ink-300 shrink-0"></span>';
+/* Setup header: round back button + 4 segments (Trình độ, Bộ từ, Chủ đề, Lịch học). No "Bước 2/4" text: the bar says it. */
+const obHeader = step => `<div class="flex items-center gap-4 px-5 pt-2 h-12"><span class="icon-btn">${ic('back', 'w-4 h-4')}</span>
+  <div class="flex-1 flex gap-1.5">${[1, 2, 3, 4].map(i => `<i class="flex-1 h-1.5 rounded-full ${i <= step ? 'bg-blue-500' : 'bg-ink-100'}"></i>`).join('')}</div><span class="w-9"></span></div>`;
+const obTitle = (t, sub) => `<h1 class="text-[28px] font-extrabold tracking-[-0.8px] leading-[1.15] mt-6">${t}</h1>${sub ? `<p class="mt-2 text-[15px] text-ink-600 leading-snug">${sub}</p>` : ''}`;
+const obAction = (label, enabled = true, cls = 'btn-ink') => `<div class="px-5 pt-3 pb-10">${enabled ? `<button class="btn ${cls}">${label}</button>` : disabledBtn(label)}</div>`;
+
+function obLanguage() {
+  const row = (name, sub, on) => `<div class="row py-3">${obRadio(on)}<div class="flex-1"><div class="font-bold ${on ? 'text-blue-800' : ''}">${name}</div><div class="text-[13px] text-ink-500">${sub}</div></div></div>`;
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <img src="${SYLLIE}" alt="" class="w-16 mt-8">
+    ${obTitle('Chọn ngôn ngữ', 'Ngôn ngữ của app và của nghĩa từ. Đổi lại được trong Cài đặt.')}
+    <div class="mt-7 card">${row('Tiếng Việt', 'Vietnamese', true)}${row('English', 'Tiếng Anh', false)}</div>
+  </div>${obAction('Tiếp tục')}`;
+}
+
+function obWelcome() {
+  return `${status()}
+  <div class="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-6">
+    <img src="${SYLLIE}" alt="" class="w-40">
+    <h1 class="mt-8 h-display">Chào bạn, mình là Syllie</h1>
+    <p class="mt-3 text-[17px] text-ink-600 leading-snug">Trả lời bốn câu hỏi ngắn, mình sẽ soạn bài học mỗi ngày vừa sức với bạn.</p>
+  </div>${obAction('Bắt đầu')}`;
+}
+
+const LEVELS = [['A1', 'Mới bắt đầu', 'Chào hỏi, giới thiệu bản thân'], ['A2', 'Sơ cấp', 'Mua sắm, hỏi đường, việc hằng ngày'], ['B1', 'Trung cấp', 'Kể chuyện, nói về công việc'], ['B2', 'Trung cao cấp', 'Đọc báo, họp hành, tranh luận'], ['C1', 'Cao cấp', 'Đọc tài liệu chuyên môn'], ['C2', 'Thành thạo', 'Gần như người bản xứ']];
+function obLevel(selected) {
+  const row = ([code, name, ex]) => { const on = code === selected; return `<div class="row py-2.5 ${on ? 'bg-blue-50' : ''}">
+    <span class="w-11 h-9 rounded-lg grid place-items-center text-[15px] font-extrabold ${on ? 'bg-blue-500 text-white' : 'bg-ink-100 text-ink-700'}">${code}</span>
+    <div class="flex-1 min-w-0"><div class="font-bold text-[15px] ${on ? 'text-blue-800' : ''}">${name}</div><div class="text-[13px] text-ink-500 truncate">${ex}</div></div>${obRadio(on)}</div>`; };
+  return `${status()}${obHeader(1)}
+  <div class="flex-1 overflow-hidden px-5">
+    ${obTitle('Trình độ tiếng Anh của bạn?')}
+    <div class="mt-6 card flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('target')}</span>
+      <div class="flex-1"><div class="font-bold">Chưa chắc? Làm bài kiểm tra</div><div class="text-[13px] text-ink-500">Syll chấm và chọn trình độ cho bạn</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
+    <div class="mt-6 eyebrow mb-2.5">Hoặc tự chọn</div>
+    <div class="card overflow-hidden">${LEVELS.map(row).join('')}</div>
+  </div>${obAction('Tiếp tục', !!selected)}`;
+}
+
+function obPlacementQuestion() {
+  return `${status()}
+  <div class="px-5 pt-1 pb-3 flex items-center gap-4"><span class="text-ink-400">${ic('x', 'w-6 h-6')}</span><div class="flex-1">${bar(40, 'bg-blue-500', 'h-2.5')}</div></div>
+  <div class="flex-1 overflow-hidden px-6">
+    <h2 class="text-[22px] font-bold tracking-tight mt-2">Chọn nghĩa đúng của từ</h2>
+    ${textPrompt('reluctant')}
+    ${choices(['miễn cưỡng', 'hăng hái', 'nhút nhát', 'cẩn trọng'], ['sel'])}
+  </div>
+  <div class="px-6 pt-3 pb-10">
+    <p class="text-[13px] text-ink-500 text-center mb-3">Không chắc thì chọn Bỏ qua: đoán bừa có thể xếp bạn quá cao.</p>
+    <div class="grid grid-cols-[1fr_2fr] gap-3"><button class="btn btn-line3d">Bỏ qua</button><button class="btn btn-ink">Tiếp</button></div>
+  </div>`;
+}
+
+function obPlacementResult() {
+  return `${status()}
+  <div class="flex-1 flex flex-col items-center justify-center px-8 text-center">
+    <img src="${SYLLIE}" alt="" class="w-24">
+    <div class="mt-6 text-[17px] font-semibold text-ink-500">Trình độ của bạn</div>
+    <div class="mt-1 text-[96px] font-black tracking-[-4px] leading-none">B1</div>
+    <div class="mt-2 text-[20px] font-bold">Trung cấp</div>
+    <p class="mt-2 text-[15px] text-ink-600">Kể chuyện, nói về công việc</p>
+    <span class="mt-5 pill h-8 px-3.5 text-[14px] bg-ink-100 text-ink-700 tabular-nums">Đúng 14/20 câu</span>
+  </div>
+  <div class="px-5 pt-3 pb-10 space-y-3"><button class="btn btn-ink">Dùng trình độ này</button><button class="btn btn-line">Tự chọn trình độ khác</button></div>`;
+}
+
+function obCollection() {
+  const cols = [['Everyday', 'Từ dùng hằng ngày: nhà cửa, mua sắm, đi lại', '12 chủ đề', MARK.everyday, true], ['IELTS', 'Từ học thuật cho bài thi IELTS', '10 chủ đề', MARK.ielts], ['Business', 'Họp, email, đàm phán, báo cáo', '8 chủ đề', MARK.business], ['TOEIC', 'Từ công sở thường gặp trong đề TOEIC', '9 chủ đề', MARK.toeic]];
+  return `${status()}${obHeader(2)}
+  <div class="flex-1 overflow-hidden px-5">
+    ${obTitle('Bạn muốn học bộ từ nào?', 'Chọn một bộ. Đổi lại được bất cứ lúc nào.')}
+    <div class="mt-6 card overflow-hidden">${cols.map(([n, d, t, c, on]) => `<div class="row py-3.5 items-start ${on ? 'bg-blue-50' : ''}"><i class="mt-1.5 w-2.5 h-2.5 rounded-full shrink-0" style="background:${c}"></i>
+      <div class="flex-1 min-w-0"><div class="font-bold ${on ? 'text-blue-800' : ''}">${n}</div><div class="text-[13px] text-ink-500 leading-snug">${d}</div><div class="mt-1 text-[12px] font-semibold text-ink-500">${t}</div></div><div class="mt-0.5 shrink-0">${obRadio(on)}</div></div>`).join('')}</div>
+  </div>${obAction('Tiếp tục')}`;
+}
+
+function obTopics() {
+  const topics = [['bubble', 'Daily conversation', 1], ['cart', 'Shopping', 1], ['plane', 'Travel', 1], ['utensils', 'Food', 0], ['heart', 'Health', 0], ['home', 'Home', 0], ['zap', 'Sports', 0], ['user', 'Family', 0], ['globe', 'Nature', 0], ['book', 'School', 0], ['clock', 'Time', 0], ['key', 'Work', 0]];
+  return `${status()}${obHeader(3)}
+  <div class="flex-1 overflow-hidden px-5">
+    ${obTitle('Bạn quan tâm chủ đề nào?', 'Từ mới lấy từ các chủ đề bạn chọn.')}
+    <div class="mt-6 flex items-center justify-between mb-3"><span class="eyebrow">Everyday · 3/12 chủ đề</span><span class="link text-[14px]">Chọn tất cả</span></div>
+    <div class="flex flex-wrap gap-2">${topics.map(([i, n, on]) => `<span class="chip ${on ? 'on' : ''}">${ic(i, 'w-4 h-4')}${n}</span>`).join('')}</div>
+  </div>${obAction('Tiếp tục')}`;
+}
+
+function obRoutine() {
+  const stepper = n => `<div class="card p-3 flex items-center gap-4"><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('minus')}</span><div class="flex-1 text-center"><span class="text-[30px] font-extrabold tracking-tight">${n}</span> <span class="text-ink-500 font-semibold">từ</span></div><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('plus')}</span></div>`;
+  return `${status()}${obHeader(4)}
+  <div class="flex-1 overflow-hidden px-5">
+    ${obTitle('Lịch học của bạn')}
+    <div class="mt-7"><div class="font-bold mb-2.5">Từ mới / ngày</div>${stepper(10)}</div>
+    <div class="mt-6"><div class="flex justify-between items-baseline mb-2.5"><span class="font-bold">Ngày học</span><span class="link text-[14px]">Mỗi ngày</span></div>
+      <div class="flex gap-1.5">${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d, i) => `<span class="day ${i < 5 ? 'on' : ''}">${d}</span>`).join('')}</div></div>
+    <div class="mt-6 card">
+      <div class="row"><span class="flex-1 font-bold">Nhắc tôi học</span><span class="switch on"></span></div>
+      <div class="row">${ic('clock', 'w-5 h-5 text-ink-500')}<span class="flex-1 text-ink-600">Giờ nhắc</span><span class="datepill">20:00</span></div>
+    </div>
+  </div>${obAction('Tạo kế hoạch học')}`;
+}
+
+function obReady() {
+  const r = (k, v) => `<div class="row"><span class="flex-1 text-ink-600">${k}</span><span class="font-bold text-right">${v}</span></div>`;
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5">
+    <div class="text-center pt-10"><img src="${SYLLIE}" alt="" class="w-28 mx-auto">
+      <h1 class="mt-6 h-display">Kế hoạch đã sẵn sàng</h1>
+      <p class="mt-2 text-[15px] text-ink-600">Bài đầu tiên có 10 từ mới.</p></div>
+    <div class="mt-8 card">
+      <div class="row"><span class="flex-1 text-ink-600">Trình độ</span><span class="font-bold">B1</span></div>
+      <div class="row"><span class="flex-1 text-ink-600">Bộ từ</span><span class="flex items-center gap-2 font-bold"><i class="w-2.5 h-2.5 rounded-full" style="background:${MARK.everyday}"></i>Everyday · 3 chủ đề</span></div>
+      ${r('Mỗi ngày', '10 từ mới')}${r('Ngày học', 'T2 – T6')}${r('Nhắc học', '20:00')}
+    </div>
+    <p class="mt-3 text-[13px] text-ink-500 text-center">Đổi lại được trong Hồ sơ.</p>
+  </div>${obAction('Học bài đầu tiên', true, 'btn-blue')}`;
+}
+
+document.getElementById('flows').innerHTML = [
+  flow('flow-auth', 'Luồng 0 · Đăng nhập & đăng ký', 'Màn đầu tiên khi chưa đăng nhập. Vùng sản phẩm: gọn, một hành động chính mỗi màn. Đăng nhập lần đầu xong thì sang Chọn ngôn ngữ rồi Onboarding (Luồng 0b).', [
+    frame('0.1', 'Đăng nhập', login(false), [
+      'Syllie và chữ "Syll" thay thanh thương hiệu nhỏ ở góc.',
+      'Nhãn nằm trên ô nhập; ô viền 2pt, focus Blue; nút mắt để hiện mật khẩu.',
+      'Nút "Đăng nhập" Ink. Sign in with Apple giữ nút gốc của Apple (đen, bo theo nút của app); Google là nút viền.',
+      'Link "Tạo tài khoản" ghim ở đáy màn hình.',
+    ]),
+    go('Sai mật khẩu'),
+    frame('0.2', 'Đăng nhập · lỗi', login(true), ['Ô nhập viền Coral; lỗi hiện ngay dưới ô với icon, không dùng alert.']),
+    go('Từ 0.1: Tạo tài khoản'),
+    frame('0.3', 'Tạo tài khoản', signUp(), [
+      'Trang con: thanh điều hướng iOS chỉ có nút quay lại (bỏ chữ của màn trước trên nút back).',
+      'Quy tắc mật khẩu hiện trực tiếp: tick Green khi đạt, vòng xám khi chưa.',
+      'Nút "Đăng ký" mờ đến khi đủ điều kiện.',
+    ]),
+    go('Chạm Đăng ký'),
+    frame('0.4', 'Kiểm tra email', checkEmail(), ['Syllie kèm icon thư; email được in đậm để người dùng kiểm tra lại địa chỉ.']),
+    go('Từ 0.1: Quên mật khẩu?'),
+    frame('0.5', 'Đặt lại mật khẩu · nhập email', resetEmail(), ['Mỗi bước là một trang con có nút quay lại, thay link "Quay lại đăng nhập".']),
+    go('Chạm Gửi mã'),
+    frame('0.6', 'Đặt lại mật khẩu · nhập mã', resetCode(), [
+      'Ô mã dùng chữ số đơn cách, chữ lớn (tự điền mã từ Mail/Tin nhắn của iOS).',
+      '"Gửi lại mã" là link ngay dưới ô mã; mật khẩu mới có danh sách quy tắc như lúc đăng ký.',
+    ]),
+  ]),
+  flow('flow-onboarding', 'Luồng 0b · Onboarding', 'Sau lần đăng nhập đầu tiên: Chọn ngôn ngữ → Chào → Trình độ (có thể qua bài kiểm tra) → Bộ từ → Chủ đề → Lịch học → Sẵn sàng. Vùng sản phẩm, riêng bài kiểm tra trình độ là vùng luyện tập vì người học đang trả lời. Mỗi màn một câu hỏi, một hành động chính.', [
+    frame('0b.1', 'Chọn ngôn ngữ', obLanguage(), [
+      'Lựa chọn là các dòng trong một card với dấu tick tròn, cùng kiểu Nguồn từ / Chọn kỹ năng (thay các ô viền rời).',
+      'Màn tự đổi sang ngôn ngữ đang chọn để đọc được trước khi xác nhận (giữ như app). Phụ đề nói rõ ngôn ngữ áp dụng cho gì.',
+    ]),
+    go('Tiếp tục'),
+    frame('0b.2', 'Chào', obWelcome(), [
+      'Syllie thay hình ô chữ F·L·O·W và câu "Make words stick" (tên cũ "Flow" không còn là thương hiệu).',
+      'Một câu nói rõ việc sắp làm và lợi ích: bốn câu hỏi → bài học vừa sức. Nút "Bắt đầu".',
+    ]),
+    go('Bắt đầu'),
+    frame('0b.3', 'Trình độ', obLevel('B1'), [
+      'Header chung cho bốn bước: nút quay lại tròn + thanh 4 đoạn Blue (bỏ chữ "Bước 1/4" và nhãn "Back to …").',
+      'Bài kiểm tra đứng đầu, là card có ›: người chưa chắc thấy ngay, không phải đoán ở lưới A1–C2.',
+      'Danh sách 6 trình độ trong một card: mã (A1…), tên tiếng Việt và một dòng ví dụ làm được gì, để tự chọn có căn cứ. Đang chọn: nền Blue 50, mã nền Blue 500, tick.',
+      'Chưa chọn thì nút vô hiệu. Lỗi lưu hiện ngay dưới danh sách (coral-700 kèm icon).',
+    ]),
+    go('Chạm Làm bài kiểm tra'),
+    frame('0b.3a', 'Bài kiểm tra trình độ', obPlacementQuestion(), [
+      'Vùng luyện tập: khung ✕ + thanh tiến độ, thẻ đáp án có cạnh dày như bài tập (không có panel đúng/sai, backend chấm cuối bài).',
+      '"Bỏ qua" (viền 3D) và "Tiếp" (Ink) cạnh nhau; câu cuối là "Xem kết quả". Lời nhắc đừng đoán nằm ngay trên hai nút.',
+      '✕ mở sheet "Rời bài kiểm tra?" như Rời buổi học (1.11).',
+    ]),
+    go('Câu cuối'),
+    frame('0b.3b', 'Kết quả kiểm tra', obPlacementResult(), [
+      'Mã trình độ lớn + tên tiếng Việt + dòng ví dụ cùng nội dung với 0b.3, để người học biết B1 nghĩa là gì.',
+      '"Dùng trình độ này" (Ink) đi tiếp sang Bộ từ; "Tự chọn trình độ khác" (viền) về 0b.3 với B1 được chọn sẵn.',
+      'Đang tải / chấm bài: Syllie (hoạt ảnh tải) thay vòng quay. Lỗi tải: "Thử lại" + "Tự chọn trình độ".',
+    ]),
+    go('Dùng trình độ này'),
+    frame('0b.4', 'Bộ từ', obCollection(), [
+      'Các Collection là dòng trong một card: chấm màu dấu, tên, một câu mô tả, số chủ đề; tick tròn. Bộ đầu tiên được chọn sẵn.',
+      'Câu hỏi thay "What kind of vocabulary would you like to learn?" bằng câu ngắn; phụ đề cho biết đổi lại được.',
+    ]),
+    go('Tiếp tục'),
+    frame('0b.5', 'Chủ đề', obTopics(), [
+      'Chip có icon, cùng chip Topic của Nguồn từ. Số đã chọn nằm ở nhãn "Everyday · 3/12 chủ đề" (không lặp trên nút).',
+      'Chưa chọn chủ đề nào thì nút vô hiệu.',
+    ]),
+    go('Tiếp tục'),
+    frame('0b.6', 'Lịch học', obRoutine(), [
+      'Cùng thành phần và nhãn với Lịch học của bạn ở Hồ sơ (stepper "Từ mới / ngày", ô ngày, Toggle + giờ của iOS). Không ghi ước lượng thời gian: không có dữ liệu đứng sau.',
+      'Nút "Tạo kế hoạch học" thay "Create my flow". Lỗi lưu hiện dưới nội dung, nút giữ nguyên để thử lại.',
+    ]),
+    go('Tạo kế hoạch học'),
+    frame('0b.7', 'Sẵn sàng', obReady(), [
+      'Syllie thay ô "sparkles". Tóm tắt là các dòng nhãn trái / giá trị đậm phải trong một card (thay các pill rời).',
+      'Nút Blue "Học bài đầu tiên" mở thẳng buổi học đầu tiên (đổi hành vi: hiện app chỉ về Trang chủ). Một dòng nhỏ cho biết đổi lại ở Hồ sơ.',
+    ]),
+  ]),
+  flow('flow-daily', 'Luồng 1 · Bài học hôm nay', 'Trang chủ → ôn từ đã học → bài ôn → đã ôn xong → từ mới → kết quả. Trong buổi học lấy cảm hứng Duolingo ở nguyên tắc (nút và thẻ đáp án có cạnh dày, phản hồi rõ màu), mọi chi tiết khác là của Syll.', [
+    frame('1.1', 'Trang chủ', home(), [
+      'Tạm bỏ card Thử thách.',
+      'Card Bài học hôm nay chỉ nói buổi học kế tiếp có gì: "10 từ ôn · 8 từ mới" và nút "Bắt đầu". Bỏ thanh tiến độ và "Còn khoảng 6 phút": không có dữ liệu nào đứng sau (các buổi daily nối tiếp nhau, backend không ước lượng thời gian).',
+      'Bỏ card "Ôn thêm" đứng riêng (không đọc được mục đích). Thay bằng một dòng trong chính card Bài học hôm nay, nói rõ lý do và việc sẽ xảy ra: "Còn 24 từ khác chờ ôn" / "Ôn riêng 10 từ, không có từ mới". 24 = số từ đến hạn trừ phần bài học đã lấy (backlog − dueCap); 10 = dueCap.',
+      'Dòng này chỉ hiện khi số từ chờ ôn vượt ngưỡng (> 10, <code>ReviewLoad.statusThreshold</code>). Chạm: bắt đầu buổi chỉ ôn (<code>reviewOnly</code>).',
+      'Thêm khối "Đang học": tiến độ Collection và các Topic đang học, mọi thanh tiến độ dùng màu dấu của Collection (Everyday = xanh trời).',
+      'Lời chào tách hai dòng: "Chào buổi sáng" nhỏ, tên một dòng; tên dài tự thu nhỏ tới 80% rồi cắt "…" ở cuối (ảnh chụp app: tên mellow_puffin_5001 làm lời chào vỡ thành 4 dòng).',
+      'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
+    ], 1120),
+    go('Chạm Bắt đầu'),
+    frame('1.2', 'Ôn từ bạn đã học', reviewPreview(), [
+      'Thẻ từ có tên Topic nhỏ bên dưới, cạnh dày như thẻ đáp án; Syllie đứng giữa lời mở đầu và danh sách.',
+      'Giữ hai nút Tiếp tục / Đóng như hiện tại.',
+    ]),
+    go('Chạm Tiếp tục'),
+    frame('1.3', 'Bài ôn · chọn nghĩa', selectTask('sel'), [
+      'Câu dạng chữ: từ đứng giữa, không kèm loa.',
+      'Link "Xem đáp án" nằm trên nút Kiểm tra; Syllie bên trái panel.',
+      'Chữ trong thẻ đáp án luôn căn giữa, một độ đậm ở mọi trạng thái (không in đậm khi chọn, tránh chữ nhảy); đúng/sai chỉ thể hiện bằng màu thẻ, không có dấu ✓/✕.',
+    ]),
+    go('Kiểm tra · đúng'),
+    frame('1.4', 'Đúng', selectTask('ok'), ['Panel Green 50, hiện lại đáp án; nút Green.']),
+    go('hoặc · sai, còn lượt'),
+    frame('1.5', 'Sai · còn lượt thử', selectTask('wrong'), ['Panel Coral 50 "Thử lại, hoặc xem đáp án."; nút "Thử lại" Coral, link "Xem đáp án" phía trên.']),
+    go('Sai hết lượt'),
+    frame('1.6', 'Hết lượt · đáp án đúng', selectTask('exhausted'), [
+      'Panel thông tin Blue 50 (không đỏ) "Đáp án đúng"; thẻ sai vẫn giữ màu Coral.',
+      'Sau "Xem đáp án" dùng cùng panel, tiêu đề "Đáp án đây".',
+    ]),
+    go('Câu dạng nghe'),
+    frame('1.7', 'Bài ôn · nghe và chọn nghĩa', selectTask('sel', true), ['Chỉ một nút loa lớn ở giữa, không hiện chữ của từ.', 'Loa đề dùng đúng nút giữa bài tập của micro (T7): 128pt Blue 500 có cạnh dày, không có quầng nền. Không tự phát.']),
+    go('Hết phần ôn'),
+    frame('1.8', 'Đã ôn xong', reviewFinished(), [
+      'Syllie ngay dưới tiêu đề; danh sách từ mới sắp học nằm trong một card.',
+      'Một nút "Học từ mới".',
+    ]),
+    go('Học từ mới'),
+    frame('1.9', 'Giới thiệu từ', wordIntro(false), [
+      'Một card: Loại từ → Nghĩa → Định nghĩa → Trong ngữ cảnh; Nghĩa là thông tin chính.',
+      'Dưới từ chỉ còn IPA và loa.',
+      'Link "Nghĩa khác" (Blue, kèm số nghĩa) chỉ hiện khi từ có nghĩa khác ngoài nghĩa đang học; tải lỗi thì ẩn link.',
+    ]),
+    go('Chạm Nghĩa khác'),
+    frame('1.9a', 'Nghĩa khác (sheet)', otherMeaningsSheet(), [
+      'Sheet <code>.medium</code>/<code>.large</code>, có grabber và nút ✕; phụ đề "Chỉ để tham khảo · Không thuộc bài học này".',
+      'Tiêu đề Sheet Title 26 Heavy; phụ đề Secondary 15 ink-600.',
+      'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), chỉ mở một card một lúc. Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), không có pill Đã học hay Kỹ năng.',
+      'Không đổi tiến độ buổi học: đóng sheet là về lại 1.9, "Tiếp tục" vẫn như cũ.',
+    ]),
+    go('Đóng sheet · Tiếp tục'),
+    frame('1.10', 'Giới thiệu từ · kiểm tra "đã biết"', wordIntro(true), ['"Tôi biết từ này" là nút viền trắng, phẳng (không cạnh dày) dưới "Tiếp tục".']),
+    go('Chạm ✕ bất kỳ lúc nào'),
+    frame('1.11', 'Rời buổi học (sheet)', exitSheet(), [
+      'Sheet hệ thống (<code>.sheet</code> + detent) thay <code>.alert</code>.',
+      '"Tiếp tục luyện tập" là nút Ink; "Rời đi không lưu" nút viền chữ coral.',
+      'Sửa bản dịch "Rời khỏi flow này?" thành "Rời buổi học?".',
+    ]),
+    go('Hết bài'),
+    frame('1.12', 'Kết quả', results(), [
+      'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn.',
+      'Bỏ các dòng nhóm yếu hơn ("1 chưa chắc", "+1 đã biết"…) khỏi tile: thay bằng một link "Xem chi tiết ›" mở sheet chi tiết, nơi các nhóm đã được liệt kê đủ.',
+      'Card LP có chip chia theo nguồn. Chuỗi "Xem chi tiết" là chuỗi mới, cần thêm bản vi/en.',
+      'Đổi chip "Hoàn thành flow" thành "Hoàn thành buổi học".',
+    ]),
+    go('Chạm Xem chi tiết'),
+    frame('1.13', 'Chi tiết buổi học (sheet)', resultDetail(), [
+      'Mỗi khối có thanh tỷ lệ 3 mức (Blue 600 / Blue 300 / sọc) và các nhóm có ô màu tương ứng.',
+      'Nhóm mạnh (Nhớ chắc, Nắm ngay) thu gọn sẵn; mỗi từ có nguyên nhân (Blue 700) và kỹ năng/ngày học.',
+    ]),
+    go('Từ 1.12: buổi học dùng hết từ mới của Collection'),
+    frame('1.12a', 'Kết quả · học hết Collection', results(true), [
+      'Syllie nhỏ lại (80pt) để card hoàn thành không bị hai nút che.',
+      'Card hoàn thành dưới card LP: icon cúp nền Sun 50 (thành tựu), "Bạn đã học hết mọi từ trong Everyday" và một dòng nói rõ điều gì tiếp theo.',
+      'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở Nguồn từ (2.4) trên tab Hồ sơ; "Để sau" (viền) về Trang chủ.',
+      'Chỉ hết các Topic đang chọn (Collection còn Topic chưa chọn): tiêu đề "Bạn đã học hết mọi từ trong Daily conversation, Shopping", nút chính "Chọn thêm chủ đề".',
+    ]),
+    go('Để sau'),
+    frame('1.1a', 'Trang chủ · đã học hết Collection', home(true), [
+      'Card Bài học hôm nay nói thẳng trạng thái (không giấu trong ⓘ): icon cúp Sun, "Bạn đã học hết Everyday", một dòng hướng dẫn.',
+      'Nút Blue là việc còn làm được hôm nay: "Ôn N từ" khi có từ đến hạn, không có thì "Luyện tập" (mở Luyện tập ngẫu nhiên). "Chọn bộ từ khác" là nút viền.',
+      'Không hiện "Ôn thêm": nút chính đã là ôn tập. Khối Đang học: thanh đầy, pill "Hoàn thành" cạnh tên Collection.',
+      'Còn từ người dùng tự thêm chưa học: không phải trạng thái này; card vẫn là buổi học bình thường với số từ mới còn lại.',
+      'Chỉ hết các Topic đang chọn: "Bạn đã học hết các chủ đề đang chọn", nút viền "Chọn thêm chủ đề" thay "Chọn bộ từ khác".',
+    ], 1120),
+  ]),
+  flow('flow-templates', 'Các dạng bài tập', 'Bảy template của backend dùng chung khung: câu hỏi, phần đề (chữ ở giữa hoặc một nút loa), nội dung, panel đáy có Syllie. Chọn nghĩa (select) xem ở Luồng 1.', [
+    frame('T2', 'Điền vào chỗ trống (cloze)', clozeTask(), ['Từ đã chọn bay vào ô trống (viền Blue); chỗ cũ trong ngân hàng từ để lại ô xám giữ chỗ.']),
+    frame('T3', 'Gõ từ (typing) · có gợi ý', typingTask(), ['Hàng gợi ý: "Hiện gợi ý 1/2" bên trái, "Xem đáp án" bên phải; gợi ý hiện thành chip "a _ _ _".']),
+    frame('T4', 'Xếp chữ (reorder)', reorderTask(), ['Vùng trả lời là dòng kẻ; chữ đã dùng để lại ô xám để hàng chữ không nhảy.', 'Ô chữ 54×54; từ dài thì mọi ô thu hẹp đều để cả từ nằm trên một dòng.']),
+    frame('T5', 'Nối cặp (match)', matchTask(), ['Không có nút Kiểm tra: cặp đúng khóa màu Green, đang chọn màu Blue; panel đếm số cặp đã ghép.']),
+    frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.']),
+    frame('T7', 'Đọc to (recording)', recordingTask(), ['Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
+  ]),
+  flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (cần chọn kỹ năng), từ còn yếu (bắt đầu ngay), quản lý từ đã thêm.', [
+    frame('2.1', 'Từ của tôi', myWords(), [
+      'Hai con số thống kê nằm chung một card để có điểm tựa; chỉ để xem, không chạm được.',
+      'Luyện tập là hai dòng trong một card, không còn hai thẻ lệch nhau. Ngẫu nhiên có › vì cần thêm một bước; Từ còn yếu có nút "Luyện ngay".',
+      'IPA nằm dưới từ.',
+    ], 1130),
+    go('Chạm một từ'),
+    frame('2.2', 'Chi tiết từ (sheet)', wordDetail(), [
+      'Mỗi nghĩa là card mở/đóng: Định nghĩa, Ví dụ, Kỹ năng đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch, kỹ năng dạng lưới 2×2 có màu trạng thái, ngày học.',
+      'IPA và audio thuộc từng nghĩa. Mọi nghĩa đọc giống nhau thì IPA + loa nằm dưới từ (một lần), card không lặp lại.',
+    ]),
+    go('Từ có nhiều cách đọc'),
+    frame('2.2a', 'Chi tiết từ · nhiều cách đọc', wordDetailHeteronym(), [
+      'Các nghĩa đọc khác nhau (lead /liːd/ · /led/): dưới từ không còn IPA và loa, vì không có một cách đọc chung.',
+      'IPA + loa tròn Blue 50 là một dòng riêng dưới nghĩa (thẳng cột với chữ nghĩa), hiện cả khi card thu gọn để so cách đọc không cần mở. Pill và mũi tên giữ thẳng hàng với dòng nghĩa. Loa là nút riêng (vùng chạm 44pt), chạm vào không mở/đóng card.',
+      'Bỏ mục "Phát âm" trong card mở: IPA đã ở dòng đầu card.',
+      'Một nghĩa thiếu IPA thì dòng đó chỉ có loa (đọc bằng giọng máy). Mỗi nghĩa hiện một cách đọc, theo accent của người học (MVP: en-US).',
+    ], 1010),
+    go('Từ 2.1: Luyện tập ngẫu nhiên'),
+    frame('2.3', 'Chọn kỹ năng', randomPractice(), [
+      'Thanh điều hướng iOS chỉ có nút quay lại; một tiêu đề lớn trong nội dung.',
+      'Thẻ kỹ năng đã chọn: viền và nền Blue, dấu tick tròn.',
+    ]),
+    go('Chạm Nguồn từ'),
+    frame('2.4', 'Nguồn từ (sheet)', wordSource(), ['Chọn một Collection thì Topic mở ra ngay dưới dòng đó, trong cùng card (nền Blue 50 nhạt): danh sách Collection dài bao nhiêu thì Topic vẫn nằm sát chỗ vừa chạm.', 'Nhãn "Chủ đề · 2/6" cho biết đang chọn bao nhiêu Topic; Collection khác thu gọn.']),
+    go('Từ 2.1: Quản lý từ đã thêm'),
+    frame('2.5', 'Từ bạn đã thêm · vuốt dòng', customWords(true, false), ['Giữ swipe action của iOS (Khôi phục, Sửa, Xóa), chỉ đặt màu tint theo bộ màu.', 'Dòng có › vì chạm mở chi tiết từ.']),
+    go('Chạm Xóa'),
+    frame('2.6', 'Xóa từ (alert iOS)', customWords(false, true), ['Xác nhận bằng <code>.alert</code> gốc của iOS: nút bấm mặc định đủ dùng, không cần tự vẽ.']),
+  ]),
+  flow('flow-addword', 'Luồng 3 · Thêm từ', 'Mở từ nút "Thêm từ" ở Từ của tôi. Cả luồng nằm trong một sheet duy nhất, các bước chuyển bên trong sheet (nút quay lại tròn), thay vì chồng tới ba sheet như hiện tại.', [
+    frame('3.1', 'Nhập từ', addEntry(), [
+      'Ô nhập lớn, chữ đậm 20pt; nút "Tra từ" nằm ngay trên bàn phím.',
+      'Bỏ dòng gợi ý định dạng khi chưa sai; chỉ hiện khi từ nhập vào không hợp lệ.',
+    ]),
+    go('Chạm Tra từ'),
+    frame('3.2', 'Đang tra', addLoading(), ['Syllie (hoạt ảnh tải) thay vòng quay hệ thống.']),
+    go('Tìm thấy'),
+    frame('3.3', 'Kết quả · chọn nhiều nghĩa', addResult(), [
+      'Thêm được nhiều nghĩa một lần: mỗi nghĩa là một card chọn được (dấu tick tròn như Chọn kỹ năng); đang chọn thì viền Blue 500, nền Blue 50.',
+      'Chạm dấu tick để chọn/bỏ; chạm phần còn lại của card để mở xem Định nghĩa, Ví dụ và link "Sửa nghĩa này". Nghĩa đã sửa có pill "Đã sửa".',
+      'Nhóm theo loại từ (eyebrow). Nhãn nguồn ("Do AI tạo") ghi một lần cạnh tiêu đề, không lặp trên từng card.',
+      'Nghĩa đầu tiên được chọn sẵn. Nghĩa đã có trong lộ trình hoặc đã học: không có dấu tick, pill "Đã có trong lộ trình" / "Đã học" (Ink 100), không chọn được.',
+      'Nút đếm số nghĩa đã chọn ("Thêm 2 nghĩa"; một nghĩa: "Thêm từ"); chưa chọn nghĩa nào thì nút vô hiệu. "Tìm nghĩa khác" là link dưới danh sách.',
+      'API thêm từng nghĩa (<code>POST /custom-words</code>, gọi lại an toàn): app gửi lần lượt; một nghĩa lỗi thì giữ màn này, các nghĩa đã thêm hiện "Đã có trong lộ trình" và chỉ thử lại nghĩa lỗi.',
+      'IPA và loa thuộc từng nghĩa. Mọi nghĩa đọc giống nhau: IPA + loa nằm dưới từ, một lần (như ở đây).',
+    ], 960),
+    go('Từ có nhiều cách đọc'),
+    frame('3.3a', 'Kết quả · mỗi nghĩa một cách đọc', addResultHeteronym(), [
+      'Các nghĩa đọc khác nhau (tear /tɪr/ · /ter/): dưới từ không còn IPA và loa, giống Chi tiết từ 2.2a.',
+      'IPA + loa 28pt là dòng riêng dưới nghĩa, thẳng cột với chữ nghĩa, hiện cả khi card thu gọn; dấu tick, pill và mũi tên giữ trên dòng nghĩa.',
+      'Loa là nút riêng (vùng chạm 44pt): chạm không chọn và không mở card. Bản nháp chưa có audio, nên loa đọc IPA bằng giọng máy cho tới khi thêm xong.',
+      'Trên card đang chọn (nền Blue 50) loa đổi nền trắng để không chìm.',
+      'Nghĩa thiếu IPA: dòng đó chỉ có loa.',
+    ], 1010),
+    go('Chạm Thêm 2 nghĩa'),
+    frame('3.4', 'Đã thêm', addDone(), ['Syllie + dấu tick xanh lá; liệt kê mọi nghĩa vừa thêm trong một card.']),
+    go('Từ 3.3: Sửa nghĩa này'),
+    frame('3.5', 'Sửa trước khi thêm', addEdit(), [
+      'Sửa một nghĩa; "Lưu" quay về 3.3 với nghĩa đó được chọn và có pill "Đã sửa".',
+      'Từ được tô trong câu ví dụ luôn là từ đang thêm (và dạng biến đổi của nó), tự tô, không cần chọn. Bỏ hàng chip chọn từ và dòng "Từ đã được đánh dấu. Chạm để đổi."',
+    ]),
+    go('Câu ví dụ thiếu từ'),
+    frame('3.5a', 'Sửa · ví dụ thiếu từ', addEditMissing(), ['Ô Ví dụ viền Coral, lỗi ngay dưới ô (coral-700 kèm icon): "Câu ví dụ cần có từ “serendipity”." Nút Lưu vô hiệu tới khi câu có lại từ.']),
+    go('Từ 3.3: Tìm nghĩa khác'),
+    frame('3.6', 'Tìm nghĩa khác', addOtherMeaning(), ['Một ô nhập mô tả nghĩa cần tìm, nút "Tìm nghĩa" trên bàn phím.']),
+    go('Từ 3.2: không phải từ'),
+    frame('3.7', 'Không phải từ', addInvalid(), ['Syllie nghiêng đầu và hiện lại chữ đã nhập để người dùng thấy lỗi chính tả.']),
+  ]),
+  flow('flow-profile', 'Luồng 4 · Hồ sơ & cài đặt', 'Ngoài luyện tập lấy cảm hứng Brilliant: gọn, nhiều khoảng trống. Nút chính Ink có cạnh dày như nút Blue.', [
+    frame('4.1', 'Hồ sơ', profile(), [
+      'Tiêu đề lớn; Tier, LP và tiến độ lên Tier kế gộp vào một card.',
+      'Toggle giữ bản iOS; dòng dữ liệu bỏ icon.',
+      'Nút cài đặt là nút của thanh điều hướng iOS (vòng kính trên iOS 26), không phải nút tròn Ink 100.',
+    ], 1260),
+    go('Lịch học · Sửa'),
+    frame('4.2', 'Sửa lịch học (sheet)', editRoutine(), ['Toggle và DatePicker (dạng compact) giữ nguyên bản iOS.', 'Stepper số từ và ô chọn ngày là thành phần riêng của Syll (iOS không có bản tương đương phù hợp).']),
+    go('Từ 4.1: ⚙'),
+    frame('4.3', 'Cài đặt', settings(), [
+      'Thanh điều hướng và Toggle giữ bản iOS.',
+      'Nhóm thành card; bỏ phụ đề lặp ý, giữ phụ đề có nghĩa.',
+      'Bỏ dòng "Giao diện · Sáng"; Hoạt ảnh Syllie chuyển vào Practice Lab.',
+    ]),
+    go('Chạm Xóa tài khoản'),
+    frame('4.4', 'Xóa tài khoản (alert iOS)', deleteAccount(), ['<code>.alert</code> gốc của iOS, có Hủy và Xóa tài khoản (destructive).']),
+  ]),
+  flow('flow-ranking', 'Luồng 5 · Xếp hạng', 'Một màn chính; báo cáo người chơi chuyển từ nhấn giữ sang nút ⋯ (chưa vẽ).', [
+    frame('5.1', 'Xếp hạng tuần', ranking(), ['Segmented control gốc của iOS.', 'Top 1 số hạng màu Sun; dòng của bạn nền Blue 50.', 'Báo cáo giữ context menu (nhấn giữ) của iOS.']),
+  ]),
+].join('');
+
+/* ---------- foundations: ramps ---------- */
+const C = tailwind.config.theme.extend.colors;
+document.getElementById('ramps').innerHTML = [['ink', 'Ink · 30%'], ['blue', 'Blue · nhấn'], ['green', 'Green · đúng'], ['coral', 'Coral · sai'], ['sun', 'Sun · thưởng']].map(([k, label]) => `
+  <div class="flex items-center gap-4"><div class="w-28 text-[13px] font-semibold">${label}</div>
+  <div class="flex-1 grid grid-cols-11 rounded-xl overflow-hidden">${Object.entries(C[k]).map(([s, h]) =>
+    `<div class="h-12 px-2 py-1.5 text-[10px] font-semibold ${+s >= 500 ? 'text-white' : 'text-ink-900'} ${s === '500' ? 'ring-2 ring-inset ring-ink-950' : ''}" style="background:${h}">${s}<br><span class="opacity-80 font-mono">${h.slice(1)}</span></div>`).join('')}</div></div>`).join('');
+document.getElementById('sound-controls').innerHTML = (() => {
+  const cell = (ctrl, cap) => `<div class="flex flex-col items-center gap-3"><div class="h-48 grid place-items-center">${ctrl}</div><div class="text-[13px] text-ink-500 text-center leading-snug">${cap}</div></div>`;
+  const inl = (sz, cap) => `<div class="flex flex-col items-center gap-2">${soundInline(sz)}<div class="text-[12px] text-ink-500 whitespace-nowrap">${cap}</div></div>`;
+  return `<div class="grid grid-cols-[300px_1fr] gap-10 items-start">
+    <div><div class="text-[14px] font-bold mb-3">Cạnh IPA · phẳng</div>
+      <div class="flex items-end gap-4">${inl('s', '28 · card')}${inl('m', '36 · dưới từ')}${inl('l', '44 · giới thiệu')}<div class="flex flex-col items-center gap-2">${soundInline('l', 'active')}<div class="text-[12px] text-ink-500 whitespace-nowrap">Đang phát</div></div></div>
+      <p class="mt-4 text-[13px] text-ink-500 leading-relaxed">Nền Blue 50, icon Blue 600, không cạnh dày. Vùng chạm luôn 44pt. Icon loa có 3 vạch sóng. Đang phát: các vạch chạy 1 → 2 → 3 lặp lại (mỗi bước 280ms), màu nền không đổi. Không có audio: Ink 100 / Ink 400.</p></div>
+    <div><div class="text-[14px] font-bold mb-3">Giữa bài tập · cạnh dày (một kích thước cho loa và micro)</div>
+      <div class="grid grid-cols-5 gap-x-12">
+        ${cell(soundCenter('vol'), 'Loa · đề nghe')}${cell(soundCenter('vol', 'active'), 'Đang phát: sóng 1 → 2 → 3, lặp')}
+        ${cell(soundCenter('mic'), 'Micro · Đọc to')}${cell(soundCenter('mic', 'active'), 'Đang ghi: ■ dừng, quầng lớn nhỏ theo giọng')}
+        ${cell(soundCenter('mic', 'off'), 'Không dùng được')}
+      </div>
+      <p class="mt-4 text-[13px] text-ink-500 leading-relaxed">Nút 128pt mặt Blue 500, cạnh dày 5pt Blue 700, đứng một mình (không có quầng/đĩa nền); nhấn lún như nút Blue. Ghi âm: quầng tô màu (Blue 100 trong, Blue 50 ngoài) hiện khi nghe thấy giọng và lớn nhỏ theo độ lớn giọng, kèm gợn sóng và vạch mức âm dưới nút. Lúc nghỉ không có quầng. Loa đang phát: vạch sóng trên icon chạy 1 → 2 → 3 lặp lại, mặt nút giữ Blue 500. Reduce Motion: loa hiện đủ 3 vạch đứng yên; micro một vòng đứng yên, không gợn sóng.</p></div>
+  </div>`;
+})();
+hydrateIcons();
+</script>
+</body>
+</html>

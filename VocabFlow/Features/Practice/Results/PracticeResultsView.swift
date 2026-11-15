@@ -1,11 +1,15 @@
 import SwiftUI
 
-/// The end of a session: the result tiles that have something to show, the LP card, the scope card, Syllie and confetti.
+/// The end of a session (docs/app-redesign-v1.html, 1.12): Syllie celebrating at the top, the "Session complete" pill and
+/// title, the result tiles that have something to show, the LP card, the scope card, and confetti.
 /// Takes plain data so the Practice Lab can show it from fixtures.
 struct PracticeResultsView: View {
     let result: PracticeResult
     var effort: SessionEffort?
     var scopeEvents: ScopeEvents?
+    var onChooseTopics: (() -> Void)?
+
+    private var hasCompletion: Bool { scopeEvents.map { !$0.isEmpty } ?? false }
     /// Only for the fallback grid of a session saved before the result groups existed.
     var firstTryCount = 0
     /// Random and Weak: plan the same practice again.
@@ -18,71 +22,73 @@ struct PracticeResultsView: View {
     @State private var sheetSection: ResultSection?
 
     var body: some View {
-        GeometryReader { viewport in
-            ScrollView {
-                // The content sits at the bottom so the top of the screen stays clear for Syllie's celebration.
-                VStack(spacing: 0) {
-                    BrandBar()
-
-                    Spacer(minLength: Spacing.xl)
-
-                    // Without motion there is no Syllie, so the badge stands in for him.
-                    if motion.reduceMotion {
-                        CelebrationBadge()
-                            .padding(.bottom, Spacing.l)
-                    }
-
-                    Chip(text: chipText, fill: .reward)
-
-                    Text("Nice work.")
-                        .font(Typography.display)
-                        .tracking(-1.4)
-                        .foregroundStyle(Color.ink)
-                        .multilineTextAlignment(.center)
-                        .accessibilityAddTraits(.isHeader)
-                        .padding(.top, Spacing.s)
-
-                    if let tiles = result.tiles {
-                        if !tiles.isEmpty {
-                            tileRow(tiles)
-                                .padding(.top, Spacing.xl)
-                        }
-                    } else {
-                        LegacyResultGrid(summary: result.summary, firstTryCount: firstTryCount, hasAppeared: hasAppeared)
-                            .padding(.top, Spacing.xl)
-                    }
-
-                    if let effort {
-                        SessionEffortCard(effort: effort)
-                            .padding(.top, Spacing.l)
-                    }
-
-                    if let scopeEvents, !scopeEvents.isEmpty {
-                        ScopeCompletionCard(events: scopeEvents)
-                            .padding(.top, Spacing.l)
-                    }
+        ScrollView {
+            VStack(spacing: 0) {
+                // Without motion there is no animated Syllie, so the badge stands in for him.
+                if motion.reduceMotion {
+                    CelebrationBadge()
+                } else {
+                    // The `Syllie` artboard (520×430) has room around him for his gestures; at this frame his body
+                    // is about 112 pt wide, and the negative padding trims the empty margin above and below.
+                    SyllieArtboardView(artboard: "Syllie", stateMachine: "Celebrate")
+                        .frame(width: (hasCompletion ? 133 : Self.mascotWidth), height: (hasCompletion ? 133 : Self.mascotWidth) * 430 / 520)
+                        .padding(.vertical, -Spacing.m)
                 }
-                .padding(.horizontal, Spacing.screenGutter)
-                .padding(.top, Spacing.s)
-                .padding(.bottom, Spacing.l)
-                .frame(minHeight: viewport.size.height)
+
+                Text(chipText)
+                    .font(Typography.micro.weight(.bold))
+                    .foregroundStyle(Color.sun800)
+                    .padding(.horizontal, Spacing.s)
+                    .frame(minHeight: Self.chipHeight)
+                    .background(Color.sun100, in: Capsule())
+                    .padding(.top, Spacing.m)
+
+                Text("Nice work")
+                    .font(Typography.display)
+                    .tracking(Typography.displayTracking)
+                    .foregroundStyle(Color.ink)
+                    .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
+                    .padding(.top, Spacing.xs)
+
+                if let tiles = result.tiles {
+                    if !tiles.isEmpty {
+                        tileRow(tiles)
+                            .padding(.top, Spacing.l + Spacing.xxs)
+                    }
+                } else {
+                    LegacyResultGrid(summary: result.summary, firstTryCount: firstTryCount, hasAppeared: hasAppeared)
+                        .padding(.top, Spacing.l + Spacing.xxs)
+                }
+
+                if let effort {
+                    ResultEffortCard(effort: effort)
+                        .padding(.top, Spacing.s)
+                }
+
+                if let scopeEvents, !scopeEvents.isEmpty {
+                    ScopeCompletionCard(events: scopeEvents)
+                        .padding(.top, Spacing.s)
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .padding(.horizontal, Spacing.practiceGutter)
+            .padding(.top, Spacing.l)
+            .padding(.bottom, Spacing.l)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .safeAreaInset(edge: .bottom) {
-            PinnedActionBar {
-                VStack(spacing: Spacing.xs) {
-                    PrimaryButton(title: "Done", action: onDone)
-                    if let onPracticeAgain {
+            PracticeActionBar {
+                VStack(spacing: Spacing.s) {
+                    if hasCompletion, let onChooseTopics {
+                        PrimaryButton(title: scopeEvents?.collectionCompleted == true ? "Choose another collection" : "Choose more topics", action: onChooseTopics)
+                        SecondaryButton(title: "Later", action: onDone)
+                    } else {
+                        PrimaryButton(title: "Done", action: onDone)
+                    }
+                    if !hasCompletion, let onPracticeAgain {
                         SecondaryButton(title: "Practice again", action: onPracticeAgain)
                     }
                 }
-            }
-        }
-        .overlay {
-            if !motion.reduceMotion {
-                SyllieCelebrationView()
-                    .ignoresSafeArea()
             }
         }
         .overlay {
@@ -98,7 +104,7 @@ struct PracticeResultsView: View {
             motion.perform(MotionTokens.progress.delay(MotionTokens.celebrationStatsDelay)) { hasAppeared = true }
         }
         .task {
-            // The confetti bursts as Syllie nears the top of his loop.
+            // The confetti bursts once Syllie has started celebrating.
             if !motion.reduceMotion {
                 try? await Task.sleep(for: SyllieCelebrationView.confettiCue)
             }
@@ -108,15 +114,21 @@ struct PracticeResultsView: View {
 
     private var chipText: LocalizedStringKey {
         switch result.kind {
-        case .daily: "Flow complete"
+        case .daily: "Session complete"
         case .randomPractice, .weakPractice: "Practice complete"
         case .checkpoint: "Review complete"
         }
     }
 
+    /// Frame of the `Syllie` artboard that shows his body about 112 pt wide (w-28).
+    private static let mascotWidth: CGFloat = 186
+
+    /// The "Session complete" pill (h-7).
+    private static let chipHeight: CGFloat = 28
+
     /// Tiles of equal height and width; a part with nothing to report has no tile.
     private func tileRow(_ tiles: [ResultTile]) -> some View {
-        HStack(alignment: .top, spacing: Spacing.xs) {
+        HStack(alignment: .top, spacing: Spacing.s) {
             ForEach(Array(tiles.enumerated()), id: \.element.id) { index, tile in
                 ResultTileView(
                     tile: tile,
@@ -187,7 +199,7 @@ private struct LegacyResultGrid: View {
     private func stat(_ label: LocalizedStringKey, value: Int, index: Int) -> some View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text(value, format: .number)
-                .font(Typography.screenTitle.monospacedDigit())
+                .font(Typography.stat.monospacedDigit())
                 .foregroundStyle(Color.ink)
             Text(label)
                 .font(Typography.micro)
@@ -195,8 +207,8 @@ private struct LegacyResultGrid: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .padding(Spacing.l - 4)
-        .cardSurface(radius: Radii.tile)
+        .padding(Spacing.m)
+        .cardSurface()
         .accessibilityElement(children: .combine)
         .opacity(hasAppeared || motion.reduceMotion ? 1 : 0)
         .offset(y: hasAppeared || motion.reduceMotion ? 0 : MotionTokens.enterOffset)

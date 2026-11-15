@@ -289,13 +289,17 @@ private struct MatchMadnessBoardView: View {
         }
         .padding(.horizontal, Spacing.screenGutter)
         .padding(.bottom, Spacing.s)
-        .alert(exitTitle, isPresented: $confirmsExit) {
-            Button("Keep playing", role: .cancel) {}
-            Button("Exit", role: .destructive) {
+        .sheet(isPresented: $confirmsExit) {
+            ConfirmSheet(
+                style: .leavePractice,
+                title: exitTitle,
+                message: exitMessage,
+                cancelTitle: "Keep playing",
+                confirmTitle: "Exit"
+            ) {
+                confirmsExit = false
                 Task { await store.quit() }
             }
-        } message: {
-            Text(exitMessage)
         }
         .onChange(of: store.feedback.count) { _, _ in react(to: store.feedback.value) }
         .onAppear { syncSlots() }

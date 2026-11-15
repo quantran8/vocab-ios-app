@@ -19,6 +19,8 @@ struct PlacementTestView: View {
             Color.canvas.ignoresSafeArea()
             content
         }
+        // Answering questions is practice: Blue actions with a depth edge.
+        .actionContext(.practice)
     }
 
     @ViewBuilder
@@ -178,11 +180,17 @@ private struct PlacementQuestionScreen: View {
                 }
             }
         }
-        .alert("Leave the test?", isPresented: $isConfirmingLeave) {
-            Button("Keep going", role: .cancel) {}
-            Button("Leave", role: .destructive, action: onLeave)
-        } message: {
-            Text("Your answers won’t be saved.")
+        .sheet(isPresented: $isConfirmingLeave) {
+            ConfirmSheet(
+                style: .leavePractice,
+                title: "Leave the test?",
+                message: "Your answers won’t be saved.",
+                cancelTitle: "Keep going",
+                confirmTitle: "Leave"
+            ) {
+                isConfirmingLeave = false
+                onLeave()
+            }
         }
     }
 

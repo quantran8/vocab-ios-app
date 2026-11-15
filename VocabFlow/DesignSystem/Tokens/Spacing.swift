@@ -9,13 +9,24 @@ enum Spacing {
     static let xl: CGFloat = 32
 
     static let screenGutter: CGFloat = 20
+    /// Practice screens use a wider gutter (px-6).
+    static let practiceGutter: CGFloat = 24
     static let minTouchTarget: CGFloat = 44
+    /// Every button face (50 pt); small buttons are `buttonSmallHeight`.
+    static let buttonHeight: CGFloat = 50
+    static let buttonSmallHeight: CGFloat = 36
+    static let fieldHeight: CGFloat = 48
+    static let rowMinHeight: CGFloat = 56
+    /// Round icon buttons (back, close, settings).
+    static let iconButton: CGFloat = 36
+    /// Rounded-square icon badges in rows and cards.
+    static let iconBadge: CGFloat = 40
     static let audioButton: CGFloat = 52
     static let tileMinHeight: CGFloat = 60
     /// Match boards (Practice match, Match Madness): taller than a choice tile, easier to hit at speed.
     static let matchTileMinHeight: CGFloat = 84
     /// Sign in with Apple / Google buttons, the same height as `PrimaryButton`.
-    static let socialButtonHeight: CGFloat = 52
+    static let socialButtonHeight: CGFloat = buttonHeight
     static let tileDepth: CGFloat = 3
     static let buttonDepth: CGFloat = 4
     static let dropHitInset: CGFloat = 12

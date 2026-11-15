@@ -16,42 +16,25 @@ struct HomeView: View {
 
     var body: some View {
         let due = learner.home?.dueCount ?? 0
+        let status = DailyLessonStatus(home: learner.home, goal: plan.current.wordsPerDay)
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // Text(verbatim: "syll")
-                //     .font(Typography.wordmark)
-                //     .tracking(-0.6)
-                //     .foregroundStyle(Color.ink)
-                //     .accessibilityLabel(Text(verbatim: "Syll"))
+                header
+                    .padding(.top, Spacing.xs)
 
-                PunctuatedTitle(text: "Daily Lesson")
+                greeting
                     .padding(.top, Spacing.xl)
 
-                dailyLesson(due: due)
-                    .padding(.top, Spacing.l)
+                dailyLesson(status, due: due)
+                    .padding(.top, Spacing.l + Spacing.xxs)
 
-                sectionTitle("Challenge")
-                    .padding(.top, Spacing.xl + Spacing.l)
-
-                if isOutOfNewWords {
-                    Text(plan.current.hasAllTopics
-                         ? "Choose a new collection to keep your journey going."
-                         : "Choose new topics to keep your journey going.")
-                        .font(Typography.secondary)
-                        .foregroundStyle(Color.mutedInk)
-                        .padding(.top, Spacing.xs)
+                if let collection = TopicCatalog.collection(id: plan.current.collectionID) {
+                    learningSection(collection)
+                        .padding(.top, Spacing.xl + Spacing.xs)
                 }
-
-                // Out of new words, "keep learning" means picking topics: Daily has nothing new to give.
-                ChallengeHomeCard(
-                    onOpenMap: onOpenChallengeMap,
-                    onStartDaily: { isOutOfNewWords ? onChooseTopics() : start(.daily) }
-                )
-                .padding(.top, Spacing.m)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
             .padding(.bottom, Spacing.l)
         }
         .refreshable {
@@ -80,43 +63,220 @@ struct HomeView: View {
         }
     }
 
-    private var isOutOfNewWords: Bool {
-        challengeMap.map?.newWordsBlockedReason == .scopeExhausted
-            || DailyLessonStatus(home: learner.home, goal: plan.current.wordsPerDay).scope == .exhaustedNoCustom
+    /// The footer offers reviews beyond this daily session’s allocation.
+    /// Out of new words, the Daily card's own button already reviews.
+    private func showsExtraReview(_ status: DailyLessonStatus) -> Bool {
+        if case .exhaustedNoCustom = status.scope { return false }
+        return status.backlog > status.sessionReviews
     }
 
-    private func sectionTitle(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(Typography.screenTitle)
-            .tracking(Typography.tightTracking)
-            .foregroundStyle(Color.ink)
-            .accessibilityAddTraits(.isHeader)
-    }
+    // MARK: Header and greeting
 
-    /// The screen's one main action. It keeps the lesson's thick edge as an invitation into the lesson.
-    private func dailyLesson(due: Int) -> some View {
-        let status = DailyLessonStatus(home: learner.home, goal: plan.current.wordsPerDay)
-        return VStack(alignment: .leading, spacing: Spacing.l) {
-            HStack(alignment: .bottom, spacing: Spacing.m) {
-                VStack(alignment: .leading, spacing: Spacing.m) {
-                    HStack(spacing: Spacing.xs) {
-                        Text("Today’s session")
-                            .font(Typography.emphasis)
-                            .foregroundStyle(Color.ink)
-                        lessonInfoButton(status)
-                    }
-                    StatRow(label: "Words to review", value: status.sessionReviews)
-                    StatRow(label: "New words", value: status.newWords)
+    /// The wordmark and the learner's lifetime LP.
+    private var header: some View {
+        HStack {
+            Text(verbatim: "Syll")
+                .font(Typography.wordmark)
+                .tracking(Typography.tightTracking)
+                .foregroundStyle(Color.ink)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: Spacing.s)
+            if let lp = learner.profile?.tierSummary?.lifetimeLP {
+                HStack(spacing: Spacing.xxs) {
+                    Image(systemName: "bolt.fill")
+                        .font(Typography.micro.weight(.bold))
+                        .foregroundStyle(Color.reward)
+                        .accessibilityHidden(true)
+                    Text(lp, format: .number.locale(AppLanguage.active.locale))
+                        .font(Typography.secondary.weight(.bold).monospacedDigit())
+                        .contentTransition(.numericText(value: Double(lp)))
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                LessonMascot()
+                .foregroundStyle(Color.rewardInk)
+                .padding(.horizontal, Spacing.s)
+                .frame(height: Spacing.l + Spacing.xs)
+                .background(Color.rewardSurface, in: Capsule())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("\(lp) LP"))
             }
-            actions(status, due: due)
         }
-        .padding(Spacing.m + 2)
+    }
+
+    /// Two elements, as in the design: a 17 pt semibold Ink 500 salutation over the name in 26 pt extrabold;
+    /// a long handle shrinks to 80%, then truncates.
+    private var greeting: some View {
+        HStack(alignment: .bottom, spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: 2) {
+                salutation
+                    .font(Typography.wordClass)
+                    .foregroundStyle(Color.mutedInk)
+                    .lineLimit(1)
+                if let name = learner.profile?.username, !name.isEmpty {
+                    Text(verbatim: name)
+                        .font(Typography.sheetTitle)
+                        .tracking(Typography.sheetTracking)
+                        .foregroundStyle(Color.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .truncationMode(.tail)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+            LessonMascot()
+                .padding(.bottom, Spacing.xxs)
+        }
+    }
+
+    /// Follows the time of day.
+    private var salutation: Text {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: Text("Good morning")
+        case 12..<18: Text("Good afternoon")
+        default: Text("Good evening")
+        }
+    }
+
+    // MARK: Daily lesson
+
+    /// The screen's one main action: this session's counts and the Blue practice button.
+    private func dailyLesson(_ status: DailyLessonStatus, due: Int) -> some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: Spacing.xxs) {
+                    Eyebrow(text: "Today’s lesson")
+                        .accessibilityAddTraits(.isHeader)
+                    // Full touch target without making the eyebrow row taller.
+                    if status.scope != .exhaustedNoCustom {
+                        lessonInfoButton(status)
+                            .padding(.vertical, -(Spacing.minTouchTarget - Spacing.l) / 2)
+                    }
+                }
+                .frame(minHeight: Spacing.l)
+
+                if case .exhaustedNoCustom = status.scope {
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        IconBadge(systemImage: "trophy", tone: .reward)
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            (plan.current.hasAllTopics
+                             ? Text("You’ve learned all of \(plan.current.collection?.name ?? "")")
+                             : Text("You’ve learned all your selected topics"))
+                                .font(Typography.screenTitle.weight(.heavy))
+                            Text("Your learned words will still be reviewed. Choose another collection to learn new words.")
+                                .font(Typography.secondary)
+                                .foregroundStyle(Color.bodyInk)
+                        }
+                    }
+                    .padding(.top, Spacing.s)
+                } else {
+                    Text("\(status.sessionReviews) to review · \(status.newWords) new")
+                        .font(Typography.screenTitle.weight(.heavy).monospacedDigit())
+                        .padding(.top, Spacing.xxs)
+                }
+
+                actions(status, due: due)
+                    .padding(.top, Spacing.screenGutter)
+            }
+            .padding(Spacing.screenGutter)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if showsExtraReview(status) {
+                VStack(spacing: 0) {
+                    CardDivider()
+                    Button(action: startReviewOnly) {
+                        HStack(spacing: Spacing.s) {
+                            IconBadge(systemImage: "arrow.counterclockwise", tone: .success)
+                            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                                Text("\(max(0, status.backlog - status.sessionReviews)) more words waiting")
+                                    .font(Typography.secondary.weight(.bold))
+                                Text("Review \(status.sessionReviews) words separately, without new words")
+                                    .font(Typography.micro).foregroundStyle(Color.mutedInk)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").foregroundStyle(Color.ink400)
+                        }
+                        .foregroundStyle(Color.ink)
+                        .padding(Spacing.m)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .background(Color.surface)
+            }
+        }
         .cardSurface()
     }
+
+    // MARK: Learning now
+
+    /// The collection being learned and its chosen topics, every bar in the collection's mark colour.
+    private func learningSection(_ collection: VocabCollection) -> some View {
+        let mark = CollectionMarkColor.color(for: collection)
+        let topics = TopicCatalog.topics(ids: plan.current.topicIDs)
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionTitle("Learning") {
+                TextLink(title: "Change", action: onChooseTopics)
+            }
+
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    HStack(spacing: Spacing.xs) {
+                        CollectionMarkDot(color: mark)
+                        Text(verbatim: collection.name)
+                            .font(Typography.wordClass.weight(.bold))
+                            .foregroundStyle(Color.ink)
+                        if let total = collection.total, total > 0, (collection.learned ?? 0) >= total {
+                            StatusPill("Complete", tone: .success, systemImage: "checkmark")
+                        }
+                        Spacer(minLength: Spacing.xs)
+                        if let total = collection.total {
+                            Text("\(collection.learned ?? 0) / \(total) words")
+                                .font(Typography.secondary.monospacedDigit())
+                                .foregroundStyle(Color.mutedInk)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    if let total = collection.total, total > 0 {
+                        ProgressBar(fraction: CGFloat(collection.learned ?? 0) / CGFloat(total), color: mark, height: 10)
+                    }
+                }
+                .padding(Spacing.m)
+
+                ForEach(topics) { topic in
+                    CardDivider()
+                    topicRow(topic, mark: mark)
+                }
+            }
+            .cardSurface()
+        }
+    }
+
+    private func topicRow(_ topic: Topic, mark: Color) -> some View {
+        HStack(spacing: Spacing.s) {
+            IconBadge(systemImage: topic.systemImage, tone: .neutral, size: Spacing.iconButton)
+            VStack(alignment: .leading, spacing: Spacing.xs - 2) {
+                Text(verbatim: topic.name)
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Color.ink)
+                    .lineLimit(1)
+                if let total = topic.total, total > 0 {
+                    ProgressBar(fraction: CGFloat(topic.learned ?? 0) / CGFloat(total), color: mark, height: 6)
+                }
+            }
+            if let total = topic.total {
+                let learned = topic.learned ?? 0
+                Text(verbatim: "\(learned)/\(total)")
+                    .font(Typography.micro.monospacedDigit())
+                    .foregroundStyle(Color.mutedInk)
+                    .frame(minWidth: Spacing.xl + Spacing.m, alignment: .trailing)
+                    .accessibilityLabel(Text("\(learned) of \(total) words learned"))
+            }
+        }
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s + 2)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Lesson info
 
     private var topicNames: String {
         TopicCatalog.topics(ids: plan.current.topicIDs).map(\.name)
@@ -208,23 +368,15 @@ struct HomeView: View {
         if case .exhaustedNoCustom = status.scope {
             VStack(spacing: Spacing.s) {
                 if due > 0 {
-                    PrimaryButton(title: "Review \(status.sessionReviews) words", shimmers: true) { startReviewOnly() }
+                    PrimaryButton(title: "Review \(status.sessionReviews) words", shimmers: true, kind: .practice) { startReviewOnly() }
                 } else {
-                    PrimaryButton(title: "Practise", shimmers: true, action: onOpenRandomPractice)
+                    PrimaryButton(title: "Practise", shimmers: true, kind: .practice, action: onOpenRandomPractice)
                 }
                 // Every topic of the collection is already chosen: only another collection brings new words.
-                if !plan.current.hasAllTopics {
-                    SecondaryButton(title: "Choose topics", action: onChooseTopics)
-                }
-                SecondaryButton(title: "Change collection", action: onChooseTopics)
+                SecondaryButton(title: plan.current.hasAllTopics ? "Choose another collection" : "Choose more topics", action: onChooseTopics)
             }
         } else {
-            VStack(spacing: Spacing.s) {
-                PrimaryButton(title: due > 0 ? "Start" : "Start Flow", shimmers: true) { start(.daily) }
-                if status.backlog > ReviewLoad.statusThreshold {
-                    SecondaryButton(title: "Extra review") { startReviewOnly() }
-                }
-            }
+            PrimaryButton(title: due > 0 ? "Start" : "Start Flow", shimmers: true, kind: .practice) { start(.daily) }
         }
     }
 
@@ -286,31 +438,9 @@ struct DailyLessonStatus: Equatable {
     }
 }
 
-// MARK: - Stat row
-
-private struct StatRow: View {
-    let label: LocalizedStringKey
-    let value: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
-            Text(label)
-                .font(Typography.secondary)
-                .foregroundStyle(Color.mutedInk)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(verbatim: "\(value)")
-                .font(Typography.screenTitle.monospacedDigit())
-                .foregroundStyle(Color.ink)
-                .contentTransition(.numericText(value: Double(value)))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 // MARK: - Mascot
 
-/// Syllie beside the lesson stats, standing on a soft shadow (the `HomeSyllie` artboard). One cycle: he idles for
+/// Syllie beside the greeting (the `HomeSyllie` artboard). One cycle: he idles for
 /// `idleBeat`, plays one random scene (a letter to bounce or a paper plane to chase), then dozes off (snoring).
 /// A tap wakes him and the cycle starts again. With reduced motion he skips the play and just dozes off.
 /// Decorative except for that tap.
@@ -322,16 +452,10 @@ private struct LessonMascot: View {
     @State private var scene = HomeSyllieScene.idle
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Ellipse()
-                .fill(Color.neutralSurface)
-                .frame(width: 96, height: 12)
-                .accessibilityHidden(true)
-            // Accessibility comes from HomeSyllieView: hidden while awake, a "wake him up" button while asleep.
-            HomeSyllieView(scene: scene) { scene = .idle }
-            .frame(width: 124, height: 134)
-            .padding(.bottom, Spacing.xs)
-        }
+        // Accessibility comes from HomeSyllieView: hidden while awake, a "wake him up" button while asleep.
+        // At this frame his body is about 88 pt wide (w-[88px]); the artboard keeps room above for the props.
+        HomeSyllieView(scene: scene) { scene = .idle }
+            .frame(width: 109, height: 118)
         .task(id: scene) {
             switch scene {
             case .idle:

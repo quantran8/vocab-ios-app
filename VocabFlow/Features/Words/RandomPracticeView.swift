@@ -13,12 +13,12 @@ struct RandomPracticeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                PunctuatedTitle(text: "Choose skills")
+                ScreenTitle("Choose skills")
 
-                sectionHeader("Skills") {
+                SectionTitle("Skills") {
                     SelectAllButton(allSelected: skills.count == PracticeSkill.allCases.count, action: toggleAllSkills)
                 }
-                .padding(.top, Spacing.l)
+                .padding(.top, Spacing.xl)
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)],
                           spacing: Spacing.s) {
                     ForEach(PracticeSkill.allCases) { skill in
@@ -26,7 +26,7 @@ struct RandomPracticeView: View {
                     }
                 }
 
-                sectionHeader("Word source") { EmptyView() }
+                SectionTitle("Word source")
                     .padding(.top, Spacing.xl)
                 SourceButton(entry: WordSourceEntry.entry(for: source, in: sourceCollections), detail: sourceDetail) {
                     showsSourceSheet = true
@@ -34,7 +34,7 @@ struct RandomPracticeView: View {
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.xs)
+            .padding(.top, Spacing.xxs)
             .padding(.bottom, Spacing.l)
         }
         .background(Color.canvas)
@@ -46,16 +46,6 @@ struct RandomPracticeView: View {
         .sheet(isPresented: $showsSourceSheet) {
             WordSourceSheet(collections: sourceCollections, source: $source)
         }
-    }
-
-    private func sectionHeader<Trailing: View>(_ title: LocalizedStringKey, @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack {
-            PlanSectionTitle(text: title)
-            Spacer(minLength: Spacing.xs)
-            trailing()
-        }
-        .frame(minHeight: Spacing.minTouchTarget)
-        .padding(.bottom, Spacing.xs)
     }
 
     /// Collections the learner has learned from.
@@ -137,11 +127,13 @@ private struct WordSourceEntry: Identifiable {
     let detail: LocalizedStringKey?
     let systemImage: String
     let collection: VocabCollection?
+    /// The collection's mark colour, shown as a dot instead of the icon.
+    var mark: Color?
 
     static let all = WordSourceEntry(id: "all", title: "All learned words", detail: nil,
                                      systemImage: "square.stack.3d.up", collection: nil)
     static let custom = WordSourceEntry(id: "custom", title: "Words you added", detail: nil,
-                                        systemImage: "plus.bubble", collection: nil)
+                                        systemImage: "plus.bubble", collection: nil, mark: CollectionMarkColor.custom)
 
     static func list(_ collections: [VocabCollection]) -> [WordSourceEntry] {
         [.all] + collections.map(collection) + [.custom]
@@ -150,7 +142,8 @@ private struct WordSourceEntry: Identifiable {
     static func collection(_ collection: VocabCollection) -> WordSourceEntry {
         WordSourceEntry(id: "collection-\(collection.id)", title: LocalizedStringKey(collection.name),
                         detail: "\(collection.learned ?? 0) words learned",
-                        systemImage: collection.systemImage, collection: collection)
+                        systemImage: collection.systemImage, collection: collection,
+                        mark: CollectionMarkColor.color(for: collection))
     }
 
     static func entry(for source: WordSource, in collections: [VocabCollection]) -> WordSourceEntry {
@@ -170,8 +163,8 @@ private struct WordSourceEntry: Identifiable {
     }
 }
 
-/// Bottom sheet listing every word source. Picking a collection keeps it open to narrow its topics;
-/// any other source closes it.
+/// Bottom sheet listing every word source. Picking a collection keeps it open and unfolds its topics right
+/// under that row, inside the same card; any other source closes it.
 private struct WordSourceSheet: View {
     let collections: [VocabCollection]
     @Binding var source: WordSource
@@ -181,53 +174,64 @@ private struct WordSourceSheet: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    PunctuatedTitle(text: "Word source", font: Typography.screenTitle)
-                    Spacer(minLength: Spacing.xs)
+                    Spacer()
                     SheetCloseButton()
                 }
 
-                VStack(spacing: Spacing.s) {
-                    ForEach(WordSourceEntry.list(collections)) { entry in
-                        let selected = entry.matches(source)
-                        SourceOptionRow(entry: entry, isSelected: selected) { pick(entry) }
-                        if selected, let collection = entry.collection, case .collection(_, let topics) = source {
+                SheetTitle("Word source")
+
+                let entries = WordSourceEntry.list(collections)
+                VStack(spacing: 0) {
+                    ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                        if index > 0 { CardDivider() }
+                        SourceOptionRow(entry: entry, isSelected: entry.matches(source)) { pick(entry) }
+                        if case .collection(let id, let topics) = source,
+                           let collection = entry.collection, collection.id == id {
                             topicSection(collection, picked: topics)
+                                .transition(.opacity)
                         }
                     }
                 }
+                .cardSurface()
+                .padding(.top, Spacing.l)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.top, Spacing.xs)
             .padding(.bottom, Spacing.l)
+        }
+        .safeAreaInset(edge: .bottom) {
+            PinnedActionBar {
+                PrimaryButton(title: "Done") { dismiss() }
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .presentationCornerRadius(Radii.sheet)
         .presentationBackground(Color.canvas)
     }
 
     private func topicSection(_ collection: VocabCollection, picked: Set<String>) -> some View {
         let topics = collection.learnedTopics
         let allPicked = topics.allSatisfy { picked.contains($0.id) }
-        return VStack(alignment: .leading, spacing: Spacing.xs) {
+        let pickedCount = topics.filter { picked.contains($0.id) }.count
+        return VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Topics")
-                    .font(Typography.secondary.weight(.bold))
-                    .foregroundStyle(Color.ink)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer(minLength: Spacing.xs)
+                Eyebrow(text: "Topics · \(pickedCount)/\(topics.count)")
+                Spacer(minLength: Spacing.s)
                 SelectAllButton(allSelected: allPicked) {
                     setTopics(collection, allPicked ? [] : Set(topics.map(\.id)))
                 }
             }
+            .padding(.top, Spacing.xxs)
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
                 ForEach(topics) { topic in
                     TopicChip(
                         title: topic.name,
                         systemImage: topic.systemImage,
                         isSelected: picked.contains(topic.id),
-                        progress: (learned: topic.learned ?? 0, total: topic.total ?? 0)
+                        selectedFill: .surface
                     ) {
                         var next = picked
                         if next.contains(topic.id) { next.remove(topic.id) } else { next.insert(topic.id) }
@@ -237,8 +241,9 @@ private struct WordSourceSheet: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, Spacing.xxs)
-        .padding(.bottom, Spacing.xs)
+        .padding(.horizontal, Spacing.m)
+        .padding(.bottom, Spacing.m)
+        .background(Color.blue50.opacity(0.6))
     }
 
     private func pick(_ entry: WordSourceEntry) {
@@ -267,46 +272,33 @@ private struct SelectAllButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(allSelected ? "Deselect all" : "Select all")
-                .font(Typography.secondary.weight(.semibold))
-                .foregroundStyle(Color.selectedInk)
-                .padding(.horizontal, Spacing.xs)
-                .frame(minHeight: Spacing.minTouchTarget)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressScaleButtonStyle())
+        TextLink(title: allSelected ? "Deselect all" : "Select all", action: action)
     }
 }
 
+/// Selected: Blue 500 border on Blue 50, a white icon badge and a round check.
 private struct SkillCard: View {
     let skill: PracticeSkill
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Radii.card, style: .continuous)
         Button(action: action) {
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.white : Color.ink)
-                    .frame(width: 36, height: 36)
-                    .background(
-                        isSelected ? Color.interactive : Color.neutralSurface,
-                        in: RoundedRectangle(cornerRadius: Radii.tile - 3, style: .continuous)
-                    )
-                    .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                HStack(alignment: .top) {
+                    IconBadge(systemImage: systemImage, tone: isSelected ? .onAccent : .neutral)
+                    Spacer(minLength: 0)
+                    SelectionMark(isOn: isSelected)
+                }
                 Text(title)
-                    .font(Typography.emphasis)
-                    .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
+                    .font(Typography.wordClass.weight(.bold))
+                    .foregroundStyle(isSelected ? Color.infoInk : Color.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                SelectionTick(isSelected: isSelected, size: 19)
             }
-            .padding(.horizontal, Spacing.s)
-            .frame(maxWidth: .infinity, minHeight: 72)
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
             .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
             .contentShape(shape)
@@ -318,8 +310,7 @@ private struct SkillCard: View {
 
     private var title: LocalizedStringKey {
         switch skill {
-        case .reading: "Reading"
-        case .writing: "Writing"
+        case .spelling: "Spelling"
         case .listening: "Listening"
         case .speaking: "Speaking"
         }
@@ -327,8 +318,7 @@ private struct SkillCard: View {
 
     private var systemImage: String {
         switch skill {
-        case .reading: "book"
-        case .writing: "pencil"
+        case .spelling: "pencil"
         case .listening: "headphones"
         case .speaking: "mic"
         }
@@ -342,21 +332,26 @@ private struct SourceButton: View {
     let action: () -> Void
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
         Button(action: action) {
             HStack(spacing: Spacing.s) {
-                SourceIcon(systemImage: entry.systemImage, isSelected: false)
-                SourceText(title: entry.title, detail: detail, isSelected: false)
+                IconBadge(systemImage: entry.systemImage)
+                    .overlay(alignment: .bottomTrailing) {
+                        if let mark = entry.mark {
+                            CollectionMarkDot(color: mark)
+                                .overlay(Circle().strokeBorder(Color.surface, lineWidth: Borders.hairline))
+                                .offset(x: Spacing.xxs / 2, y: Spacing.xxs / 2)
+                        }
+                    }
+                SourceText(title: entry.title, detail: detail)
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.interactive)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.ink400)
                     .accessibilityHidden(true)
             }
-            .padding(Spacing.s)
-            .background(Color.surface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
+            .padding(Spacing.m)
+            .cardSurface()
+            .contentShape(RoundedRectangle(cornerRadius: Radii.card, style: .continuous))
         }
         .buttonStyle(PressScaleButtonStyle())
         .accessibilityElement(children: .combine)
@@ -364,24 +359,32 @@ private struct SourceButton: View {
     }
 }
 
+/// One row of the source card: the collection's mark dot (or the stack icon for every word), then a round check.
 private struct SourceOptionRow: View {
     let entry: WordSourceEntry
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
         Button(action: action) {
             HStack(spacing: Spacing.s) {
-                SourceIcon(systemImage: entry.systemImage, isSelected: isSelected)
-                SourceText(title: entry.title, detail: entry.detail, isSelected: isSelected)
+                Group {
+                    if let mark = entry.mark {
+                        CollectionMarkDot(color: mark)
+                    } else {
+                        Image(systemName: entry.systemImage)
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(Color.ink700)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(width: Spacing.screenGutter)
+                SourceText(title: entry.title, detail: entry.detail)
                 Spacer(minLength: 0)
-                SelectionTick(isSelected: isSelected, size: 22)
+                SelectionMark(isOn: isSelected)
             }
-            .padding(Spacing.s)
-            .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
+            .padding(Spacing.m)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressScaleButtonStyle())
         .accessibilityElement(children: .combine)
@@ -389,33 +392,15 @@ private struct SourceOptionRow: View {
     }
 }
 
-private struct SourceIcon: View {
-    let systemImage: String
-    let isSelected: Bool
-
-    var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: 20, weight: .semibold))
-            .foregroundStyle(isSelected ? Color.white : Color.ink)
-            .frame(width: 46, height: 46)
-            .background(
-                isSelected ? Color.interactive : Color.neutralSurface,
-                in: RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
-            )
-            .accessibilityHidden(true)
-    }
-}
-
 private struct SourceText: View {
     let title: LocalizedStringKey
     let detail: LocalizedStringKey?
-    let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs - 2) {
+        VStack(alignment: .leading, spacing: Spacing.xxs / 2) {
             Text(title)
                 .font(Typography.emphasis)
-                .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
+                .foregroundStyle(Color.ink)
             if let detail {
                 Text(detail)
                     .font(Typography.micro)
@@ -424,18 +409,5 @@ private struct SourceText: View {
         }
         .multilineTextAlignment(.leading)
         .fixedSize(horizontal: false, vertical: true)
-    }
-}
-
-/// Filled blue circle with a check when selected, an empty ring otherwise.
-private struct SelectionTick: View {
-    let isSelected: Bool
-    let size: CGFloat
-
-    var body: some View {
-        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(isSelected ? Color.interactive : Color.stroke)
-            .accessibilityHidden(true)
     }
 }

@@ -12,12 +12,13 @@ struct SocialSignInButtons: View {
     var body: some View {
         VStack(spacing: Spacing.s) {
             HStack(spacing: Spacing.s) {
-                Rectangle().fill(Color.stroke).frame(height: 1)
+                CardDivider()
                 Text("or")
-                    .font(Typography.secondary)
+                    .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
-                Rectangle().fill(Color.stroke).frame(height: 1)
+                CardDivider()
             }
+            .padding(.bottom, Spacing.xs)
             .accessibilityHidden(true)
 
             SignInWithAppleButton(.continue) { request in
@@ -30,9 +31,11 @@ struct SocialSignInButtons: View {
             }
             .signInWithAppleButtonStyle(.black)
             .frame(height: Spacing.socialButtonHeight)
-            .clipShape(RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous))
+            // Apple's own button, rounded like every other button in the app.
+            .clipShape(Capsule())
             .disabled(auth.isSubmitting)
 
+            // The flat outline button.
             Button(action: signInWithGoogle) {
                 HStack(spacing: Spacing.xs) {
                     GoogleMark()
@@ -41,16 +44,9 @@ struct SocialSignInButtons: View {
                     Text("Continue with Google")
                 }
                 .font(Typography.action)
-                .foregroundStyle(Color.ink)
                 .frame(maxWidth: .infinity, minHeight: Spacing.socialButtonHeight)
-                .background(Color.surface, in: RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous)
-                        .strokeBorder(Color.stroke, lineWidth: 1.5)
-                )
-                .contentShape(RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ActionButtonStyle(kind: .outline))
             .disabled(auth.isSubmitting)
         }
     }

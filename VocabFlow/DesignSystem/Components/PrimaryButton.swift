@@ -1,11 +1,31 @@
 import SwiftUI
 
+/// Where a button sits. The primary button is Ink with a depth edge everywhere (Check, Continue, Save…);
+/// Blue `.practice` is only for actions that start practice (Home "Continue", "Practise now"), passed explicitly.
+/// The context picks the secondary button: white `.outline3D` with a depth edge in practice, flat `.outline` elsewhere.
+enum ActionContext {
+    case practice, app
+}
+
+extension EnvironmentValues {
+    @Entry var actionContext: ActionContext = .app
+}
+
+extension View {
+    /// Buttons below take their default kind from this context (`PrimaryButton`, `SecondaryButton`).
+    func actionContext(_ context: ActionContext) -> some View {
+        environment(\.actionContext, context)
+    }
+}
+
 struct PrimaryButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
     var requirement: LocalizedStringKey?
     var isEnabled = true
     var shimmers = false
+    /// Nil is `.app` (Ink). Pass `.practice` (Blue) for an action that starts practice.
+    var kind: ActionButtonStyle.Kind?
     let action: () -> Void
 
     var body: some View {
@@ -17,19 +37,9 @@ struct PrimaryButton: View {
                     .multilineTextAlignment(.center)
             }
             Button(action: action) {
-                HStack(spacing: Spacing.xs) {
-                    Text(title)
-                    if let systemImage {
-                        Image(systemName: systemImage)
-                            .font(.subheadline.weight(.bold))
-                            .accessibilityHidden(true)
-                    }
-                }
-                .font(Typography.action)
-                .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
-                .padding(.vertical, Spacing.xxs)
+                ActionButtonLabel(title: title, systemImage: systemImage)
             }
-            .buttonStyle(ActionButtonStyle(shimmers: shimmers))
+            .buttonStyle(ActionButtonStyle(kind: kind ?? .app, shimmers: shimmers))
             .disabled(!isEnabled)
         }
     }
@@ -38,26 +48,20 @@ struct PrimaryButton: View {
 struct SecondaryButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
+    /// Nil follows `actionContext`: `.outline3D` in practice, flat `.outline` elsewhere.
+    var kind: ActionButtonStyle.Kind?
     let action: () -> Void
+    @Environment(\.actionContext) private var context
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Spacing.xs) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.subheadline.weight(.bold))
-                        .accessibilityHidden(true)
-                }
-                Text(title)
-            }
-            .font(Typography.action)
-            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
-            .padding(.vertical, Spacing.xxs)
+            ActionButtonLabel(title: title, systemImage: systemImage, iconLeading: true)
         }
-        .buttonStyle(ActionButtonStyle(kind: .secondary))
+        .buttonStyle(ActionButtonStyle(kind: kind ?? (context == .practice ? .outline3D : .outline)))
     }
 }
 
+/// Flat Coral 600 with white text; a confirmation sheet's final action.
 struct DestructiveButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
@@ -68,7 +72,7 @@ struct DestructiveButton: View {
         Button(action: action) {
             HStack(spacing: Spacing.xs) {
                 if isLoading {
-                    ProgressView()
+                    ProgressView().tint(.white)
                 } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(.subheadline.weight(.bold))
@@ -77,26 +81,96 @@ struct DestructiveButton: View {
                 Text(title)
             }
             .font(Typography.action)
-            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
-            .padding(.vertical, Spacing.xxs)
+            .frame(maxWidth: .infinity, minHeight: Spacing.buttonHeight)
         }
-        .buttonStyle(ActionButtonStyle(kind: .destructive))
+        .buttonStyle(ActionButtonStyle(kind: .danger))
     }
 }
 
-/// Tactile everywhere: a thick edge the face sinks into when pressed.
-struct ActionButtonStyle: ButtonStyle {
-    enum Kind { case primary, secondary, destructive }
+/// The small inline button ("+ Thêm từ", "Luyện ngay"): 36 pt, hugs its label.
+struct SmallButton: View {
+    let title: LocalizedStringKey
+    var systemImage: String?
+    var kind: ActionButtonStyle.Kind = .outline
+    let action: () -> Void
 
-    var kind: Kind = .primary
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Spacing.xs - 2) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.footnote.weight(.bold))
+                        .accessibilityHidden(true)
+                }
+                Text(title)
+            }
+            .font(Typography.actionSmall)
+            .lineLimit(1)
+            .padding(.horizontal, Spacing.m)
+            .frame(height: Spacing.buttonSmallHeight)
+        }
+        .buttonStyle(ActionButtonStyle(kind: kind, size: .small))
+    }
+}
+
+struct ActionButtonLabel: View {
+    let title: LocalizedStringKey
+    var systemImage: String?
+    var iconLeading = false
+
+    var body: some View {
+        HStack(spacing: Spacing.xs) {
+            if iconLeading, let systemImage { icon(systemImage) }
+            Text(title)
+            if !iconLeading, let systemImage { icon(systemImage) }
+        }
+        .font(Typography.action)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, Spacing.screenGutter)
+        .frame(maxWidth: .infinity, minHeight: Spacing.buttonHeight)
+    }
+
+    private func icon(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.subheadline.weight(.bold))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Fully rounded buttons. Depth kinds have a thick edge the face sinks into when pressed;
+/// flat kinds (`outline`, `danger`) shrink to 97%. Disabled is a flat Ink 100 face.
+struct ActionButtonStyle: ButtonStyle {
+    enum Kind {
+        /// Blue 500 on Blue 700: actions that start practice.
+        case practice
+        /// Green 600 on Green 800: Continue in a correct-answer panel.
+        case success
+        /// Coral 600 on Coral 800: Try again in a wrong-answer panel.
+        case retry
+        /// Ink 800 on Ink 950: the primary action everywhere, practice included.
+        case app
+        /// White, Ink 200 border and 3 pt Ink 200 edge: secondary practice action.
+        case outline3D
+        /// White, Ink 200 border, flat.
+        case outline
+        /// Coral 600, white text, flat.
+        case danger
+    }
+
+    enum Size { case regular, small }
+
+    var kind: Kind = .app
+    var size: Size = .regular
     var shimmers = false
+    /// Overrides the label colour (e.g. Coral text on an outline button).
+    var foregroundOverride: Color?
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.motion) private var motion
 
     func makeBody(configuration: Configuration) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous)
+        let shape = Capsule(style: .continuous)
         let pressed = configuration.isPressed && isEnabled
-        let depth = kind == .primary ? Spacing.buttonDepth : Spacing.buttonDepth - 2
+        let depth = isEnabled ? self.depth : 0
         configuration.label
             .foregroundStyle(foreground)
             .background(face, in: shape)
@@ -105,37 +179,55 @@ struct ActionButtonStyle: ButtonStyle {
                     ShimmerSweep().clipShape(shape)
                 }
             }
-            .overlay(shape.strokeBorder(kind == .secondary ? Color.stroke : .clear, lineWidth: 1.5))
-            .offset(y: pressed ? depth - 1 : 0)
-            .background(shape.fill(isEnabled ? depthColor : .clear).offset(y: depth))
-            .padding(.bottom, depth)
+            .overlay {
+                if hasBorder && isEnabled { shape.strokeBorder(Color.stroke, lineWidth: Borders.card) }
+            }
+            .offset(y: pressed && depth > 0 ? depth : 0)
+            .background(shape.fill(depth > 0 ? depthColor : .clear).offset(y: depth))
+            .scaleEffect(pressed && self.depth == 0 ? motion.pressedScale : 1)
+            .padding(.bottom, self.depth)
             .contentShape(shape)
             .animation(motion.animation(MotionTokens.press), value: pressed)
     }
 
+    private var hasBorder: Bool { kind == .outline || kind == .outline3D }
+
+    private var depth: CGFloat {
+        switch kind {
+        case .practice, .success, .retry, .app: Spacing.buttonDepth
+        case .outline3D: Spacing.tileDepth
+        case .outline, .danger: 0
+        }
+    }
+
     private var foreground: Color {
         guard isEnabled else { return .disabledInk }
+        if let foregroundOverride { return foregroundOverride }
         switch kind {
-        case .primary: return .white
-        case .secondary: return .ink
-        case .destructive: return .errorInk
+        case .practice, .success, .retry, .app, .danger: return .white
+        case .outline, .outline3D: return .ink
         }
     }
 
     private var face: Color {
         guard isEnabled else { return .disabledSurface }
         switch kind {
-        case .primary: return .primaryAction
-        case .secondary: return .surface
-        case .destructive: return .errorSurface
+        case .practice: return .blue500
+        case .success: return .green600
+        case .retry, .danger: return .coral600
+        case .app: return .primaryAction
+        case .outline, .outline3D: return .surface
         }
     }
 
     private var depthColor: Color {
         switch kind {
-        case .primary: return .primaryDepth
-        case .secondary: return .tileDepth
-        case .destructive: return .errorDepth
+        case .practice: return .interactiveDepth
+        case .success: return .successActionDepth
+        case .retry: return .errorActionDepth
+        case .app: return .primaryDepth
+        case .outline3D: return .tileDepth
+        case .outline, .danger: return .clear
         }
     }
 }
@@ -173,4 +265,19 @@ struct PinnedActionBar<Content: View>: View {
             .padding(.bottom, Spacing.xs)
             .background(Color.canvas)
     }
+}
+
+#Preview {
+    VStack(spacing: Spacing.m) {
+        PrimaryButton(title: "Check", kind: .practice) {}
+        SecondaryButton(title: "I know this word", kind: .outline3D) {}
+        PrimaryButton(title: "Continue", kind: .success) {}
+        PrimaryButton(title: "Try again", kind: .retry) {}
+        PrimaryButton(title: "Save", kind: .app) {}
+        SecondaryButton(title: "Log out", kind: .outline) {}
+        DestructiveButton(title: "Delete account") {}
+        PrimaryButton(title: "Check", isEnabled: false) {}
+        SmallButton(title: "Add word", systemImage: "plus") {}
+    }
+    .padding()
 }

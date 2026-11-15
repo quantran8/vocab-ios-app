@@ -41,7 +41,7 @@ struct WordTile: View {
             y: visualState == .dragging ? 6 : 0
         )
         .scaleEffect(scale)
-        .opacity(visualState == .disabled ? 0.6 : 1)
+
         .contentShape(shape)
         .animation(motion.animation(visualState == .pressed ? MotionTokens.press : MotionTokens.lift), value: visualState)
     }
@@ -67,7 +67,7 @@ struct WordTile: View {
         case .correct: .successInk
         case .incorrect: .errorInk
         case .selected, .dragging: .selectedInk
-        case .disabled: .disabledInk
+        case .disabled: .ink400
         default: .ink
         }
     }
@@ -100,12 +100,7 @@ struct WordTile: View {
         }
     }
 
-    private var borderWidth: CGFloat {
-        switch visualState {
-        case .pressed, .selected, .dragging, .correct, .incorrect: 2
-        default: 1.5
-        }
-    }
+    private var borderWidth: CGFloat { Borders.card }
 }
 
 #Preview {

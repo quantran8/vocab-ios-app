@@ -43,6 +43,7 @@ struct PracticeSessionView: View {
                 result: store.result(for: summary),
                 effort: store.effort,
                 scopeEvents: store.scopeEvents,
+                onChooseTopics: { motion.perform(MotionTokens.transition) { store.close(followUp: .chooseTopics) } },
                 firstTryCount: store.firstTryCount,
                 onPracticeAgain: store.canPracticeAgain ? { Task { await store.practiceAgain() } } : nil,
                 onDone: { motion.perform(MotionTokens.transition) { store.close() } }
@@ -170,6 +171,8 @@ private struct ReviewPreviewView: View {
     }
 
     private static let tileHeight: CGFloat = 54
+    /// gap-2.5 between the word tiles.
+    private static let tileGap = Spacing.xs + 2
     /// Top, right, bottom and left, each past that screen edge on any phone.
     private static let trainOrigins = [
         CGSize(width: 0, height: -1000),
@@ -190,17 +193,13 @@ private struct ReviewPreviewView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Review words you’ve learned")
-                    .font(Typography.screenTitle)
-                    .tracking(Typography.tightTracking)
-                    .foregroundStyle(Color.ink)
-                    .accessibilityAddTraits(.isHeader)
+                SheetTitle("Review words you’ve learned")
 
                 StreamingText(text: String(localized: "Let’s review these words you already learned before exploring new words.", bundle: .appLanguage)) {
                     hasLanded = true
                 }
                 .font(Typography.body)
-                .foregroundStyle(Color.mutedInk)
+                .foregroundStyle(Color.bodyInk)
                 .padding(.top, Spacing.xs)
 
                 // Between the intro and the list: he scans the words as they fly in (left to right, looping) and nods
@@ -209,24 +208,25 @@ private struct ReviewPreviewView: View {
                 SyllieReactionView(reaction: syllieReaction)
                     .frame(width: 150, height: 118)
                     .frame(maxWidth: .infinity)
-                    .padding(.top, Spacing.m)
+                    .padding(.top, Spacing.l)
 
-                FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
+                FlowLayout(spacing: Self.tileGap, lineSpacing: Self.tileGap, alignment: .center) {
                     ForEach(Array(words.enumerated()), id: \.element.id) { index, word in
                         tile(word, index: index)
                             .modifier(TileWiggle(trigger: wiggles[word.id, default: 0]))
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.top, Spacing.l)
             }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.horizontal, Spacing.practiceGutter)
+            .padding(.top, Spacing.l)
             .padding(.bottom, Spacing.l)
         }
         .task(id: hasLanded) { await wiggleWords() }
         .task(id: hasLanded) { await scanWhenSettled() }
         .safeAreaInset(edge: .bottom) {
-            PinnedActionBar {
+            PracticeActionBar {
                 VStack(spacing: Spacing.s) {
                     PrimaryButton(title: "Continue") {
                         motion.perform(MotionTokens.transition) { store.continueToPractice() }
@@ -321,15 +321,17 @@ private struct ReviewPreviewView: View {
 
     /// The word, with the topic it belongs to under it: old topics stay in review after the focus changes.
     private func tileLabel(_ word: ReviewWord) -> some View {
-        VStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(verbatim: word.lemma)
+                .font(Typography.wordClass.weight(.bold))
+                .foregroundStyle(Color.ink)
             if let topic = word.topic {
                 Text(verbatim: topic)
-                    .font(Typography.micro)
+                    .font(Typography.tab)
                     .foregroundStyle(Color.mutedInk)
             }
         }
-        .padding(.vertical, word.topic == nil ? 0 : Spacing.xxs)
+        .padding(.vertical, Spacing.xs)
     }
 
     private func flyInOrigin(_ index: Int) -> CGSize {
@@ -337,14 +339,12 @@ private struct ReviewPreviewView: View {
     }
 
     private func tileFace(_ label: some View) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         return label
-            .font(Typography.tileLarge)
-            .foregroundStyle(Color.ink)
-            .padding(.horizontal, Spacing.m + Spacing.xxs)
+            .padding(.horizontal, Spacing.s + 2)
             .frame(minHeight: Self.tileHeight)
             .background(Color.surface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: 1.5))
+            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
             .background(shape.fill(Color.tileDepth).offset(y: Spacing.tileDepth))
             .padding(.bottom, Spacing.tileDepth)
             // Flattened into one layer: the entrance and the wiggle then only move a bitmap instead of redrawing
@@ -370,8 +370,8 @@ private struct ReviewFinishedView: View {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(spacing: Spacing.m) {
                     Text("Review complete")
-                        .font(Typography.challengeTerm)
-                        .tracking(Typography.tightTracking)
+                        .font(Typography.stat)
+                        .tracking(Typography.displayTracking)
                         .foregroundStyle(Color.ink)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
@@ -385,7 +385,7 @@ private struct ReviewFinishedView: View {
 
                 if cards.isEmpty {
                     Text("Next up: some new words to learn.")
-                        .font(Typography.body)
+                        .font(Typography.secondary)
                         .foregroundStyle(Color.mutedInk)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
@@ -393,37 +393,38 @@ private struct ReviewFinishedView: View {
                 } else {
                     if !focusNames.isEmpty {
                         Text("Now for new words from \(focusNames)")
-                            .font(Typography.body)
+                            .font(Typography.secondary)
                             .foregroundStyle(Color.mutedInk)
                             .frame(maxWidth: .infinity)
                             .multilineTextAlignment(.center)
-                            .padding(.top, Spacing.m)
+                            .padding(.top, Spacing.m + Spacing.xxs)
                     }
                     Text("Next: \(cards.count) new words")
-                        .font(Typography.screenTitle)
-                        .tracking(Typography.tightTracking)
+                        .font(Typography.wordClass.weight(.bold))
                         .foregroundStyle(Color.ink)
                         .accessibilityAddTraits(.isHeader)
-                        .padding(.top, Spacing.xl)
+                        .padding(.top, Spacing.l)
 
+                    // One card, one row per word, hairlines between.
                     VStack(spacing: 0) {
                         ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
                             if index > 0 {
-                                Divider().overlay(Color.stroke)
+                                CardDivider()
                             }
                             row(card)
                         }
                     }
-                    .padding(.top, Spacing.xs)
+                    .cardSurface()
+                    .padding(.top, Spacing.s)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.horizontal, Spacing.practiceGutter)
+            .padding(.top, Spacing.xl)
             .padding(.bottom, Spacing.l)
         }
         .safeAreaInset(edge: .bottom) {
-            PinnedActionBar {
+            PracticeActionBar {
                 PrimaryButton(title: "Learn new words") {
                     motion.perform(MotionTokens.transition) { store.continueToPractice() }
                 }
@@ -432,17 +433,17 @@ private struct ReviewFinishedView: View {
     }
 
     private func row(_ card: LearnCard) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xxs) {
+        CardRow {
             Text(verbatim: card.word)
                 .font(Typography.emphasis)
                 .foregroundStyle(Color.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(verbatim: card.meaning)
                 .font(Typography.secondary)
                 .foregroundStyle(Color.mutedInk)
+                .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, Spacing.m)
         .accessibilityElement(children: .combine)
     }
 }
@@ -536,16 +537,21 @@ private struct PracticeFlowView: View {
                 onClose: { isConfirmingExit = true }
             )
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.vertical, Spacing.xs)
+            .padding(.top, Spacing.xxs)
+            .padding(.bottom, Spacing.s)
             .background(Color.canvas)
         }
-        .alert("Leave this flow?", isPresented: $isConfirmingExit) {
-            Button("Leave without saving", role: .destructive) {
+        .sheet(isPresented: $isConfirmingExit) {
+            ConfirmSheet(
+                style: .leavePractice,
+                title: "Leave the session?",
+                message: "Progress only counts once the whole session is finished.",
+                cancelTitle: "Keep practising",
+                confirmTitle: "Leave without saving"
+            ) {
+                isConfirmingExit = false
                 motion.perform(MotionTokens.transition) { store.close() }
             }
-            Button("Keep practising", role: .cancel) {}
-        } message: {
-            Text("Progress only counts once the whole session is finished.")
         }
     }
 
@@ -617,25 +623,26 @@ private struct LearnCardStep: View {
                     word: word,
                     presentation: word.introPresentation,
                     playAudio: card.audio.map { clip in { store.playClip(clip) } },
-                    isPlayingAudio: store.audio.isPlaying
+                    isPlayingAudio: store.audio.isPlaying,
+                    style: .card
                 )
                 if !otherMeanings.isEmpty {
                     OtherMeaningsLink(count: otherMeanings.count) { isShowingOtherMeanings = true }
                         .transition(.opacity)
                 }
             }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.xl)
+            .padding(.horizontal, Spacing.practiceGutter)
+            .padding(.top, Spacing.m + Spacing.xxs)
             .padding(.bottom, Spacing.l)
         }
         .stepActionBar {
-            PinnedActionBar {
+            PracticeActionBar {
                 if offersKnownCheck {
                     VStack(spacing: Spacing.s) {
                         PrimaryButton(title: "Continue") {
                             motion.perform(MotionTokens.transition) { store.declineKnownCheck() }
                         }
-                        SecondaryButton(title: "I know this word") {
+                        SecondaryButton(title: "I know this word", kind: .outline) {
                             motion.perform(MotionTokens.transition) { store.markKnown() }
                         }
                         .accessibilityHint(Text("Skips learning this word"))
@@ -666,43 +673,26 @@ private struct OtherMeaningsLink: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                Image(systemName: "info.circle")
+        Button(action: action) {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "book")
                     .accessibilityHidden(true)
-                Text("This lesson focuses on this meaning only.")
-                    .fixedSize(horizontal: false, vertical: true)
+                Text("Other meanings")
+                StatusPill(Text(count, format: .number), tone: .accent)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
             }
-            .font(Typography.secondary)
-            .foregroundStyle(Color.mutedInk)
-
-            Button(action: action) {
-                HStack(spacing: Spacing.xs) {
-                    Image(systemName: "book")
-                        .accessibilityHidden(true)
-                    Text("Other meanings")
-                    Text(count, format: .number)
-                        .font(Typography.micro.weight(.semibold))
-                        .foregroundStyle(Color.selectedInk)
-                        .padding(.horizontal, Spacing.xs)
-                        .padding(.vertical, Spacing.xxs / 2)
-                        .background(Color.selectedSurface, in: RoundedRectangle(cornerRadius: Radii.chip / 2, style: .continuous))
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.medium))
-                        .accessibilityHidden(true)
-                }
-                .font(Typography.tile)
-                .foregroundStyle(Color.interactive)
-                .frame(minHeight: Spacing.minTouchTarget + Spacing.xs)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .accessibilityLabel(Text("Other meanings, \(count)"))
-            .accessibilityHint(Text("For reference only. Not part of this lesson."))
+            .font(Typography.secondary.weight(.semibold))
+            .foregroundStyle(Color.link)
+            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, Spacing.s)
+        .buttonStyle(PressScaleButtonStyle())
+        .accessibilityLabel(Text("Other meanings, \(count)"))
+        .accessibilityHint(Text("For reference only. Not part of this lesson."))
+        .padding(.top, Spacing.xs)
     }
 }
 
@@ -716,34 +706,22 @@ struct ScopeCompletionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(alignment: .top, spacing: Spacing.s) {
-                SyllieReactionView(reaction: motion.reduceMotion ? .idle : .proud)
-                    .frame(width: 64, height: 56)
+                IconBadge(systemImage: "trophy", tone: .reward)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     title
                         .font(Typography.emphasis)
                         .foregroundStyle(Color.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(events.collectionCompleted
-                         ? "Pick another collection to keep learning new words."
-                         : "Words you learned keep coming back for review.")
+                    Text("Your learned words will still be reviewed. Choose another collection to learn new words.")
                         .font(Typography.secondary)
                         .foregroundStyle(Color.mutedInk)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            // With every topic already chosen there is no next topic to pick until the collection is done.
-            if events.collectionCompleted || !plan.current.hasAllTopics {
-                PrimaryButton(title: events.collectionCompleted ? "Choose a collection" : "Choose the next topic") {
-                    motion.perform(MotionTokens.transition) { store.close(followUp: .chooseTopics) }
-                }
-            }
-            SecondaryButton(title: "Later") {
-                motion.perform(MotionTokens.transition) { store.close() }
-            }
         }
         .padding(Spacing.m)
-        .cardSurface(radius: Radii.card - 2)
+        .cardSurface()
         .accessibilityElement(children: .contain)
     }
 

@@ -43,6 +43,8 @@ struct TaskAttempt: Equatable {
 
     /// Mirrors the backend's per-task limit; going over rejects the entire commit.
     static let maxEvents = 200
+    /// The backend rejects a larger `elapsedMs`.
+    static let maxElapsedMs = 30 * 60 * 1000
     static let maxValueLength = 200
     static let maxReplacementLength = 32
     static let maxRepairEdits = 64
@@ -53,6 +55,10 @@ struct TaskAttempt: Equatable {
     let requiresSubmission: Bool
 
     private(set) var events: [TaskEvent] = []
+    /// Ms since the task was shown, set by the session before each change; nil leaves events untimed.
+    var elapsedMs: Int? {
+        didSet { elapsedMs = elapsedMs.map { min(max($0, events.last?.elapsedMs ?? 0), Self.maxElapsedMs) } }
+    }
     private(set) var status: Status = .answering
     private(set) var submitCount = 0
     private(set) var hintsUsed = 0
@@ -314,7 +320,7 @@ struct TaskAttempt: Equatable {
     }
 
     private mutating func append(_ action: TaskEvent.Action) {
-        events.append(TaskEvent(seq: events.count + 1, action: action))
+        events.append(TaskEvent(seq: events.count + 1, action: action, elapsedMs: elapsedMs))
     }
 
     private mutating func finishSubmit(_ action: TaskEvent.Action, isCorrect: Bool) -> Bool {

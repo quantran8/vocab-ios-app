@@ -37,7 +37,7 @@ struct MeaningFields: View {
             }
             if let example = sense.examples?.first {
                 if style == .divided && definition != nil {
-                    Rectangle().fill(Color.stroke).frame(height: 1)
+                    Rectangle().fill(Color.divider).frame(height: Borders.hairline)
                 }
                 field("In context") {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -98,6 +98,7 @@ struct OtherMeaningsSheet: View {
     let meanings: [WordDetail.Meaning]
     @Environment(\.motion) private var motion
     @State private var expandedID: String?
+    @State private var playingMeaningID: String?
 
     var body: some View {
         ScrollView {
@@ -121,7 +122,6 @@ struct OtherMeaningsSheet: View {
 
                 ForEach(PartOfSpeechGroup.grouping(meanings) { $0.meaning.partOfSpeech }) { group in
                     VStack(alignment: .leading, spacing: 0) {
-                        Rectangle().fill(Color.stroke).frame(height: 1)
                         PartOfSpeechEyebrow(value: group.partOfSpeech)
                             .padding(.top, Spacing.m)
                             .padding(.bottom, Spacing.xxs)
@@ -136,6 +136,7 @@ struct OtherMeaningsSheet: View {
             .padding(.top, Spacing.l)
             .padding(.bottom, Spacing.l)
         }
+        .onAppear { expandedID = meanings.first?.meaningId }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.canvas)
@@ -163,23 +164,96 @@ struct OtherMeaningsSheet: View {
 
             if isExpanded {
                 MeaningFields(lemma: lemma, sense: item.meaning, style: .quiet)
-                    .padding(Spacing.s)
-                    .background(Color.quietSurface, in: RoundedRectangle(cornerRadius: Radii.tile, style: .continuous))
+                    .padding(.horizontal, Spacing.m)
                     .padding(.bottom, Spacing.s)
                     .transition(.opacity)
             }
         }
-        .overlay(alignment: .bottom) {
-            if !isLast {
-                Rectangle().fill(Color.stroke).frame(height: 1)
+        .padding(.horizontal, Spacing.m)
+        .cardSurface()
+        .padding(.top, Spacing.s)
+    }
+}
+
+// MARK: - Word hero (word detail, add word)
+
+/// The word, centered, over its IPA and a 36 pt pronunciation button. Plays recorded audio when there is some;
+/// otherwise the device speaks the word.
+struct WordHeroHeader: View {
+    let lemma: String
+    let ipa: String?
+    var playAudio: (() -> Void)?
+    /// Whether `playAudio`'s clip is playing right now. Without `playAudio` the device speech is watched instead.
+    var isPlayingAudio = false
+    var showsPronunciation = true
+    @Environment(SpeechPlayer.self) private var speech
+
+    private var isPlaying: Bool { playAudio == nil ? (speech.isSpeaking && speech.spokenText == lemma && speech.spokenIPA == ipa) : isPlayingAudio }
+
+    var body: some View {
+        VStack(spacing: Spacing.xs) {
+            Text(verbatim: lemma)
+                .font(Typography.wordTitle)
+                .tracking(Typography.displayTracking)
+                .foregroundStyle(Color.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            if showsPronunciation {
+                HStack(spacing: Spacing.s - 2) {
+                    if let ipa {
+                        Text(verbatim: ipa)
+                            .font(Typography.body)
+                            .foregroundStyle(Color.bodyInk)
+                            .accessibilityLabel(Text("IPA: \(ipa)"))
+                    }
+                    Button {
+                        if let playAudio {
+                            playAudio()
+                        } else {
+                            _ = speech.speak(lemma, ipa: ipa)
+                        }
+                    } label: {
+                        Group {
+                            if playAudio != nil || speech.isAvailable {
+                                SpeakerWaveIcon(isPlaying: isPlaying, side: 18)
+                            } else {
+                                Image(systemName: "speaker.slash")
+                                    .font(.callout.weight(.semibold))
+                            }
+                        }
+                        .foregroundStyle((playAudio != nil || speech.isAvailable) ? Color.link : Color.disabledInk)
+                        .frame(width: Spacing.iconButton, height: Spacing.iconButton)
+                        .background((playAudio != nil || speech.isAvailable) ? Color.selectedSurface : Color.disabledSurface, in: Circle())
+                        .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
+                        .contentShape(Circle())
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
+                    .disabled(playAudio == nil && !speech.isAvailable)
+                    .accessibilityLabel(Text((playAudio != nil || speech.isAvailable) ? "Play pronunciation" : "Audio unavailable"))
+                    .accessibilityValue(isPlaying ? Text("Playing") : Text(verbatim: ""))
+                }
             }
         }
+        .frame(maxWidth: .infinity)
     }
+}
+
+/// An example sentence with its word marked: Blue 100 behind bold Blue 800 text.
+func markedExample(_ sentence: String, term: String) -> AttributedString {
+    var attributed = AttributedString(sentence)
+    if let range = attributed.range(of: term, options: .caseInsensitive) {
+        attributed[range].inlinePresentationIntent = .stronglyEmphasized
+        attributed[range].foregroundColor = Color.infoInk
+        attributed[range].backgroundColor = Color.focusHalo
+    }
+    return attributed
 }
 
 // MARK: - Word detail (My Words)
 
 /// Every meaning of a word grouped by part of speech; progress belongs to each meaning, not the word.
+/// Each meaning is a card that opens to its definition, example and skills.
 struct WordDetailSheet: View {
     private enum Load: Equatable {
         case loading, failed
@@ -191,15 +265,17 @@ struct WordDetailSheet: View {
     let ipa: String?
     /// Opens expanded; otherwise the first learned meaning does.
     var focusMeaningID: String?
-    /// Plays recorded audio when there is some; otherwise the word is spoken by the device.
+    /// Plays recorded audio when there is some. Nil falls back to the loaded detail's clip, then to device speech.
     let playAudio: (() -> Void)?
     /// Whether `playAudio`'s clip is playing right now, for the speaker waves.
     var isPlayingAudio = false
     @Environment(LearnerStore.self) private var learner
+    @Environment(PracticeSessionStore.self) private var practice
     @Environment(SpeechPlayer.self) private var speech
     @Environment(\.motion) private var motion
     @State private var load = Load.loading
     @State private var expandedID: String?
+    @State private var playingMeaningID: String?
 
     var body: some View {
         ScrollView {
@@ -209,44 +285,64 @@ struct WordDetailSheet: View {
                     SheetCloseButton()
                 }
 
-                VStack(spacing: Spacing.xs) {
-                    IntroMotionHost(
-                        word: lemma,
-                        presentation: VocabularyItem(id: wordID, term: lemma, meaningVi: "", example: "").introPresentation,
-                        animates: false
-                    )
-                    WordPronunciation(term: lemma, ipa: ipa, playAudio: playAudio, isPlayingAudio: isPlayingAudio)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, Spacing.l)
+                WordHeroHeader(
+                    lemma: lemma,
+                    ipa: pronunciationsDiffer ? nil : ipa ?? loadedMeaning?.meaning.ipa,
+                    playAudio: heroPlayAudio,
+                    isPlayingAudio: heroPlayAudio == nil || playAudio == nil || pronunciationsDiffer ? practice.audio.isPlaying : isPlayingAudio,
+                    showsPronunciation: !pronunciationsDiffer
+                )
 
-                meanings
+                VStack(alignment: .leading, spacing: 0) { meanings }
+                    .padding(.top, Spacing.xl)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.top, Spacing.xs)
             .padding(.bottom, Spacing.l)
         }
         .task { await loadDetail() }
         .onDisappear { speech.stop() }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .presentationCornerRadius(Radii.sheet)
         .presentationBackground(Color.canvas)
+    }
+
+    /// Senses of one spelling can sound different (read /riːd/, /rɛd/). Then each meaning shows its own IPA and audio,
+    /// and the hero plays the open meaning's instead of one IPA for the word.
+    private var pronunciationsDiffer: Bool {
+        guard case .loaded(let detail) = load else { return false }
+        return Set(detail.meanings.map { $0.meaning.ipa ?? "" }).count > 1
+    }
+
+    private var heroPlayAudio: (() -> Void)? {
+        let clip = detailClip.map { clip in { practice.playClip(clip) } }
+        return pronunciationsDiffer ? clip : playAudio ?? clip
+    }
+
+    /// The open meaning, else the first one; nil until the detail loads.
+    private var loadedMeaning: WordDetail.Meaning? {
+        guard case .loaded(let detail) = load else { return nil }
+        return detail.meanings.first { $0.meaningId == expandedID } ?? detail.meanings.first
+    }
+
+    /// The server's recorded clip for the word. Nil (still loading, or no audio yet) leaves device speech.
+    private var detailClip: AudioClip? {
+        guard case .loaded(let detail) = load else { return nil }
+        return loadedMeaning?.meaning.audio ?? detail.meanings.lazy.compactMap(\.meaning.audio).first
     }
 
     @ViewBuilder
     private var meanings: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Eyebrow(text: "Meanings")
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: Spacing.s)
+        SectionTitle("Meanings") {
             if case .loaded(let detail) = load {
                 let learned = detail.meanings.filter { $0.learnedAt != nil }.count
                 Text("\(learned) / \(detail.meanings.count) learned")
-                    .font(Typography.micro)
+                    .font(Typography.secondary.weight(.semibold).monospacedDigit())
                     .foregroundStyle(Color.mutedInk)
             }
         }
-        .padding(.bottom, Spacing.xs)
+        .padding(.bottom, -Spacing.s)
 
         switch load {
         case .loading:
@@ -265,105 +361,129 @@ struct WordDetailSheet: View {
             .padding(.vertical, Spacing.m)
         case .loaded(let detail):
             ForEach(PartOfSpeechGroup.grouping(detail.meanings) { $0.meaning.partOfSpeech }) { group in
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(verbatim: VocabularyItem.localizedPartOfSpeech(group.partOfSpeech))
-                        .font(Typography.emphasis)
-                        .foregroundStyle(Color.ink)
-                        .accessibilityAddTraits(.isHeader)
-                        .padding(.top, Spacing.s)
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    PartOfSpeechEyebrow(value: group.partOfSpeech)
                     ForEach(Array(group.items.enumerated()), id: \.element.meaningId) { index, item in
-                        row(item, number: index + 1, isLast: index == group.items.count - 1)
+                        card(item, number: index + 1)
                     }
                 }
-                .padding(.bottom, Spacing.s)
+                .padding(.top, Spacing.s)
             }
         }
     }
 
-    private func row(_ item: WordDetail.Meaning, number: Int, isLast: Bool) -> some View {
+    private func card(_ item: WordDetail.Meaning, number: Int) -> some View {
         let isExpanded = expandedID == item.meaningId
         return VStack(alignment: .leading, spacing: 0) {
             Button {
                 motion.perform(MotionTokens.snap) { expandedID = isExpanded ? nil : item.meaningId }
             } label: {
-                HStack(spacing: Spacing.xs) {
-                    Text(verbatim: "\(number).")
-                        .font(Typography.secondary.monospacedDigit())
-                        .foregroundStyle(Color.mutedInk)
+                HStack(spacing: Spacing.s) {
+                    Text(verbatim: "\(number)")
+                        .font(Typography.body.weight(.bold).monospacedDigit())
+                        .foregroundStyle(Color.ink400)
                         .frame(width: Spacing.m, alignment: .leading)
                     Text(verbatim: item.meaning.text)
-                        .font(Typography.tile)
+                        .font(Typography.emphasis)
                         .foregroundStyle(Color.ink)
                         .multilineTextAlignment(.leading)
                     Spacer(minLength: Spacing.xs)
-                    learnedLabel(item.learnedAt != nil)
-                    ExpandChevron(isExpanded: isExpanded)
+                    if item.learnedAt != nil {
+                        StatusPill("Learned", tone: .success, systemImage: "checkmark")
+                    } else {
+                        StatusPill("Not learned")
+                    }
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.ink400)
+                        .accessibilityHidden(true)
                 }
-                .frame(minHeight: Spacing.tileMinHeight)
+                .padding(.horizontal, Spacing.m)
+                .frame(minHeight: Spacing.rowMinHeight)
                 .contentShape(Rectangle())
             }
             .buttonStyle(PressScaleButtonStyle())
             .accessibilityValue(Text(isExpanded ? "Expanded" : "Collapsed"))
 
+            if pronunciationsDiffer {
+                WordPronunciation(term: lemma, ipa: item.meaning.ipa,
+                    playAudio: item.meaning.audio.map { clip in { playingMeaningID = item.meaningId; practice.playClip(clip) } },
+                    isPlayingAudio: playingMeaningID == item.meaningId && practice.audio.isPlaying, style: .compact)
+                    .padding(.leading, Spacing.xl + Spacing.s)
+                    .padding(.bottom, Spacing.xs)
+            }
             if isExpanded {
                 expandedContent(item)
-                    .padding(.leading, Spacing.m + Spacing.xs)
-                    .padding(.bottom, Spacing.s)
+                    .padding(.leading, Spacing.xl + Spacing.s)
+                    .padding(.trailing, Spacing.m)
+                    .padding(.bottom, Spacing.m)
                     .transition(.opacity)
             }
         }
-        .overlay(alignment: .bottom) {
-            if !isLast {
-                Rectangle().fill(Color.stroke).frame(height: 1)
-            }
-        }
-    }
-
-    private func learnedLabel(_ isLearned: Bool) -> some View {
-        HStack(spacing: Spacing.xxs) {
-            if isLearned {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Color.success)
-                    .accessibilityHidden(true)
-            }
-            Text(isLearned ? "Learned" : "Not learned")
-        }
-        .font(Typography.micro.weight(isLearned ? .semibold : .regular))
-        .foregroundStyle(isLearned ? Color.ink : Color.mutedInk)
-        .fixedSize()
+        .cardSurface()
     }
 
     @ViewBuilder
     private func expandedContent(_ item: WordDetail.Meaning) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MeaningFields(lemma: lemma, sense: item.meaning)
-            if let learnedAt = item.learnedAt {
-                Eyebrow(text: "Skills")
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Spacing.s)
-                    .padding(.bottom, Spacing.xs)
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    skillRow("Reading", item.skills.reading)
-                    skillRow("Writing", item.skills.writing)
-                    if let listening = item.skills.listening {
-                        skillRow("Listening", listening)
+        let sense = item.meaning
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            if let definition = sense.definition, !definition.isEmpty {
+                field("Definition") {
+                    Text(verbatim: definition)
+                        .font(Typography.secondary)
+                        .foregroundStyle(Color.ink)
+                }
+            }
+            if let example = sense.examples?.first {
+                field("Example") {
+                    VStack(alignment: .leading, spacing: Spacing.xs - 2) {
+                        Text(markedExample(example.text, term: lemma))
+                            .font(Typography.secondary)
+                            .foregroundStyle(Color.ink)
+                        if let translation = example.translation, !translation.isEmpty {
+                            ExampleTranslation(text: translation)
+                        }
                     }
-                    if let speaking = item.skills.speaking {
-                        skillRow("Speaking", speaking)
+                }
+            }
+            if let learnedAt = item.learnedAt {
+                if let memory = item.memory {
+                    field("Memory") {
+                        MemoryStrengthRow(memory: memory)
+                    }
+                }
+                field("Skills") {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.xs), GridItem(.flexible(), spacing: Spacing.xs)],
+                              spacing: Spacing.xs) {
+                        skillCell("Spelling", item.skills.spelling)
+                        if let listening = item.skills.listening {
+                            skillCell("Listening", listening)
+                        }
+                        if let speaking = item.skills.speaking {
+                            skillCell("Speaking", speaking)
+                        }
                     }
                 }
                 Text("Learned \(learnedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: AppLanguage.active.locale)))")
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
-                    .padding(.top, Spacing.s)
             } else {
                 Text("This meaning hasn’t been learned yet. No skill progress is available.")
                     .font(Typography.secondary)
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Spacing.s)
             }
         }
+    }
+
+    private func field<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.xs - 2) {
+            Eyebrow(text: title)
+                .accessibilityAddTraits(.isHeader)
+            content()
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func loadDetail() async {
@@ -383,23 +503,29 @@ struct WordDetailSheet: View {
         }
     }
 
-    private func skillRow(_ name: LocalizedStringKey, _ skill: SkillState) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.m) {
-            Text(name)
-                .font(Typography.body)
-                .foregroundStyle(Color.ink)
-            Spacer(minLength: 0)
+    /// A tinted 2×2 cell: the skill's name over its state, coloured by that state.
+    private func skillCell(_ name: LocalizedStringKey, _ skill: SkillState) -> some View {
+        let tone = skillTone(skill)
+        return VStack(alignment: .leading, spacing: Spacing.xxs / 2) {
             HStack(spacing: Spacing.xxs) {
-                if skill.issue == nil && skill.status == .verified {
+                Text(name)
+                    .font(Typography.micro.weight(.bold))
+                if skill.issue == nil && skill.status == .demonstrated {
                     Image(systemName: "checkmark")
+                        .font(Typography.caption.weight(.heavy))
                         .accessibilityHidden(true)
                 }
-                Text(skillLabel(skill))
-                    .multilineTextAlignment(.trailing)
             }
-            .font(Typography.micro.weight(.semibold))
-            .foregroundStyle(skillColor(skill))
+            Text(skillLabel(skill))
+                .font(Typography.caption)
+                .opacity(0.9)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .foregroundStyle(tone.fg)
+        .padding(.horizontal, Spacing.s)
+        .padding(.vertical, Spacing.xs)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(tone.bg, in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
@@ -407,20 +533,44 @@ struct WordDetailSheet: View {
     private func skillLabel(_ skill: SkillState) -> LocalizedStringKey {
         switch (skill.issue, skill.status) {
         case (.failed, _): "Needs practice again"
-        case (.assisted, .verified): "Verified, but recently needed help"
         case (.assisted, _): "Recently needed help"
-        case (nil, .verified): "Verified"
         case (nil, .demonstrated): "Demonstrated"
         case (nil, .notVerified): "Not verified"
         }
     }
 
-    private func skillColor(_ skill: SkillState) -> Color {
+    private func skillTone(_ skill: SkillState) -> (bg: Color, fg: Color) {
         switch (skill.issue, skill.status) {
-        case (.failed, _): .errorInk
-        case (.assisted, _): .selectedInk
-        case (nil, .verified): .ink
-        case (nil, _): .mutedInk
+        case (.failed, _): (.errorSurface, .errorInk)
+        case (.assisted, _): (.selectedSurface, .selectedInk)
+        case (nil, .demonstrated): (.successSurface, .successInk)
+        case (nil, .notVerified): (.neutralSurface, .ink600)
         }
+    }
+}
+
+/// How well a learned meaning holds now: a bar for the chance of recall and the next review date.
+private struct MemoryStrengthRow: View {
+    let memory: MeaningMemory
+
+    var body: some View {
+        let percent = Int((memory.retrievability * 100).rounded())
+        VStack(alignment: .leading, spacing: Spacing.xxs) {
+            HStack {
+                Text("\(percent)% likely to remember now")
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.ink)
+                Spacer(minLength: Spacing.xs)
+            }
+            ProgressView(value: min(max(memory.retrievability, 0), 1))
+                .tint(memory.retrievability >= 0.9 ? Color.successInk : Color.selectedInk)
+                .accessibilityHidden(true)
+            if let next = memory.nextReviewAt {
+                Text("Next review \(next.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: AppLanguage.active.locale)))")
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

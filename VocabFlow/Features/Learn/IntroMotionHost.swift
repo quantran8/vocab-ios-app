@@ -15,7 +15,7 @@ struct IntroMotionHost: View {
     var animates = true
 
     @Environment(\.motion) private var motion
-    @ScaledMetric(relativeTo: .largeTitle) private var fontSize: CGFloat = 34
+    @ScaledMetric(relativeTo: .largeTitle) private var fontSize: CGFloat = 44
     @State private var generation = 0
     @State private var state: IntroMotionState = .waiting
     @State private var naturalWidth: CGFloat = 0

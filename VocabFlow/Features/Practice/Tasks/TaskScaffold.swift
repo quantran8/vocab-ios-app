@@ -31,7 +31,7 @@ struct TaskScaffold<Content: View, Action: View>: View {
                 content
                     .allowsHitTesting(attempt.status != .wrong && attempt.status != .exhausted)
             }
-            .padding(.horizontal, Spacing.screenGutter)
+            .padding(.horizontal, Spacing.practiceGutter)
             .padding(.top, Spacing.m)
             .padding(.bottom, Spacing.l)
             .frame(maxWidth: .infinity)
@@ -125,13 +125,23 @@ struct TaskPromptView: View {
         case nil:
             EmptyView()
         case .text(let text, let highlight)?:
-            promptText(text, highlight: highlight)
-                .font(Typography.challengeTerm)
-                .foregroundStyle(Color.ink)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Spacing.s)
+            if attempt.task.template == .clozeSelect {
+                // Cloze: the sentence's translation, a quiet line above the sentence itself.
+                promptText(text, highlight: highlight)
+                    .font(Typography.body)
+                    .foregroundStyle(Color.bodyInk)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            } else {
+                promptText(text, highlight: highlight)
+                    .font(promptFont)
+                    .tracking(Typography.displayTracking)
+                    .foregroundStyle(Color.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, minHeight: Self.promptMinHeight)
+            }
         case .audio?:
             VStack(spacing: Spacing.s) {
                 AudioPlayButton(isSpeaking: store.audio.isPlaying, isAvailable: true, isLarge: true) {
@@ -147,6 +157,17 @@ struct TaskPromptView: View {
             .frame(maxWidth: .infinity)
         }
     }
+
+    /// The word or meaning stands alone: 36 pt for a word, 30 pt for a meaning to type or spell.
+    private var promptFont: Font {
+        switch attempt.task.template {
+        case .typing, .flyReorder: Typography.stat
+        default: Typography.challengeTerm
+        }
+    }
+
+    /// The prompt's area is as tall as the audio button, so text and audio prompts start the content at one height.
+    private static let promptMinHeight: CGFloat = 96
 
     private func promptText(_ text: String, highlight: PromptHighlight?) -> Text {
         guard let parts = highlight?.split(text) else { return Text(verbatim: text) }
@@ -197,12 +218,12 @@ struct TaskActionBar: View {
     var body: some View {
         VStack(spacing: Spacing.s) {
             if attempt.isFinished {
-                PrimaryButton(title: "Continue") {
+                PrimaryButton(title: "Continue", kind: attempt.status == .solved ? .success : .app) {
                     motion.perform(MotionTokens.transition) { store.advance() }
                 }
             } else if attempt.status == .wrong {
                 revealButton
-                PrimaryButton(title: "Try again") {
+                PrimaryButton(title: "Try again", kind: .retry) {
                     withAnimation(motion.travel(MotionTokens.returnToOrigin)) { store.tryAgain() }
                 }
             } else {
@@ -213,7 +234,7 @@ struct TaskActionBar: View {
                     PrimaryButton(title: checkTitle, isEnabled: canCheck, action: onCheck)
                 } else if let requirement {
                     Text(requirement)
-                        .font(Typography.secondary)
+                        .font(Typography.secondary.weight(.semibold))
                         .foregroundStyle(Color.mutedInk)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
@@ -230,7 +251,7 @@ struct TaskActionBar: View {
             } label: {
                 Text("Show answer")
                     .font(Typography.secondary.weight(.bold))
-                    .foregroundStyle(Color.mutedInk)
+                    .foregroundStyle(attempt.status == .wrong ? Color.destructiveInk : Color.mutedInk)
                     .frame(minHeight: Spacing.minTouchTarget)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)

@@ -21,12 +21,12 @@ struct EditRoutineView: View {
                     SheetCloseButton()
                 }
 
-                PunctuatedTitle(text: "Your routine")
+                SheetTitle("Your routine")
                     .padding(.top, Spacing.xs)
-                    .padding(.bottom, Spacing.xl - 2)
+                    .padding(.bottom, Spacing.l + Spacing.xxs)
 
-                VStack(alignment: .leading, spacing: Spacing.xl - 1) {
-                    VStack(alignment: .leading, spacing: Spacing.s) {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    VStack(alignment: .leading, spacing: Spacing.s - 2) {
                         PlanSectionTitle(text: "New words / day")
                         WordsPerDayStepper(value: draft.wordsPerDay) { amount in
                             draft.adjustWordsPerDay(by: amount)
@@ -49,7 +49,7 @@ struct EditRoutineView: View {
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.l)
+            .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.l)
         }
         .safeAreaInset(edge: .bottom) {
@@ -58,8 +58,18 @@ struct EditRoutineView: View {
     }
 
     private var reviewsSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            PlanSectionTitle(text: "Reviews / session")
+        VStack(alignment: .leading, spacing: Spacing.s - 2) {
+            HStack(alignment: .firstTextBaseline) {
+                PlanSectionTitle(text: "Reviews / session")
+                Spacer(minLength: Spacing.s)
+                if draft.reviewsPerSession != nil {
+                    TextLink(title: "Match new words") {
+                        draft.reviewsPerSession = nil
+                        settings.feedback.selectionChanged()
+                    }
+                    .padding(.vertical, -Spacing.s)
+                }
+            }
             WordsPerDayStepper(
                 value: draft.effectiveReviewsPerSession,
                 range: LearningPreferences.reviewsPerSessionRange,
@@ -70,30 +80,16 @@ struct EditRoutineView: View {
                 draft.adjustReviewsPerSession(by: amount)
                 settings.feedback.selectionChanged()
             }
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
-                Group {
-                    if draft.reviewsPerSession == nil {
-                        Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionRange.lowerBound).")
-                    } else {
-                        Text("Words due for review wait for the next session.")
-                    }
-                }
-                .font(Typography.micro)
-                .foregroundStyle(Color.mutedInk)
-                .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 0)
-                if draft.reviewsPerSession != nil {
-                    Button {
-                        draft.reviewsPerSession = nil
-                        settings.feedback.selectionChanged()
-                    } label: {
-                        Text("Match new words")
-                            .font(Typography.micro.weight(.heavy))
-                            .foregroundStyle(Color.selectedInk)
-                            .frame(minHeight: Spacing.minTouchTarget)
-                    }
+            Group {
+                if draft.reviewsPerSession == nil {
+                    Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionRange.lowerBound).")
+                } else {
+                    Text("Words due for review wait for the next session.")
                 }
             }
+            .font(Typography.micro)
+            .foregroundStyle(Color.mutedInk)
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 

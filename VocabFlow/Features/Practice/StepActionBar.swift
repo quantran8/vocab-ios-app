@@ -43,6 +43,18 @@ extension View {
     }
 }
 
+/// `PinnedActionBar` on the practice gutter (24 pt, px-6) instead of the app's 20 pt.
+struct PracticeActionBar<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        PinnedActionBar {
+            content
+                .padding(.horizontal, Spacing.practiceGutter - Spacing.screenGutter)
+        }
+    }
+}
+
 private struct StepActionBarModifier<Bar: View>: ViewModifier {
     let bar: Bar
     @Environment(\.stepActionBarHost) private var step

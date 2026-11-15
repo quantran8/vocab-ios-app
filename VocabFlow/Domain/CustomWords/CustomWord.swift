@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 // MARK: - Lookup
 
@@ -241,14 +242,6 @@ struct CustomWordEditDraft: Equatable {
         var text: String
         var translation: String
         fileprivate let original: CustomWordExample
-        /// The learner's own highlight, valid only for the sentence it was picked in.
-        fileprivate var picked: Pick?
-
-        fileprivate struct Pick: Equatable {
-            let sentence: String
-            let locator: TargetLocator
-        }
-
         fileprivate init(id: Int, original: CustomWordExample) {
             self.id = id
             self.original = original
@@ -294,26 +287,30 @@ struct CustomWordEditDraft: Equatable {
         originalDefinition = definitionText
     }
 
-    /// An untouched sentence keeps its locator: the target may not be the first match.
-    /// A rewritten one uses the learner's pick, then the old target, then the dictionary form.
+    /// Keep the backend's occurrence until the sentence changes. Edits automatically find the lemma
+    /// or an English inflection, and never permit an unrelated word as the target.
     func locator(for example: Example) -> TargetLocator? {
         guard example.isRewritten else { return example.original.targetLocator }
         let sentence = example.text.trimmed
-        if let picked = example.picked, picked.sentence == sentence { return picked.locator }
         let target = example.original.targetLocator.substring(of: example.original.text) ?? lemma
-        return TargetLocator(locating: target, in: sentence) ?? TargetLocator(locating: lemma, in: sentence)
-    }
-
-    /// Tapping a word highlights it; tapping another next extends the highlight up to that word.
-    mutating func pick(_ word: TargetLocator, inExample id: Example.ID) {
-        guard let index = examples.firstIndex(where: { $0.id == id }) else { return }
-        let sentence = examples[index].text.trimmed
-        var locator = word
-        if let current = self.locator(for: examples[index]), current != word,
-           TargetLocator.words(in: sentence).contains(current) {
-            locator = TargetLocator(start: min(current.start, word.start), end: max(current.end, word.end))
+        let words = TargetLocator.words(in: sentence)
+        for candidate in [lemma, target] {
+            if let match = TargetLocator(locating: candidate, in: sentence),
+               words.contains(where: { $0.start == match.start }),
+               words.contains(where: { $0.end == match.end }) { return match }
         }
-        examples[index].picked = Example.Pick(sentence: sentence, locator: locator)
+        let tagger = NLTagger(tagSchemes: [.lemma])
+        tagger.string = sentence
+        tagger.setLanguage(.english, range: sentence.startIndex..<sentence.endIndex)
+        var found: TargetLocator?
+        tagger.enumerateTags(in: sentence.startIndex..<sentence.endIndex, unit: .word, scheme: .lemma,
+                             options: [.omitWhitespace, .omitPunctuation]) { tag, range in
+            guard tag?.rawValue.caseInsensitiveCompare(lemma) == .orderedSame else { return true }
+            let span = NSRange(range, in: sentence)
+            found = TargetLocator(start: span.location, end: NSMaxRange(span))
+            return false
+        }
+        return found
     }
 
     var isValid: Bool {

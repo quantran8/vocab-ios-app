@@ -27,23 +27,27 @@ struct SessionResultDetailSheet: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.l) {
-                    HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .center) {
                         Text("Session details")
-                            .font(Typography.screenTitle)
-                            .tracking(-0.6)
+                            .font(Typography.sectionTitle.weight(.heavy))
+                            .tracking(Typography.tightTracking)
                             .foregroundStyle(Color.ink)
                             .accessibilityAddTraits(.isHeader)
                         Spacer()
                         SheetCloseButton()
                     }
 
-                    ForEach(blocks) { block in
-                        blockView(block)
+                    VStack(alignment: .leading, spacing: Spacing.l + Spacing.xxs) {
+                        ForEach(blocks) { block in
+                            blockView(block)
+                        }
                     }
+                    .padding(.top, Spacing.m)
                 }
                 .padding(.horizontal, Spacing.screenGutter)
-                .padding(.vertical, Spacing.l)
+                .padding(.top, Spacing.s)
+                .padding(.bottom, Spacing.l)
             }
             .onAppear {
                 // The first block of the tapped tile's section.
@@ -63,26 +67,24 @@ struct SessionResultDetailSheet: View {
 
     private func blockView(_ block: ResultSheetBlock) -> some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            Text(block.title.text)
-                .font(Typography.eyebrow)
-                .tracking(0.4)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.mutedInk)
-                .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: Spacing.xs + 2) {
+                Eyebrow(text: block.title.text)
+                    .accessibilityAddTraits(.isHeader)
 
-            // The block's proportions; each group header below carries its part's swatch, so the names are the key.
-            if let bar = block.bar {
-                SegmentedResultBar(segments: bar, revealed: true)
-                    .accessibilityHidden(true)
+                // The block's proportions; each group header below carries its part's swatch, so the names are the key.
+                if let bar = block.bar {
+                    SegmentedResultBar(segments: bar, revealed: true)
+                        .accessibilityHidden(true)
+                }
             }
 
             VStack(spacing: 0) {
                 ForEach(Array(block.groups.enumerated()), id: \.element.id) { index, group in
-                    if index > 0 { hairline }
+                    if index > 0 { CardDivider() }
                     groupView(group, in: block)
                 }
             }
-            .cardSurface(radius: Radii.card - 4)
+            .cardSurface()
 
             if let excluded = block.excluded, excluded.count > 0 {
                 Text("\(excluded.count) answers didn’t count toward skills: \(reasonList(excluded.reasons))")
@@ -135,27 +137,35 @@ struct SessionResultDetailSheet: View {
         let open = isExpanded(group, in: block)
         return VStack(alignment: .leading, spacing: 0) {
             Button { toggle(group, in: block) } label: {
-                HStack(alignment: .center, spacing: Spacing.s) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(alignment: .center, spacing: Spacing.xs) {
-                            if block.bar != nil, let level = group.barLevel {
-                                ResultSwatch(level: level)
-                                    .frame(width: 14, height: 10)
-                                    .accessibilityHidden(true)
-                            }
-                            Text(group.kind.header(group.items.count))
-                                .font(Typography.emphasis)
-                                .foregroundStyle(Color.ink)
+                HStack(alignment: .center, spacing: Self.swatchGap) {
+                    // The swatch keys the group to its bar segment; without one the column stays, so words line up.
+                    Group {
+                        if block.bar != nil, let level = group.barLevel {
+                            ResultSwatch(level: level)
+                        } else {
+                            Color.clear
                         }
+                    }
+                    .frame(width: Self.swatchSize.width, height: Self.swatchSize.height)
+                    .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(group.kind.header(group.items.count))
+                            .font(Typography.secondary.weight(.bold))
+                            .foregroundStyle(Color.ink)
                         if let subtitle = subtitle(group) {
                             subtitle
-                                .font(Typography.micro)
+                                .font(Typography.caption)
                                 .foregroundStyle(Color.mutedInk)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    Spacer(minLength: 0)
-                    ExpandChevron(isExpanded: open)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Image(systemName: open ? "chevron.up" : "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Color.ink400)
+                        .accessibilityHidden(true)
                 }
                 .padding(.horizontal, Spacing.m)
                 .padding(.vertical, Spacing.s)
@@ -171,7 +181,6 @@ struct SessionResultDetailSheet: View {
                         itemRow(item, group: group)
                     }
                 }
-                .padding(.bottom, Spacing.xs)
                 .transition(.opacity)
             }
         }
@@ -180,10 +189,10 @@ struct SessionResultDetailSheet: View {
     // MARK: Items
 
     @ViewBuilder private func itemRow(_ item: ResultItem, group: ResultSheetGroup) -> some View {
-        let row = HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
-            VStack(alignment: .leading, spacing: 2) {
+        let row = HStack(alignment: .top, spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: item.lemma)
-                    .font(Typography.secondary.weight(.semibold))
+                    .font(Typography.body.weight(.semibold))
                     .foregroundStyle(Color.ink)
                 if !item.gloss.isEmpty {
                     Text(verbatim: item.gloss)
@@ -192,7 +201,7 @@ struct SessionResultDetailSheet: View {
                 }
             }
             Spacer(minLength: Spacing.xs)
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 0) {
                 if let tag = tag(for: item, in: group) {
                     tag
                         .font(Typography.micro.weight(.semibold))
@@ -200,14 +209,16 @@ struct SessionResultDetailSheet: View {
                 }
                 if let detail = detail(for: item) {
                     detail
-                        .font(Typography.micro)
+                        .font(Typography.caption)
                         .foregroundStyle(Color.mutedInk)
                 }
             }
             .multilineTextAlignment(.trailing)
         }
-        .padding(.horizontal, Spacing.m)
-        .padding(.vertical, Spacing.xs)
+        // Words line up under the group title, past the swatch column.
+        .padding(.leading, Spacing.m + Self.swatchSize.width + Self.swatchGap)
+        .padding(.trailing, Spacing.m)
+        .padding(.bottom, Spacing.s)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -297,9 +308,9 @@ struct SessionResultDetailSheet: View {
         }
     }
 
-    private var hairline: some View {
-        Rectangle().fill(Color.stroke).frame(height: 1)
-    }
+    /// The 14 × 10 group swatch and the gap after it (gap-2.5).
+    private static let swatchSize = CGSize(width: 14, height: 10)
+    private static let swatchGap = Spacing.xs + 2
 }
 
 extension ResultSheetBlock.Title {
@@ -338,7 +349,7 @@ extension ResultSheetGroup.Kind {
         switch self {
         case .relearn: "Didn’t come back on your own"
         case .shaky: "Right, but not fully on your own"
-        case .solid: "Recalled on your own"
+        case .solid: "Right first time, on your own"
         case .revealed: "Saw the answer or ran out of tries"
         case .retried: "Right after a hint or another try"
         case .smooth: "Right first time, no hints"
@@ -375,8 +386,7 @@ extension ResultSkill {
     /// Same words as the skill rows on the word page; nil for a skill this app doesn't know.
     var name: String? {
         switch self {
-        case .reading: String(localized: "Reading", bundle: .appLanguage)
-        case .writing: String(localized: "Writing", bundle: .appLanguage)
+        case .spelling: String(localized: "Spelling", bundle: .appLanguage)
         case .listening: String(localized: "Listening", bundle: .appLanguage)
         case .speaking: String(localized: "Speaking", bundle: .appLanguage)
         case .unknown: nil
@@ -390,7 +400,6 @@ extension ResultSkillStatus {
         switch self {
         case .notVerified: SkillStatus.notVerified.label
         case .demonstrated: SkillStatus.demonstrated.label
-        case .verified: SkillStatus.verified.label
         case .unknown: nil
         }
     }
@@ -401,7 +410,6 @@ extension SkillStatus {
         switch self {
         case .notVerified: String(localized: "Not verified", bundle: .appLanguage)
         case .demonstrated: String(localized: "Demonstrated", bundle: .appLanguage)
-        case .verified: String(localized: "Verified", bundle: .appLanguage)
         }
     }
 }

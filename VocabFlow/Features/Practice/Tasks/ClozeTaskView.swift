@@ -13,13 +13,13 @@ struct ClozeTaskView: View {
         TaskScaffold(attempt: attempt) {
             if case .choice(let options, let sentence?, let correct) = attempt.task.body {
                 let filledID = filledOptionID(correct: correct)
-                VStack(spacing: Spacing.l) {
+                VStack(spacing: Spacing.xl + Spacing.xs) {
                     ClozeSentence(
                         parts: sentence,
                         filled: options.first { $0.id == filledID },
                         onRemove: remove
                     )
-                    FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs) {
+                    FlowLayout(spacing: ClozeTile.gap, lineSpacing: ClozeTile.gap) {
                         ForEach(options) { option in
                             bankSlot(option)
                         }
@@ -116,7 +116,7 @@ struct ClozeTaskView: View {
             .hidden()
             .background {
                 RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-                    .fill(Color.stroke)
+                    .fill(Color.neutralSurface)
                     .padding(.bottom, Spacing.tileDepth)
             }
             .accessibilityHidden(true)
@@ -142,15 +142,19 @@ private struct ClozeTile: View {
     let text: String
     let state: WordTileVisualState
 
+    /// gap-2.5 between bank words.
+    static let gap = Spacing.xs + 2
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
         Text(verbatim: text)
-            .font(Typography.sentence)
+            // One weight in every state: the word is the same size in the bank and in the blank.
+            .font(Typography.tileLarge)
             .foregroundStyle(ink)
-            .padding(.horizontal, Spacing.s)
-            .frame(minHeight: Spacing.minTouchTarget - Spacing.tileDepth)
+            .padding(.horizontal, Spacing.m)
+            .frame(minHeight: Spacing.minTouchTarget)
             .background(surface, in: shape)
-            .overlay(shape.strokeBorder(border, lineWidth: 1.5))
+            .overlay(shape.strokeBorder(border, lineWidth: Borders.card))
             .background(shape.fill(depth).offset(y: Spacing.tileDepth))
             .padding(.bottom, Spacing.tileDepth)
             .opacity(state == .disabled ? 0.6 : 1)
@@ -223,7 +227,7 @@ private struct ClozeSentence: View {
     /// Every word takes the blank's height, so a line reads straight once a word lands.
     private func word(in text: String) -> some View {
         Text(verbatim: text)
-            .font(Typography.sentence)
+            .font(Typography.sentence.weight(.semibold))
             .foregroundStyle(Color.ink)
             .frame(minHeight: Spacing.minTouchTarget)
     }

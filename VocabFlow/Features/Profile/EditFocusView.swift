@@ -29,9 +29,9 @@ struct EditFocusView: View {
                     SheetCloseButton()
                 }
 
-                PunctuatedTitle(text: "Your focus")
+                SheetTitle("Your focus")
                     .padding(.top, Spacing.xs)
-                    .padding(.bottom, Spacing.l - 4)
+                    .padding(.bottom, Spacing.l)
 
                 VStack(alignment: .leading, spacing: Spacing.l) {
                     VStack(alignment: .leading, spacing: Spacing.s) {
@@ -55,7 +55,7 @@ struct EditFocusView: View {
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.l)
+            .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.l)
         }
         .safeAreaInset(edge: .bottom) {

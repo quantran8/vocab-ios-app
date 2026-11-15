@@ -1,17 +1,21 @@
 import SwiftUI
 
-/// A titled text input in a bordered tile, used by the account forms.
+/// A text input with its label above (semibold, Ink 950), used by the account forms.
+/// Focused: Blue border and halo; `isError`: Coral border.
 struct LabeledField<Content: View>: View {
     let title: LocalizedStringKey
+    var isFocused = false
+    var isError = false
     @ViewBuilder let content: Content
 
-    init(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) {
+    init(_ title: LocalizedStringKey, isFocused: Bool = false, isError: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
+        self.isFocused = isFocused
+        self.isError = isError
         self.content = content()
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(title)
                 .font(Typography.secondary.weight(.semibold))
@@ -19,11 +23,25 @@ struct LabeledField<Content: View>: View {
             content
                 .font(Typography.body)
                 .foregroundStyle(Color.ink)
-                .padding(.horizontal, Spacing.m)
-                .frame(minHeight: Spacing.tileMinHeight)
-                .background(Color.surface, in: shape)
-                .overlay(shape.strokeBorder(Color.stroke, lineWidth: 1.5))
+                .fieldSurface(isFocused: isFocused, isError: isError)
         }
+    }
+}
+
+/// An error line under a form: info icon and semibold Coral 700 text. Never an alert.
+struct FieldErrorText: View {
+    let message: String
+
+    var body: some View {
+        Label {
+            Text(verbatim: message)
+                .fixedSize(horizontal: false, vertical: true)
+        } icon: {
+            Image(systemName: "info.circle")
+        }
+        .font(Typography.secondary.weight(.semibold))
+        .foregroundStyle(Color.destructiveInk)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

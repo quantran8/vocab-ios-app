@@ -64,7 +64,7 @@ struct ResultTile: Equatable, Identifiable {
         case relearn(Int), shaky(Int)
         case neededRetry(Int), sawAnswer(Int), alreadyKnew(Int)
         case missed(Int), helped(Int)
-        case regressed(Int), newlyVerified(Int), verifiedHint
+        case regressed(Int)
         /// Signed change in weak words since before the session.
         case weakDelta(Int), weakPending(Int)
     }
@@ -149,18 +149,7 @@ enum ResultTiles {
         let changes = changes ?? ResultGroups()
         let leveled = changes.count(.leveledUp)
         let regressed = changes.count(.regressed)
-        let verified = changes[.leveledUp].filter { $0.to == .verified }.count
-        let lines: [ResultTile.Line]
-        if regressed > 0 {
-            lines = [.regressed(regressed)]
-        } else if verified > 0 {
-            lines = [.newlyVerified(verified)]
-        } else if leveled == 0 {
-            // Practising all day and still at 0 is what this line explains.
-            lines = [.verifiedHint]
-        } else {
-            lines = []
-        }
+        let lines: [ResultTile.Line] = regressed > 0 ? [.regressed(regressed)] : []
         return ResultTile(kind: .skillsLeveledUp, number: leveled > 0 ? .plus(leveled) : .count(0), caption: .skillsLeveledUp, lines: lines)
     }
 

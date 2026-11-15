@@ -22,6 +22,8 @@ struct VocabCollection: Identifiable, Hashable {
     let topics: [Topic]
     var learned: Int? = nil
     var total: Int? = nil
+    /// The backend's slug ("business-work"); nil for the bundled catalog, whose ids are the slugs.
+    var slug: String? = nil
 
     var topicIDs: Set<String> { Set(topics.map(\.id)) }
     var isFinished: Bool { (total ?? 0) > 0 && learned == total }
@@ -57,7 +59,8 @@ enum TopicCatalog {
                           learned: topic.learnedMeanings, total: topic.totalMeanings)
                 },
                 learned: collection.learnedMeanings,
-                total: collection.totalMeanings
+                total: collection.totalMeanings,
+                slug: collection.slug
             )
         }
     }
@@ -66,6 +69,8 @@ enum TopicCatalog {
     private static func icon(slug: String, fallback: String) -> String {
         bundled.first { $0.id == slug }?.systemImage
             ?? bundled.lazy.flatMap(\.topics).first { $0.id == slug }?.systemImage
+            // "business-work" → the bundled "business".
+            ?? bundled.first { slug.hasPrefix($0.id + "-") }?.systemImage
             ?? fallback
     }
 

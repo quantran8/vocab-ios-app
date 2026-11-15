@@ -64,9 +64,17 @@ final class PracticeSessionStore {
         static let skipped = "userSkipped"
     }
 
-    private(set) var stage: Stage = .idle
+    private(set) var stage: Stage = .idle {
+        // An interstitial (review preview, review finished) is not time spent on the task.
+        didSet { if stage == .running, oldValue != .running { stepShownAt = now() } }
+    }
     private(set) var steps: [PlanStep] = []
-    private(set) var stepIndex = 0
+    private(set) var stepIndex = 0 {
+        didSet { stepShownAt = now() }
+    }
+    /// When the current step appeared; events carry the time since.
+    private var stepShownAt: ContinuousClock.Instant?
+    private let now: () -> ContinuousClock.Instant
     private(set) var attempts: [String: TaskAttempt] = [:]
     private(set) var recording: RecordingStage = .idle
     /// New for every session; keys the route so screens never carry over.
@@ -127,8 +135,10 @@ final class PracticeSessionStore {
         haptics: FeedbackProviding,
         sounds: SoundEffectsPlaying = SilentSoundEffects(),
         recordingScoring: RecordingScoring = .onDevice,
-        transcriber: SpeechTranscribing? = nil
+        transcriber: SpeechTranscribing? = nil,
+        now: @escaping () -> ContinuousClock.Instant = { ContinuousClock.now }
     ) {
+        self.now = now
         self.api = api
         self.audio = audio
         self.recorder = recorder
@@ -695,9 +705,15 @@ final class PracticeSessionStore {
         audioFailed = false
     }
 
+    private static func milliseconds(_ duration: Duration) -> Int {
+        let components = duration.components
+        return max(Int(components.seconds) * 1000 + Int(components.attoseconds / 1_000_000_000_000_000), 0)
+    }
+
     @discardableResult
     private func mutate<Result>(_ body: (inout TaskAttempt) -> Result) -> Result? {
         guard stage == .running, let id = currentAttempt?.task.id, attempts[id] != nil else { return nil }
+        attempts[id]!.elapsedMs = stepShownAt.map { Self.milliseconds(now() - $0) }
         return body(&attempts[id]!)
     }
 

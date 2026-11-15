@@ -9,7 +9,7 @@ enum SessionMode: String, Codable, Equatable {
 
 /// Focuses `random_practice` on the chosen skills. The backend rejects it with any other mode.
 enum PracticeSkill: String, Codable, Equatable, CaseIterable, Identifiable {
-    case reading, writing, listening, speaking
+    case spelling, listening, speaking
 
     var id: String { rawValue }
 }

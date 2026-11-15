@@ -15,6 +15,8 @@ protocol SpeechProviding: AnyObject {
 @MainActor
 final class SpeechPlayer: NSObject, SpeechProviding {
     private(set) var isSpeaking = false
+    private(set) var spokenText: String?
+    private(set) var spokenIPA: String?
     let isAvailable: Bool
 
     @ObservationIgnored private let synthesizer = AVSpeechSynthesizer()
@@ -28,9 +30,22 @@ final class SpeechPlayer: NSObject, SpeechProviding {
     }
 
     func speak(_ text: String) -> Bool {
+        speak(text, ipa: nil)
+    }
+
+    func speak(_ text: String, ipa: String?) -> Bool {
         guard let voice else { return false }
         synthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: text)
+        let phonemes = ipa?.trimmingCharacters(in: CharacterSet(charactersIn: "/[] "))
+        let utterance: AVSpeechUtterance
+        if let phonemes, !phonemes.isEmpty {
+            utterance = AVSpeechUtterance(attributedString: NSAttributedString(
+                string: text, attributes: [NSAttributedString.Key(rawValue: AVSpeechSynthesisIPANotationAttribute): phonemes]))
+        } else {
+            utterance = AVSpeechUtterance(string: text)
+        }
+        spokenText = text
+        spokenIPA = ipa
         utterance.voice = voice
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85
         synthesizer.speak(utterance)
@@ -46,11 +61,11 @@ final class SpeechPlayer: NSObject, SpeechProviding {
 
 extension SpeechPlayer: AVSpeechSynthesizerDelegate {
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in self.isSpeaking = false }
+        Task { @MainActor in self.isSpeaking = self.synthesizer.isSpeaking }
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        Task { @MainActor in self.isSpeaking = false }
+        Task { @MainActor in self.isSpeaking = self.synthesizer.isSpeaking }
     }
 }
 

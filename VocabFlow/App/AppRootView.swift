@@ -128,19 +128,22 @@ struct AppRootView: View {
             OnboardingView()
         } else if practice.isActive {
             PracticeSessionView()
+                .actionContext(.practice)
         } else if challengeRun.isActive {
             MatchMadnessGameView()
+                .actionContext(.practice)
         } else if sandbox.isOpen {
             if sandbox.activeTemplate != nil {
                 LabTaskView()
+                    .actionContext(.practice)
             } else {
                 PracticeLabView()
             }
         } else {
             switch store.state.phase {
             case .home: MainShellView(tab: $shellTab, homePath: $homePath, profilePath: $profilePath)
-            case .learn, .build, .recall: SessionFlowView()
-            case .results: ResultsView()
+            case .learn, .build, .recall: SessionFlowView().actionContext(.practice)
+            case .results: ResultsView().actionContext(.practice)
             }
         }
     }

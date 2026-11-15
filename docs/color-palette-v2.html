@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syll Ink Palette</title>
+<script>
+/* ---------- Ramps: single source of truth ---------- */
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const RAMPS = {
+  ink:    { group: "core", label: "Ink", layer: "30%", role: "Chữ, Syllie, nút chính, icon. Không bao giờ làm nền card. Đen ngả tím rất nhẹ",
+    hex: ["#F7F7F9","#EFEFF2","#E2E2E7","#C8C8D0","#A3A3AE","#80808C","#62626D","#4A4A54","#34343C","#222228","#131217"] },
+  blue: { group: "core", label: "Blue", layer: "10%", role: "Màu nhấn: tiến độ, đang chọn, focus, link, nút của luyện tập. Trầm hơn #4775F5 một chút",
+    hex: ["#EEF3FD","#DCE6FB","#BACCF6","#92AEEF","#6A8DE6","#3E68DB","#3053C2","#28449E","#22387D","#1A2A5B","#0E1733"] },
+  green:   { group: "semantic", label: "Green", layer: "trạng thái", role: "Đúng, nhớ chắc, ôn tập. Giữ hướng success cũ #2BC86A",
+    hex: ["#EAFBF1","#CFF5DE","#A0EABE","#6BDC9A","#45D17E","#2BC86A","#1FA857","#188646","#12673A","#0E4A2A","#062615"] },
+  coral:  { group: "semantic", label: "Coral", layer: "trạng thái", role: "Sai, cần luyện, xóa. Ấm, rõ, không đỏ máu",
+    hex: ["#FFF1EE","#FFDFD8","#FFBFB1","#FF9883","#FF7559","#FF5A3C","#E5432A","#BA3421","#8C2A1D","#5E1E16","#320E09"] },
+  amber:  { group: "semantic", label: "Sun", layer: "thưởng", role: "LP, sao, chuỗi, ăn mừng. Vàng nắng",
+    hex: ["#FFFBEA","#FFF4C5","#FFE88A","#FFD84A","#FFC81F","#FFB800","#E09A00","#B47800","#875A06","#5C3E08","#301F03"] },
+};
+/* Collection marks: one vivid tone each, used only as a small dot / icon glyph, never as a card fill. */
+const MARKS = [
+  ["Everyday", "#2F9BF4"], ["Business", "#14B8A6"], ["IELTS", "#F0458A"], ["TOEIC", "#FF8A1F"], ["Từ của tôi", "#FFB800"],
+];
+
+function lum(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [16, 8, 0].map(s => {
+    const c = ((n >> s) & 255) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }).reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0);
+}
+function contrast(a, b) {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+(function () {
+  const root = document.documentElement.style;
+  for (const [name, r] of Object.entries(RAMPS)) r.hex.forEach((h, i) => root.setProperty(`--${name}-${STEPS[i]}`, h));
+})();
+</script>
+<style>
+:root {
+  --page-ink: #131217; --page-muted: #62626D; --page-line: #E2E2E7;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #FFFFFF; color: var(--page-ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+code { font-family: ui-monospace, Menlo, monospace; font-size: .9em; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 56px 24px 96px; }
+header.page { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+header.page .txt { flex: 1; min-width: 300px; }
+header.page h1 { font-size: 44px; letter-spacing: -1.6px; margin: 0 0 10px; font-weight: 800; }
+header.page p { color: var(--page-muted); max-width: 680px; line-height: 1.55; margin: 0; font-size: 16px; }
+header.page img { width: 140px; }
+.dot { color: var(--blue-500); }
+h2.sec { font-size: 28px; letter-spacing: -0.8px; margin: 72px 0 8px; }
+p.lead { color: var(--page-muted); margin: 0 0 28px; line-height: 1.55; max-width: 760px; }
+.nav { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 22px; }
+.nav a { font-size: 14px; font-weight: 600; color: var(--page-ink); text-decoration: none; padding: 7px 13px; border: 1px solid var(--page-line); border-radius: 999px; }
+.nav a:hover { border-color: var(--page-ink); }
+
+/* 60-30-10 */
+.rule { display: grid; grid-template-columns: 6fr 3fr 1.4fr; gap: 0; border-radius: 22px; overflow: hidden; border: 1px solid var(--page-line); min-height: 220px; }
+.rule > div { padding: 22px; font-size: 14px; line-height: 1.5; }
+.rule .pct { display: block; font-size: 40px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 4px; }
+.rule b { display: block; font-size: 16px; margin-bottom: 6px; }
+.rule .r60 { background: #fff; }
+.rule .r30 { background: var(--ink-950); color: #fff; }
+.rule .r30 span.m { color: var(--ink-400); }
+.rule .r10 { background: var(--blue-500); color: #fff; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 16px; }
+.rules div { border: 1px solid var(--page-line); border-radius: 16px; padding: 14px 16px; font-size: 14px; line-height: 1.5; }
+.rules b { display: block; margin-bottom: 2px; }
+
+/* ramps */
+.board { border: 1px solid var(--page-line); border-radius: 22px; padding: 24px; }
+.board + .board { margin-top: 16px; }
+.bt { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--page-muted); margin-bottom: 16px; }
+.ramps { display: grid; gap: 12px; }
+.ramp { display: grid; grid-template-columns: 220px repeat(11, minmax(0, 1fr)); }
+.ramp .name { padding-right: 14px; display: flex; flex-direction: column; justify-content: center; }
+.ramp .name b { font-size: 15px; }
+.ramp .name b small { font-size: 11px; font-weight: 700; color: var(--page-muted); margin-left: 6px; letter-spacing: .5px; }
+.ramp .name span { font-size: 12px; color: var(--page-muted); line-height: 1.35; margin-top: 2px; }
+.cell { height: 62px; padding: 6px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; font-size: 10.5px; }
+.ramp .cell:nth-child(2) { border-radius: 12px 0 0 12px; }
+.ramp .cell:last-child { border-radius: 0 12px 12px 0; }
+.cell.key { outline: 3px solid var(--page-ink); outline-offset: -3px; border-radius: 4px; }
+.cell .step { font-weight: 700; }
+.cell .hex { opacity: .85; font-family: ui-monospace, Menlo, monospace; }
+.marks { display: flex; gap: 10px; flex-wrap: wrap; }
+.marks div { display: flex; align-items: center; gap: 8px; border: 1px solid var(--page-line); border-radius: 999px; padding: 7px 14px 7px 10px; font-size: 14px; font-weight: 600; }
+.marks i { width: 10px; height: 10px; border-radius: 99px; }
+.marks code { color: var(--page-muted); font-weight: 400; font-size: 12px; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #131217; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* measured bars */
+.alloc { display: flex; height: 52px; border-radius: 14px; overflow: hidden; border: 1px solid var(--page-line); }
+.alloc div { display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.alloc-l { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--page-muted); margin: 18px 0 6px; }
+
+table.map { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.map th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--page-muted); padding: 8px 10px; border-bottom: 1px solid var(--page-line); }
+table.map td { padding: 9px 10px; border-bottom: 1px solid var(--page-line); }
+.sw { display: inline-flex; align-items: center; gap: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; white-space: nowrap; }
+.sw i { width: 24px; height: 24px; border-radius: 7px; border: 1px solid rgba(0,0,0,.08); }
+.sw small { color: var(--page-muted); font-family: var(--font); }
+.tblwrap { overflow-x: auto; border: 1px solid var(--page-line); border-radius: 22px; padding: 8px 14px; }
+
+.compare { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.col .lbl { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--page-muted); }
+.col .lbl.new { color: var(--blue-600); }
+.controls { display: flex; justify-content: center; margin-bottom: 24px; }
+.seg { display: inline-flex; background: var(--ink-100); border-radius: 12px; padding: 4px; gap: 2px; }
+.seg button { font: 600 14px var(--font); border: 0; background: transparent; padding: 8px 16px; border-radius: 9px; cursor: pointer; color: var(--page-ink); }
+.seg button.on { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+/* ---------- phones ---------- */
+.phone { width: 360px; border: 10px solid #0B0B0D; border-radius: 48px; overflow: hidden; background: #fff; flex: none; }
+.status { height: 40px; display: flex; justify-content: space-between; align-items: center; padding: 0 26px; font: 600 14px var(--font); color: var(--ink); }
+.scr { height: 720px; display: flex; flex-direction: column; color: var(--ink); background: #fff; }
+.scroll { flex: 1; overflow: hidden; padding: 4px 20px 20px; }
+
+.theme-old {
+  --ink:#171717; --muted:#5C606B; --stroke:#E1E4EB; --neutral:#F5F5F5; --tile-depth:#CDD2DC;
+  --cta:#303030; --cta-ink:#fff; --cta-depth:#080808;
+  --ok-btn:#303030; --ok-btn-depth:#080808; --err-btn:#303030; --err-btn-depth:#080808;
+  --hero:#FFFFFF; --hero-depth:transparent; --hero-ink:#171717; --hero-muted:#5C606B; --hero-line:#E1E4EB; --hero-track:#E1E4EB; --hero-bar:#4775F5;
+  --hero-cta:#303030; --hero-cta-ink:#fff; --hero-cta-depth:#080808;
+  --accent:#4775F5; --accent-ink:#234EAE; --sel-bg:#EAF0FF; --sel-depth:#B2C5F5;
+  --ok:#2BC86A; --ok-bg:#E5FAED; --ok-ink:#12673A; --err:#FF795D; --err-bg:#FFF0EA; --err-ink:#943727;
+  --reward:#171717; --icon-bg:#F5F5F5; --bar:#4775F5; --track:#E1E4EB; --tab-on:#4775F5;
+}
+.theme-new {
+  --ink:var(--ink-950); --muted:var(--ink-600); --stroke:var(--ink-200); --neutral:var(--ink-100); --tile-depth:var(--ink-200);
+  --cta:var(--ink-800); --cta-ink:#fff; --cta-depth:var(--ink-950); --practice:var(--blue-500); --practice-depth:var(--blue-700);
+  --hero:#fff; --hero-ink:var(--ink-950); --hero-muted:var(--ink-600); --hero-line:var(--ink-200); --hero-track:var(--ink-100); --hero-bar:var(--blue-500); --hero-depth:var(--ink-200);
+  --hero-cta:var(--blue-500); --hero-cta-ink:#fff; --hero-cta-depth:var(--blue-700);
+  --accent:var(--blue-500); --accent-ink:var(--blue-700); --sel-bg:var(--blue-50); --sel-depth:var(--blue-200);
+  --ok:var(--green-500); --ok-bg:var(--green-50); --ok-ink:var(--green-800); --err:var(--coral-500); --err-bg:var(--coral-50); --err-ink:var(--coral-800);
+  --ok-btn:var(--green-600); --ok-btn-depth:var(--green-800); --err-btn:var(--coral-600); --err-btn-depth:var(--coral-800);
+  --reward:var(--amber-500); --icon-bg:var(--ink-100); --bar:var(--ink-950); --track:var(--ink-100); --tab-on:var(--ink-950);
+}
+
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.wordmark { font-size: 20px; font-weight: 900; letter-spacing: -0.4px; }
+.wordmark i, .acc { font-style: normal; color: var(--accent); }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 14px; }
+.lp { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lp svg { width: 16px; height: 16px; color: var(--reward); }
+.hello { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.hello img { width: 82px; margin-bottom: 6px; }
+h3.greet { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; margin: 2px 0 14px; line-height: 1.12; }
+.hero { background: var(--hero); color: var(--hero-ink); border: 2px solid var(--hero-line); border-radius: 22px; padding: 18px; }
+.theme-new .hero .bar { height: 12px; }
+.theme-new .mini { border-width: 2px; }
+.theme-new .mini .ico { background: var(--g-bg); color: var(--g); }
+.theme-new .hello { margin-top: 8px; }
+.theme-new h3.greet { margin-bottom: 22px; }
+.theme-new .grid2 { gap: 12px; margin-top: 16px; }
+.theme-new .sect { margin: 32px 0 8px; }
+.theme-new .topic { padding: 14px 0; }
+.theme-new .res { padding: 24px 0 28px; }
+.theme-new .blk { margin-top: 16px; }
+.theme-new .topic .bar i { background: var(--blue-500); }
+.hero .eyebrow { color: var(--hero-muted); }
+.hero .title { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; margin: 4px 0 2px; }
+.hero .bar { background: var(--hero-track); }
+.hero .bar i { background: var(--hero-bar); }
+.hero .meta { color: var(--hero-muted); }
+.bar { height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; margin: 14px 0 7px; }
+.bar i { display: block; height: 100%; background: var(--bar); border-radius: 99px; }
+.meta { font-size: 13px; color: var(--muted); margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+.btn { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 16px; font: 700 17px var(--font); padding: 15px; cursor: pointer; background: var(--cta); color: var(--cta-ink); box-shadow: 0 4px 0 var(--cta-depth); transition: transform .06s, box-shadow .06s; }
+.btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--cta-depth); }
+/* Action buttons: 44pt high (touch minimum), fully rounded. */
+.theme-new .btn { height: 44px; padding: 0 20px; border-radius: 999px; font-size: 16px; }
+.theme-new .dock .btn + .btn { margin-top: 12px !important; }
+.theme-new .btn.practice { background: var(--practice); box-shadow: 0 4px 0 var(--practice-depth); }
+.theme-new .btn.practice:active { box-shadow: 0 0 0 var(--practice-depth); }
+.btn.hero-cta { background: var(--hero-cta); color: var(--hero-cta-ink); box-shadow: 0 4px 0 var(--hero-cta-depth); }
+.btn.hero-cta:active { box-shadow: 0 0 0 var(--hero-cta-depth); }
+.btn.secondary { background: #fff; color: var(--ink); border: 1.5px solid var(--stroke); box-shadow: 0 2px 0 var(--tile-depth); }
+.btn.danger { background: #fff; color: var(--err-ink); border: 1.5px solid var(--stroke); box-shadow: 0 2px 0 var(--tile-depth); }
+.btn.disabled { background: var(--neutral); color: var(--muted); box-shadow: none; cursor: default; }
+.btn.brand { background: var(--blue-500); color: #fff; box-shadow: 0 4px 0 var(--blue-700); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.mini { background: #fff; border: 1.5px solid var(--stroke); border-radius: 20px; padding: 14px; }
+.ico { width: 38px; height: 38px; border-radius: 12px; background: var(--icon-bg); color: var(--ink); display: grid; place-items: center; margin-bottom: 10px; }
+.ico svg { width: 19px; height: 19px; }
+.mini b { display: block; font-size: 15px; }
+.mini span { font-size: 13px; color: var(--muted); }
+.stars { color: var(--reward); letter-spacing: 1px; }
+.sect { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 6px; }
+.sect b { font-size: 17px; }
+.cmark { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.cmark i { width: 8px; height: 8px; border-radius: 99px; background: var(--mark, var(--muted)); }
+.theme-old .cmark i { display: none; }
+.topic { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--stroke); }
+.topic .ico { width: 36px; height: 36px; margin: 0; }
+.theme-new .topic .ico { color: var(--g); background: #EEF6FE; }
+.theme-new .streak { background: var(--amber-50); color: var(--amber-800); padding: 5px 10px; border-radius: 99px; display: inline-flex; gap: 4px; align-items: center; }
+.theme-new .streak svg { color: var(--amber-500); }
+.theme-old .streak { display: inline-flex; gap: 4px; align-items: center; }
+.topic .t { flex: 1; }
+.topic .t b { font-size: 15px; display: block; font-weight: 600; }
+.topic .bar { height: 4px; margin: 7px 0 0; }
+.topic .n { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabbar { display: flex; justify-content: space-around; border-top: 1px solid var(--stroke); padding: 8px 0 22px; background: #fff; }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--ink-400, #A3A3AE); position: relative; }
+.theme-old .tab { color: #5C606B; }
+.tab svg { width: 24px; height: 24px; }
+.tab.on { color: var(--tab-on); }
+
+.taskhead { display: flex; align-items: center; gap: 14px; margin: 6px 0 22px; }
+.taskhead svg { width: 22px; height: 22px; color: var(--muted); }
+.taskhead .bar { flex: 1; margin: 0; height: 8px; }
+.taskhead .bar i { background: var(--accent); }
+.q { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; margin: 6px 0 14px; }
+.word { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.word b { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.speak { width: 40px; height: 40px; border-radius: 12px; background: var(--icon-bg); color: var(--ink); display: grid; place-items: center; }
+.theme-old .speak { background: #EAF0FF; color: #4775F5; }
+.speak svg { width: 20px; height: 20px; }
+.opts { display: grid; gap: 10px; }
+.opt { min-height: 60px; display: flex; align-items: center; padding: 0 16px; font-size: 19px; border-radius: 14px; background: #fff; border: 2px solid var(--stroke); box-shadow: 0 3px 0 var(--tile-depth); }
+/* No depth on resting tiles; depth only marks emphasis (selected / correct / wrong). */
+.theme-new .opt:not(.sel):not(.ok):not(.err) { box-shadow: none; }
+.theme-new .topic { border-bottom-width: 1.5px; }
+.opt.sel { background: var(--sel-bg); border-color: var(--accent); color: var(--accent-ink); box-shadow: 0 3px 0 var(--sel-depth); font-weight: 600; }
+.opt.ok { background: var(--ok-bg); border-color: var(--ok); color: var(--ok-ink); box-shadow: 0 3px 0 var(--ok); font-weight: 600; }
+.opt.err { background: var(--err-bg); border-color: var(--err); color: var(--err-ink); box-shadow: 0 3px 0 var(--err); font-weight: 600; }
+.opt svg { width: 20px; height: 20px; margin-left: auto; }
+.dock { padding: 16px 20px 26px; }
+.panel { padding: 18px 20px 26px; border-radius: 20px 20px 0 0; }
+.panel.ok { background: var(--ok-bg); } .panel.err { background: var(--err-bg); }
+.panel .btn.okb { background: var(--ok-btn); box-shadow: 0 4px 0 var(--ok-btn-depth); }
+.panel .btn.errb { background: var(--err-btn); box-shadow: 0 4px 0 var(--err-btn-depth); }
+.theme-new .opt.ok, .theme-new .opt.err { transform: none; }
+.panel .ph { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.panel .ph span { width: 28px; height: 28px; border-radius: 99px; display: grid; place-items: center; color: #fff; }
+.panel .ph svg { width: 17px; height: 17px; }
+.panel.ok .ph { color: var(--ok-ink); } .panel.ok .ph span { background: var(--ok); }
+.panel.err .ph { color: var(--err-ink); } .panel.err .ph span { background: var(--err); }
+.theme-old .panel.ok { background: #E5FAED; border: 0; border-radius: 20px 20px 0 0; }
+.theme-old .panel.err { background: #FFF0EA; border: 0; border-radius: 20px 20px 0 0; }
+.panel p { margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
+.panel.ok p { color: var(--ok-ink); } .panel.err p { color: var(--err-ink); }
+
+
+.res { text-align: center; padding: 6px 0 18px; }
+.res img { width: 110px; }
+.res h3 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 8px 0 4px; }
+.res p { margin: 0; color: var(--muted); font-size: 15px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--stroke); border-radius: 20px; }
+.stats > div { padding: 16px 12px 16px 14px; min-width: 0; }
+.stats > div + div { border-left: 1.5px solid var(--stroke); }
+.stats .num { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.stats .cap { white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.stats .cap i { width: 8px; height: 8px; border-radius: 99px; }
+.theme-old .stats .cap i { display: none; }
+.blk { margin-top: 12px; border: 1.5px solid var(--stroke); border-radius: 20px; padding: 14px; }
+.blk .h { font-size: 14px; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chips span { font-size: 14px; font-weight: 600; padding: 5px 10px; border-radius: 10px; background: var(--neutral); }
+.lprow { display: flex; align-items: center; gap: 12px; }
+.lprow .ico { margin: 0; display: flex; align-items: center; justify-content: center; }
+.lprow .ico svg { width: 20px; height: 20px; }
+.theme-new .lprow .ico { background: var(--amber-400); color: #fff; }
+.theme-new .stats { border-width: 2px; }
+.theme-new .stats .num { color: var(--c); }
+.theme-new .blk { border-width: 2px; }
+.lprow .grow { flex: 1; }
+.lprow b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.lprow span { display: block; font-size: 13px; color: var(--muted); }
+.rank { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.theme-new .rank { color: var(--blue-600); }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.gallery .g { display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid var(--page-line); border-radius: 22px; color: var(--ink); }
+.gallery .g.dark { background: var(--ink-950); border-color: var(--ink-950); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.note { border: 1px solid var(--page-line); border-radius: 18px; padding: 16px 18px; font-size: 14px; line-height: 1.5; }
+.note b { display: block; font-size: 15px; margin-bottom: 4px; }
+
+@media (max-width: 860px) {
+  .rule { grid-template-columns: 1fr; }
+  .ramp { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+  .ramp .name { grid-column: 1 / -1; padding: 0 0 6px; }
+  .cell { height: 52px; padding: 4px 3px; font-size: 9px; }
+  .cell .hex { display: none; }
+}
+@media (max-width: 400px) {
+  .wrap { padding: 32px 16px 80px; }
+  .phone { width: 100%; max-width: 360px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <div class="txt">
+    <h1>Syll Ink Palette<span class="dot">.</span></h1>
+    <p>Bộ màu cho một app học từ vựng cao cấp, dành cho người trưởng thành. Tỷ lệ <b>60 trắng · 30 Ink · 10 nhấn</b>. Vẫn đậm chất game như Duolingo/Brilliant: màu tươi, thẻ có cạnh dày, phản hồi rõ. Ink (màu của Syllie) cho chữ và nút, không bao giờ làm nền card. Màu nhấn vẫn là xanh dương nhưng trầm hơn một chút (<code>#3E68DB</code>); Green, Coral, Sun bật lên đúng lúc. Nút chính là Ink 800 cho hành động chung, xanh dương cho hành động luyện tập. Đây là demo HTML gần đúng; code app chưa đổi.</p>
+    <nav class="nav">
+      <a href="#rule">60 · 30 · 10</a><a href="#ramps">Dải màu</a><a href="#tokens">Token</a><a href="#home">Home</a><a href="#task">Bài tập</a><a href="#results">Kết quả</a><a href="#buttons">Nút</a><a href="#notes">Cần quyết</a>
+    </nav>
+  </div>
+  <img src="../VocabFlow/Resources/Assets.xcassets/LaunchSyllieV2.imageset/LaunchSyllieV2@2x.png" alt="Syllie">
+</header>
+
+<!-- ============ RULE ============ -->
+<h2 class="sec" id="rule">1. Tỷ lệ 60 · 30 · 10<span class="dot">.</span></h2>
+<p class="lead">Học từ Brilliant cách tổ chức: màu là dải nhiều bậc, ít màu lõi, mỗi màu một nghĩa. Còn bản sắc thì của Syll: mực đen của Syllie và mực tím.</p>
+<div class="rule">
+  <div class="r60"><span class="pct">60%</span><b>Trắng</b>Nền màn hình và card, giữ như hiện tại. Khoảng thở, tập trung vào chữ.</div>
+  <div class="r30"><span class="pct">30%</span><b>Ink</b><span class="m">Chữ, Syllie, nút chính, icon, viền và cạnh dày. Không bao giờ làm nền card.</span></div>
+  <div class="r10"><span class="pct">10%</span><b>Nhấn tươi</b>Blue là chính. Green, Coral, Sun bật lên khi có đúng, sai, thưởng.</div>
+</div>
+<div class="rules">
+  <div><b>Một màu nhấn: xanh dương trầm hơn</b><code>#4775F5</code> → <code>#3E68DB</code>. Giữ mọi vai trò cũ (tiến độ, đang chọn, focus, link; bỏ dấu chấm xanh cuối tiêu đề) và thêm nền nút cho mọi hành động luyện tập.</div>
+  <div><b>Ink cho chữ và nút, không cho card</b>Đen ngả tím rất nhẹ (<code>#131217</code>). Card luôn nền trắng.</div>
+  <div><b>Gamify bằng màu tươi đúng lúc</b>Màu trạng thái tươi như Duolingo/Brilliant: panel đúng/sai phủ màu nhạt, nút cùng màu có cạnh dày, thanh tiến độ dày, sao và LP vàng nắng.</div>
+  <div><b>Viền, không shadow</b>Card và item viền 2pt (1.5pt khi cần nhẹ). Không shadow hay cạnh dày, trừ chỗ cần nhấn: đáp án đang chọn, đúng, sai và nút bấm.</div>
+  <div><b>Chữ chỉ khi có nghĩa</b>Mỗi dòng chữ phải cho người học biết thêm điều gì đó. Không chữ trang trí, không lặp thông tin đã có trên màn hình.</div>
+  <div><b>Khoảng thở</b>Ít phần hơn trên một màn hình, khoảng cách rộng hơn. Không nhồi thêm card để lấp chỗ trống.</div>
+  <div><b>Không tô pastel khắp nơi</b>Card nền trắng với viền mảnh. Collection chỉ có một chấm màu trầm, không đổi màu cả card.</div>
+</div>
+
+<div class="alloc-l">Đo pixel màn Home hiện tại</div>
+<div class="alloc" id="m-old"></div>
+<div class="alloc-l" style="color:var(--blue-600)">Đo pixel màn Home đề xuất</div>
+<div class="alloc" id="m-new"></div>
+<p class="lead" style="margin-top:10px;font-size:13px">Đếm pixel trên ảnh chụp hai màn Home ở mục 4, bỏ khung máy. Trắng: gần trắng, không sắc. Ink: tối hoặc xám. Nhấn: có sắc. Khi card không được nền Ink, Ink chỉ còn ở chữ, icon, viền và Syllie nên đo được khoảng 9%; 30% nên hiểu là sức nặng thị giác (chữ đậm, nút Ink, Syllie) hơn là diện tích.</p>
+
+<!-- ============ RAMPS ============ -->
+<h2 class="sec" id="ramps">2. Dải màu<span class="dot">.</span></h2>
+<p class="lead">Bấm ô để copy. Ô viền đen là bậc 500. Số trong ô là độ tương phản của chữ trắng hoặc bậc 950 (chọn cái tốt hơn).</p>
+<div class="board"><div class="bt">Lõi: 30% Ink và 10% nhấn</div><div class="ramps" id="core"></div></div>
+<div class="board"><div class="bt">Trạng thái: chỉ khi có ngữ cảnh</div><div class="ramps" id="semantic"></div></div>
+<div class="board"><div class="bt">Dấu Collection: một màu tươi, chỉ ở chấm và icon, không làm nền card</div><div class="marks" id="marks"></div></div>
+
+<!-- ============ TOKENS ============ -->
+<h2 class="sec" id="tokens">3. Token cũ → mới<span class="dot">.</span></h2>
+<p class="lead">Giữ tên token trong <code>Colors.swift</code>, đổi giá trị trỏ vào dải. Nền trắng giữ nguyên.</p>
+<div class="tblwrap"><table class="map" id="map"><thead><tr><th>Token</th><th>Hiện tại</th><th>Đề xuất</th><th>Ghi chú</th></tr></thead><tbody></tbody></table></div>
+
+<!-- ============ SCREENS ============ -->
+<h2 class="sec" id="home">4. Home<span class="dot">.</span></h2>
+<p class="lead">Mọi card nền trắng, viền 2pt, không shadow hay cạnh dày. Bỏ dòng ngày tháng và "Đã xong 7/20" (thanh tiến độ đã nói điều đó); chỉ giữ hai Topic để màn hình thoáng. Card "Bài học hôm nay" nổi bật nhờ thanh tiến độ xanh dày và nút xanh (vào bài học là hành động luyện tập). Icon mang màu theo nghĩa (Sun cho thử thách, Green cho ôn tập, màu Collection cho Topic) nhưng nền card không đổi màu.</p>
+<div class="compare" id="cmp-home"></div>
+
+<h2 class="sec" id="task">5. Bài tập<span class="dot">.</span></h2>
+<p class="lead">Nút "Kiểm tra" nền xanh vì là hành động luyện tập. Đang chọn và tiến độ cũng xanh. Phản hồi đúng/sai đậm chất game: panel phủ màu nhạt, nút Green hoặc Coral có cạnh dày.</p>
+<div class="controls"><div class="seg" id="seg-state"><button data-v="sel" class="on">Đang chọn</button><button data-v="ok">Đúng</button><button data-v="err">Sai</button></div></div>
+<div class="compare" id="cmp-task"></div>
+
+<h2 class="sec" id="results">6. Kết quả cuối phiên<span class="dot">.</span></h2>
+<p class="lead">Số lớn mang màu của nhóm (Green, Blue, Coral) trên card trắng. LP có icon vàng nắng nổi khối. "Luyện lại" là hành động luyện tập nên nền xanh; "Xong" là nút phụ. Danh sách từ yếu không lặp lại ở đây: chạm vào ô "Cần luyện" để xem.</p>
+<div class="compare" id="cmp-results"></div>
+
+<h2 class="sec" id="buttons">7. Nút<span class="dot">.</span></h2>
+<p class="lead">Bấm thử để thấy cạnh dày lún xuống. Nút mới cao 44pt (so với khoảng 51pt), đúng mức chạm tối thiểu, và bo tròn hoàn toàn.</p>
+<div class="gallery">
+  <div class="g theme-old"><div class="eyebrow">Hiện tại</div>
+    <button class="btn">Kiểm tra</button><button class="btn secondary">Bỏ qua</button><button class="btn danger">Xóa từ</button><button class="btn disabled">Kiểm tra</button></div>
+  <div class="g theme-new"><div class="eyebrow" style="color:var(--blue-600)">Đề xuất · hành động chung (Ink 800)</div>
+    <button class="btn">Lưu thay đổi</button><button class="btn secondary">Hủy</button><button class="btn danger">Xóa từ</button><button class="btn disabled">Lưu thay đổi</button>
+    <div style="font-size:13px;line-height:1.5;color:var(--ink-600)">Mặt Ink 800, cạnh dày Ink 950: cạnh dày vẫn nhìn rõ. Dùng cho đăng nhập, lưu, thêm từ, chỉnh kế hoạch.</div></div>
+  <div class="g theme-new"><div class="eyebrow" style="color:var(--blue-600)">Đề xuất · luyện tập (Blue + trạng thái)</div>
+    <button class="btn practice">Bắt đầu học</button>
+    <button class="btn practice">Kiểm tra</button>
+    <button class="btn" style="background:var(--green-600);box-shadow:0 4px 0 var(--green-800)">Tiếp tục</button>
+    <button class="btn" style="background:var(--coral-600);box-shadow:0 4px 0 var(--coral-800)">Đã hiểu</button>
+    <div style="font-size:13px;line-height:1.5;color:var(--ink-600)">Blue: mọi hành động luyện tập (vào bài, Kiểm tra, Luyện lại, chơi Thử thách). Green/Coral: nút trong panel phản hồi.</div></div>
+</div>
+
+<h2 class="sec" id="notes">8. Cần quyết<span class="dot">.</span></h2>
+<div class="notes">
+  <div class="note"><b>Xanh dương trầm hơn</b><code>#4775F5</code> → <code>#3E68DB</code>. Chữ trắng trên Blue 500 ≈ <span id="cr-v"></span>:1 (đạt AA; màu cũ ≈ <span id="cr-old"></span>:1).</div>
+  <div class="note"><b>Nút trong panel phản hồi</b>Green/Coral thay Ink để giữ nhịp game. Chữ trắng trên Green 600 ≈ <span id="cr-m"></span>:1 và Coral 600 ≈ <span id="cr-c"></span>:1, đạt mức chữ lớn đậm (≥ 3:1).</div>
+  <div class="note"><b>Ink đổi sắc nhẹ</b><code>#171717</code> → <code>#131217</code> (ngả tím rất nhẹ). Khác biệt nhỏ; Syllie trong Rive nên dùng cùng mã. Có thể giữ <code>#171717</code> nếu muốn đổi ít nhất.</div>
+  <div class="note"><b>HomeSyllie</b>Prop (thẻ chữ, máy bay) đang dùng xanh dương <code>interactive</code>, đổi sang Blue 500 mới cho khớp.</div>
+  <div class="note"><b>DESIGN_SYSTEM.md</b>Thay mục 4.1 bằng quy tắc 60 · 30 · 10, dải màu và quy ước bậc; thêm quy tắc nút: Ink 800 cho hành động chung, Blue cho hành động luyện tập.</div>
+</div>
+
+</div>
+<div class="toast" id="toast">Đã copy</div>
+
+<script>
+const SYLLIE = "../VocabFlow/Resources/Assets.xcassets/LaunchSyllieV2.imageset/LaunchSyllieV2@2x.png";
+const P = {
+  book: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+  rotate: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/><path d="M12 15v7"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  vol: '<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>',
+  bubble: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  plane: '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>',
+};
+const ic = (n, fill) => `<svg viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+
+/* ramps */
+for (const [name, r] of Object.entries(RAMPS)) {
+  const row = document.createElement("div");
+  row.className = "ramp";
+  row.innerHTML = `<div class="name"><b>${r.label}<small>${r.layer}</small></b><span>${r.role}</span></div>` +
+    r.hex.map((h, i) => {
+      const w = contrast(h, "#FFFFFF"), d = contrast(h, r.hex[10]);
+      const cr = Math.max(w, d), g = cr >= 4.5 ? "AA" : cr >= 3 ? "AA+" : "";
+      return `<div class="cell ${STEPS[i] === 500 ? "key" : ""}" style="background:${h};color:${w >= d ? "#fff" : r.hex[10]}" data-hex="${h}" title="${name}-${STEPS[i]}">
+        <span class="step">${STEPS[i]}</span><span class="hex">${h.slice(1)}</span><span>${cr.toFixed(1)} ${g}</span></div>`;
+    }).join("");
+  document.getElementById(r.group).appendChild(row);
+}
+document.getElementById("marks").innerHTML = MARKS.map(([n, h]) => `<div class="cell-mark" data-hex="${h}"><i style="background:${h}"></i>${n} <code>${h}</code></div>`).join("");
+const toast = document.getElementById("toast");
+document.addEventListener("click", e => {
+  const c = e.target.closest("[data-hex]"); if (!c) return;
+  navigator.clipboard?.writeText(c.dataset.hex).catch(() => {});
+  toast.textContent = `Đã copy ${c.dataset.hex}`; toast.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove("show"), 1200);
+});
+
+/* tokens */
+const R = (n, s) => RAMPS[n].hex[STEPS.indexOf(s)];
+const MAP = [
+  ["canvas / surface", "#FFFFFF", null, "Giữ trắng (60%)"],
+  ["ink", "#171717", ["ink", 950], "Đen ngả tím nhẹ"],
+  ["mutedInk", "#5C606B", ["ink", 600], ""],
+  ["stroke / track", "#E1E4EB", ["ink", 200], ""],
+  ["neutralSurface", "#F5F5F5", ["ink", 100], ""],
+  ["tileDepth", "#CDD2DC", ["ink", 200], "Cạnh dày nhẹ hơn, đỡ nặng"],
+  ["primaryAction", "#303030", ["ink", 800], "Không lên 900+ để cạnh dày còn thấy"],
+  ["primaryDepth", "#080808", ["ink", 950], ""],
+  ["interactive / focusRing", "#4775F5", ["blue", 500], "Trầm hơn một chút"],
+  ["selectedSurface", "#EAF0FF", ["blue", 50], ""],
+  ["selectedInk", "#234EAE", ["blue", 700], ""],
+  ["selectedDepth", "#B2C5F5", ["blue", 200], ""],
+  ["success", "#2BC86A", ["green", 500], "Giữ nguyên"],
+  ["successSurface", "#E5FAED", ["green", 50], ""],
+  ["successInk", "#12673A", ["green", 800], "Giữ nguyên"],
+  ["error", "#FF795D", ["coral", 500], "Tươi, rõ hơn"],
+  ["errorSurface", "#FFF0EA", ["coral", 50], ""],
+  ["errorInk", "#943727", ["coral", 800], ""],
+  ["reward", "#FFD23F", ["amber", 500], "Sun: LP, sao, ăn mừng"],
+  ["resultStrong / Mid / Weak", "#2B55CE", ["blue", 600], "Lấy từ dải Blue (600 / 300 / 100)"],
+  ["successAction (mới)", null, ["green", 600], "Nút trong panel đúng"],
+  ["errorAction (mới)", null, ["coral", 600], "Nút trong panel sai"],
+  ["practiceAction (mới)", null, ["blue", 500], "Nền nút của hành động luyện tập"],
+  ["practiceDepth (mới)", null, ["blue", 700], ""],
+  ["collectionMark (mới)", null, null, "5 màu tươi, chỉ ở chấm và icon"],
+];
+const sw = (h, l) => `<span class="sw"><i style="background:${h}"></i>${h}${l ? ` <small>${l}</small>` : ""}</span>`;
+document.querySelector("#map tbody").innerHTML = MAP.map(([t, old, ref, note]) => {
+  const nu = ref ? sw(R(...ref), `${ref[0]}-${ref[1]}`) : (t.startsWith("canvas") ? sw("#FFFFFF") : t === "primaryDepth" ? sw("#000000") : "—");
+  return `<tr><td><code>${t}</code></td><td>${old ? sw(old) : "—"}</td><td>${nu}</td><td style="color:var(--page-muted)">${note}</td></tr>`;
+}).join("");
+
+/* screens */
+const status = `<div class="status"><span>9:41</span><span>●●● ▮</span></div>`;
+function home() {
+  const topics = [["bubble", "Daily conversation", 24, 40], ["cart", "Shopping", 12, 30]];
+  return `<div class="scr">${status}<div class="scroll">
+    <div class="topbar"><span class="wordmark">Syll<i>.</i></span><span class="lp"><span class="streak">${ic("zap", 1)}1.240</span></span></div>
+    <div class="hello"><div><h3 class="greet">Chào buổi sáng,<br>Alan<span class="acc">.</span></h3></div><img src="${SYLLIE}" alt=""></div>
+    <div class="hero">
+      <div class="eyebrow">Bài học hôm nay</div>
+      <div class="title">12 từ ôn · 8 từ mới</div>
+      <div class="bar"><i style="width:35%"></i></div>
+      <div class="meta">Còn khoảng 6 phút</div>
+      <button class="btn hero-cta practice">Tiếp tục</button>
+    </div>
+    <div class="grid2">
+      <div class="mini" style="--g:var(--amber-600);--g-bg:var(--amber-50)"><span class="ico">${ic("zap", 1)}</span><b>Thử thách</b><span>Màn 7 · <span class="stars">★★</span>☆</span></div>
+      <div class="mini" style="--g:var(--green-700);--g-bg:var(--green-50)"><span class="ico">${ic("rotate")}</span><b>Ôn thêm</b><span>34 từ đến hạn</span></div>
+    </div>
+    <div class="sect"><b>Topic của bạn</b><span class="cmark" style="--mark:${MARKS[0][1]}"><i></i>Everyday</span></div>
+    ${topics.map(([i, n, a, b]) => `<div class="topic"><span class="ico" style="--g:${MARKS[0][1]}">${ic(i)}</span><div class="t"><b>${n}</b><div class="bar"><i style="width:${a / b * 100}%"></i></div></div><span class="n">${a}/${b}</span></div>`).join("")}
+  </div>
+  <div class="tabbar"><span class="tab on">${ic("home")}Học</span><span class="tab">${ic("book")}Từ của tôi</span><span class="tab">${ic("trophy")}Xếp hạng</span><span class="tab">${ic("user")}Hồ sơ</span></div></div>`;
+}
+function task(state) {
+  const opts = ["kiên cường", "mong manh", "cẩn thận", "hào phóng"];
+  const cls = i => state === "sel" ? (i === 0 ? "sel" : "") : state === "ok" ? (i === 0 ? "ok" : "") : (i === 1 ? "err" : i === 0 ? "ok" : "");
+  const mark = i => cls(i) === "ok" ? ic("check") : cls(i) === "err" ? ic("x") : "";
+  const dock = state === "sel" ? `<div class="dock"><button class="btn practice">Kiểm tra</button></div>`
+    : state === "ok" ? `<div class="panel ok"><div class="ph"><span>${ic("check")}</span>Chính xác!</div><p><b>resilient</b>: kiên cường, nhanh hồi phục sau khó khăn.</p><button class="btn okb">Tiếp tục</button></div>`
+    : `<div class="panel err"><div class="ph"><span>${ic("x")}</span>Chưa đúng</div><p>Đáp án là <b>kiên cường</b>. "Mong manh" là <i>fragile</i>.</p><button class="btn errb">Đã hiểu</button></div>`;
+  return `<div class="scr">${status}<div class="scroll">
+    <div class="taskhead">${ic("x")}<div class="bar"><i style="width:55%"></i></div></div>
+    <div class="eyebrow">Từ mới</div>
+    <div class="q">Chọn nghĩa đúng của từ</div>
+    <div class="word"><b>resilient</b><span class="speak">${ic("vol")}</span></div>
+    <div class="opts">${opts.map((o, i) => `<div class="opt ${cls(i)}">${o}${mark(i)}</div>`).join("")}</div>
+  </div>${dock}</div>`;
+}
+function results() {
+  return `<div class="scr">${status}<div class="scroll">
+    <div class="res"><img src="${SYLLIE}" alt=""><h3>Hoàn thành<span class="acc">.</span></h3><p>20 từ trong 9 phút</p></div>
+    <div class="stats">
+      <div style="--c:var(--green-600)"><div class="num">12</div><div class="cap"><i style="background:var(--green-500)"></i>Đã ôn</div></div>
+      <div style="--c:var(--blue-500)"><div class="num">8</div><div class="cap"><i style="background:var(--blue-500)"></i>Từ mới</div></div>
+      <div style="--c:var(--coral-600)"><div class="num">3</div><div class="cap"><i style="background:var(--coral-500)"></i>Cần luyện</div></div>
+    </div>
+    <div class="blk lprow"><span class="ico">${ic("zap", 1)}</span><div class="grow"><b>+45 LP</b></div><span class="rank">#12 → #9</span></div>
+  </div><div class="dock"><button class="btn practice">Luyện lại từ yếu</button><button class="btn secondary" style="margin-top:10px">Xong</button></div></div>`;
+}
+function pair(id, render) {
+  document.getElementById(id).innerHTML = `
+    <div class="col"><div class="lbl">Hiện tại</div><div class="phone theme-old">${render()}</div></div>
+    <div class="col"><div class="lbl new">Đề xuất</div><div class="phone theme-new">${render()}</div></div>`;
+}
+let st = "sel";
+const drawTask = () => pair("cmp-task", () => task(st));
+document.getElementById("seg-state").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#seg-state button").forEach(x => x.classList.toggle("on", x === b));
+  st = b.dataset.v; drawTask();
+});
+pair("cmp-home", home); drawTask(); pair("cmp-results", results);
+document.getElementById("cr-old").textContent = contrast("#4775F5", "#FFFFFF").toFixed(1);
+document.getElementById("cr-v").textContent = contrast(R("blue", 500), "#FFFFFF").toFixed(1);
+document.getElementById("cr-m").textContent = contrast(R("green", 600), "#FFFFFF").toFixed(1);
+document.getElementById("cr-c").textContent = contrast(R("coral", 600), "#FFFFFF").toFixed(1);
+
+/* measured 60/30/10 (filled after pixel count) */
+const MEASURED = { old: [86.1, 13.1, 0.7], new: [83.1, 9.3, 7.6] };
+function bar(id, [w, k, a], accent) {
+  document.getElementById(id).innerHTML =
+    `<div style="flex:${w};background:#fff;color:var(--ink-600)">Trắng ${w}%</div>` +
+    `<div style="flex:${k};background:var(--ink-950);color:#fff">Ink ${k}%</div>` +
+    `<div style="flex:${Math.max(a, 1.5)};background:${accent};color:#fff">${a >= 6 ? a + "%" : ""}</div>`;
+}
+bar("m-old", MEASURED.old, "#4775F5"); bar("m-new", MEASURED.new, "var(--blue-500)");
+</script>
+</body>
+</html>

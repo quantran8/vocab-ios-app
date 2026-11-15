@@ -17,6 +17,15 @@ private actor AudioSessionActivator {
         try session.setActive(true)
     }
 
+    /// `play()` implicitly prepares and activates the session, even after explicit activation.
+    /// Keep creation and startup here; ownership transfers to the main actor after this returns.
+    func startPlayback(_ data: Data, delegate: AudioClipPlayer) throws -> PlaybackHandle {
+        try activate(.playback, mode: .spokenAudio)
+        let player = try AVAudioPlayer(data: data)
+        player.delegate = delegate
+        return PlaybackHandle(player, started: player.play())
+    }
+
     private struct Configuration {
         let category: AVAudioSession.Category
         let mode: AVAudioSession.Mode
@@ -59,6 +68,17 @@ private actor AudioSessionActivator {
     }
 }
 
+/// The activator accesses the player only before returning this handle. The main actor owns it afterwards.
+private final class PlaybackHandle: @unchecked Sendable {
+    let player: AVAudioPlayer
+    let started: Bool
+
+    init(_ player: AVAudioPlayer, started: Bool) {
+        self.player = player
+        self.started = started
+    }
+}
+
 /// Carries a recorder to the activator for the one blocking call; it is used only from the main actor otherwise.
 private final class RecorderHandle: @unchecked Sendable {
     let recorder: AVAudioRecorder
@@ -94,14 +114,16 @@ final class AudioClipPlayer: NSObject, AudioClipPlaying {
             let data = try await clip(url)
             // Checked before activating too: a stale play must not switch the category under a recording.
             guard request == playRequest else { return false }
-            try await AudioSessionActivator.shared.activate(.playback, mode: .spokenAudio)
-            guard request == playRequest else { return false }
-            let player = try AVAudioPlayer(data: data)
-            player.delegate = self
-            self.player = player
-            isPlaying = player.play()
+            let playback = try await AudioSessionActivator.shared.startPlayback(data, delegate: self)
+            guard request == playRequest else {
+                playback.player.stop()
+                return false
+            }
+            self.player = playback.player
+            isPlaying = playback.started && playback.player.isPlaying
             return isPlaying
         } catch {
+            guard request == playRequest else { return false }
             isPlaying = false
             return false
         }
@@ -127,7 +149,10 @@ final class AudioClipPlayer: NSObject, AudioClipPlaying {
 
 extension AudioClipPlayer: AVAudioPlayerDelegate {
     nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        Task { @MainActor in self.isPlaying = false }
+        Task { @MainActor in
+            guard self.player === player else { return }
+            self.isPlaying = false
+        }
     }
 }
 

@@ -1,64 +1,45 @@
 import SwiftUI
 
-/// Sheet adding any word to the learning path: type it, then review what the backend found in a sheet over it.
-/// Editing a meaning or looking for another one opens one more sheet on top.
+/// Sheet adding any word to the learning path. The whole flow stays in this one sheet: type the word, the lookup,
+/// what the backend found, editing it or looking for another meaning, and the confirmation are steps pushed inside
+/// it, each with a round back (‹) and close (✕) button (docs/app-redesign-v1.html, frames 3.1–3.7).
 struct AddWordView: View {
     @Environment(CustomWordStore.self) private var store
     @Environment(SpeechPlayer.self) private var speech
+    @Environment(\.motion) private var motion
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
+    @State private var direction = StepDirection()
 
     var body: some View {
-        // The ZStack ties onDisappear to the sheet, not to each phase's view.
-        ZStack { entry }
-            .onDisappear {
-                store.resetLookup()
-                speech.stop()
-            }
-            .sheet(isPresented: isShowingResult) {
-                AddWordResultSheet()
-                    .environment(\.closeAddWord, { dismiss() })
-            }
-            .addWordSheetStyle()
-    }
-
-    /// Swiping the result away returns to the word entry, like its back button.
-    private var isShowingResult: Binding<Bool> {
-        Binding(get: { store.isReviewing }, set: { if !$0 { store.resetLookup() } })
-    }
-
-    @ViewBuilder
-    private var entry: some View {
-        switch store.phase {
-        case .loading where !store.isReviewing:
-            AddWordScaffold { LookupProgress() }
-        case .failed(let message, let canRetry) where !store.isReviewing:
-            WordEntry(text: $text, message: message, canRetry: canRetry)
-        default:
-            WordEntry(text: $text, message: nil, canRetry: false)
+        let stage = Stage(store: store)
+        let _ = direction.update(stage.order)
+        // The ZStack ties onDisappear to the sheet, not to each step's view.
+        ZStack {
+            stageView
+                .id(stage.key)
+                .transition(motion.stepTransition(isMovingBack: { direction.isBack }))
         }
-    }
-}
-
-/// What a lookup found, in its own sheet. Later lookups and the add show here too, until it goes away.
-private struct AddWordResultSheet: View {
-    @Environment(CustomWordStore.self) private var store
-    @Environment(\.closeAddWord) private var closeAddWord
-
-    var body: some View {
-        ZStack { content }
-            .addWordSheetStyle()
+        .animation(motion.animation(MotionTokens.stepSlide), value: stage.key)
+        .onDisappear {
+            store.resetLookup()
+            speech.stop()
+        }
+        .environment(\.closeAddWord, { dismiss() })
+        .addWordSheetStyle()
     }
 
     @ViewBuilder
-    private var content: some View {
+    private var stageView: some View {
         switch store.phase {
         case .idle:
-            EmptyView()
+            WordEntry(text: $text, message: nil, canRetry: false)
         case .loading:
-            AddWordScaffold { LookupProgress() }
+            CenteredStage { LookupProgress() }
         case .failed(let message, let canRetry):
-            if let word = store.baseWord {
+            if !store.isReviewing {
+                WordEntry(text: $text, message: message, canRetry: canRetry)
+            } else if let word = store.baseWord {
                 OtherMeaningStage(
                     lemma: word.lemma,
                     context: store.lastContext,
@@ -78,8 +59,8 @@ private struct AddWordResultSheet: View {
             }
         case .result(let result):
             lookupResult(result)
-        case .added(let lemma, let isNew, let ipa):
-            AddedConfirmation(lemma: lemma, ipa: ipa, isNew: isNew) { closeAddWord?() }
+        case .added(let lemma, let isNew, _, let meaning):
+            AddedConfirmation(lemma: lemma, meanings: store.addedMeanings.isEmpty ? meaning.map { [$0] } ?? [] : store.addedMeanings, isNew: isNew) { dismiss() }
         }
     }
 
@@ -94,24 +75,13 @@ private struct AddWordResultSheet: View {
                 closed: word.meanings.filter { meaning in !senses.contains { $0.id == meaning.id } },
                 search: .otherMeaning
             )
-            .id(word.meanings.map(\.id))
         case .draft(let draft):
-            WordReview(lemma: draft.lemma, senses: ReviewSense.senses(of: draft, tag: "AI-generated"))
-                .id(draft.draftId)
+            WordReview(lemma: draft.lemma, senses: ReviewSense.senses(of: draft, tag: "AI-generated"), search: .otherMeaning)
         case .newMeaningDraft(let draft):
             WordReview(lemma: draft.lemma, senses: ReviewSense.senses(of: draft, tag: "Private to you"), search: .searchAgain)
-                .id(draft.draftId)
         case .invalid:
-            AddWordScaffold(onBack: store.goBack) {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("That doesn’t look like a word")
-                        .font(Typography.screenTitle)
-                        .foregroundStyle(Color.ink)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Check the spelling, or try another word.")
-                        .font(Typography.secondary)
-                        .foregroundStyle(Color.mutedInk)
-                }
+            CenteredStage(onBack: store.goBack) {
+                InvalidWord(text: text.trimmed)
             } bar: {
                 PinnedActionBar {
                     PrimaryButton(title: "Try another word") { store.resetLookup() }
@@ -121,12 +91,67 @@ private struct AddWordResultSheet: View {
     }
 }
 
+/// The step on screen, from the store's phase: a key that changes with every new step, and its place in the flow.
+private struct Stage {
+    let key: String
+    /// Higher is further in. A search for another meaning sits deeper than the word it started from.
+    let order: Int
+
+    @MainActor
+    init(store: CustomWordStore) {
+        let nested = store.baseWord != nil ? 2 : 0
+        switch store.phase {
+        case .idle:
+            key = "entry"
+            order = 0
+        case .loading:
+            key = "loading"
+            order = 1 + nested
+        case .failed:
+            if store.isReviewing {
+                key = "failed-\(nested)"
+                order = 2 + nested
+            } else {
+                key = "entry"
+                order = 0
+            }
+        case .result(let result):
+            key = "result-" + Self.identity(of: result)
+            order = 2 + nested
+        case .added:
+            key = "added"
+            order = 5
+        }
+    }
+
+    private static func identity(of result: CustomWordLookup) -> String {
+        switch result {
+        case .existing(let word): "existing-" + word.meanings.map(\.id).joined(separator: ",")
+        case .draft(let draft): "draft-" + draft.draftId
+        case .newMeaningDraft(let draft): "meaning-" + draft.draftId
+        case .invalid: "invalid"
+        }
+    }
+}
+
+/// Which way the steps move. Worked out from their order as the phase changes, and read by the transition as it
+/// runs (an outgoing step keeps the transition it was given). Not observed: it never redraws anything itself.
+private final class StepDirection {
+    private(set) var isBack = false
+    private var last: Int?
+
+    func update(_ order: Int) {
+        if let last, last != order { isBack = order < last }
+        last = order
+    }
+}
+
 private struct CloseAddWordKey: EnvironmentKey {
     static var defaultValue: (() -> Void)? { nil }
 }
 
 private extension EnvironmentValues {
-    /// Closes every sheet of the flow. Unset, a sheet's close button closes just that sheet.
+    /// Closes the add-word sheet from any step.
     var closeAddWord: (() -> Void)? {
         get { self[CloseAddWordKey.self] }
         set { self[CloseAddWordKey.self] = newValue }
@@ -137,42 +162,49 @@ private extension View {
     func addWordSheetStyle() -> some View {
         presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .presentationCornerRadius(Radii.sheet)
             .presentationBackground(Color.canvas)
     }
 }
 
-/// One step of the sheet: a header, scrolling content, and an action bar pinned to the bottom.
-private struct AddWordScaffold<Content: View, Bar: View>: View {
+/// The ‹ and ✕ row at the top of every step.
+private struct AddWordHeader: View {
     var onBack: (() -> Void)?
-    /// The step's secondary actions, behind a menu button.
-    var menu: [HeaderAction] = []
-    @ViewBuilder let content: Content
-    @ViewBuilder let bar: Bar
     @Environment(\.closeAddWord) private var closeAddWord
 
     var body: some View {
+        HStack {
+            if let onBack {
+                SheetBackButton(action: onBack)
+            }
+            Spacer()
+            SheetCloseButton(action: closeAddWord)
+        }
+    }
+}
+
+/// One step of the sheet: the header, scrolling content, and an action bar pinned to the bottom (above the keyboard).
+private struct AddWordScaffold<Content: View, Bar: View>: View {
+    var onBack: (() -> Void)?
+    @ViewBuilder let content: Content
+    @ViewBuilder let bar: Bar
+
+    var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.l) {
-                HStack(spacing: Spacing.xs) {
-                    if let onBack {
-                        SheetBackButton(action: onBack)
-                    }
-                    if !menu.isEmpty {
-                        // Lines the circle up with the content edge, as the back button does.
-                        HeaderMenu(actions: menu)
-                            .padding(.leading, onBack == nil ? -Spacing.xs : 0)
-                    }
-                    Spacer()
-                    SheetCloseButton(action: closeAddWord)
+            VStack(alignment: .leading, spacing: 0) {
+                AddWordHeader(onBack: onBack)
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    content
                 }
-                content
+                .padding(.top, Spacing.xxs)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.top, Spacing.xs)
             .padding(.bottom, Spacing.l)
         }
         .scrollDismissesKeyboard(.interactively)
         .safeAreaInset(edge: .bottom) { bar }
+        .background(Color.canvas)
     }
 }
 
@@ -182,35 +214,38 @@ extension AddWordScaffold where Bar == EmptyView {
     }
 }
 
-private struct HeaderAction: Identifiable {
-    let title: LocalizedStringKey
-    let systemImage: String
-    let action: () -> Void
-
-    var id: String { systemImage }
-}
-
-/// Round ⋯ matching the sheet's close button, opening the step's secondary actions.
-private struct HeaderMenu: View {
-    let actions: [HeaderAction]
+/// A step whose content sits in the middle of the sheet: the lookup, the confirmation, "not a word".
+private struct CenteredStage<Content: View, Bar: View>: View {
+    var onBack: (() -> Void)?
+    @ViewBuilder let content: Content
+    @ViewBuilder let bar: Bar
 
     var body: some View {
-        Menu {
-            ForEach(actions) { item in
-                Button(item.title, systemImage: item.systemImage, action: item.action)
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Color.mutedInk)
-                .frame(width: 34, height: 34)
-                .background(Color.neutralSurface, in: Circle())
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
-                .contentShape(Rectangle())
+        VStack(spacing: 0) {
+            AddWordHeader(onBack: onBack)
+                .padding(.horizontal, Spacing.screenGutter)
+                .padding(.top, Spacing.xs)
+            Spacer(minLength: Spacing.l)
+            content
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Spacing.xl)
+            Spacer(minLength: Spacing.l)
+            // Sits a little above the middle, as the header's height does in the design.
+            Color.clear.frame(height: Spacing.xl + Spacing.xs)
         }
-        .accessibilityLabel(Text("More actions"))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom) { bar }
+        .background(Color.canvas)
     }
 }
+
+extension CenteredStage where Bar == EmptyView {
+    init(onBack: (() -> Void)? = nil, @ViewBuilder content: () -> Content) {
+        self.init(onBack: onBack, content: content, bar: { EmptyView() })
+    }
+}
+
+// MARK: - Entry, lookup, not a word
 
 private struct WordEntry: View {
     @Binding var text: String
@@ -221,35 +256,39 @@ private struct WordEntry: View {
 
     var body: some View {
         let issue = CustomWordInput.issue(in: text)
+        let inputHint = hint(for: issue)
         AddWordScaffold {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                ExerciseHeading("Which word do you want to learn?", subtitle: "We’ll find it or prepare it for you.")
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                SheetTitle("Which word do you want to learn?")
+                Text("We’ll find it or prepare it for you.")
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.bodyInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-                TextField("Type an English word", text: $text)
-                    .font(Typography.body)
-                    .foregroundStyle(Color.ink)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .submitLabel(.search)
-                    .focused($isFocused)
-                    .onSubmit { search() }
-                    .padding(.horizontal, Spacing.m - 2)
-                    .frame(minHeight: Spacing.minTouchTarget + 4)
-                    .background(Color.surface, in: entryShape)
-                    .overlay(entryShape.strokeBorder(isFocused ? Color.focusRing : Color.stroke, lineWidth: isFocused ? 2 : 1.5))
+            TextField("Type an English word", text: $text)
+                .font(Typography.tileLarge)
+                .foregroundStyle(Color.ink)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .focused($isFocused)
+                .onSubmit { search() }
+                .fieldSurface(isFocused: isFocused, minHeight: Spacing.rowMinHeight, isError: inputHint != nil)
+                .padding(.top, Spacing.xs)
 
-                if let hint = hint(for: issue) {
-                    Text(hint)
-                        .font(Typography.micro)
-                        .foregroundStyle(Color.errorInk)
-                }
-                if let message {
-                    ErrorText(message: message)
-                }
-                if canRetry {
-                    SecondaryButton(title: "Try again", systemImage: "arrow.clockwise") {
-                        Task { await store.retryLookup() }
-                    }
+            // Only once the text can't be looked up.
+            if let inputHint {
+                Text(inputHint)
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.errorInk)
+            }
+            if let message {
+                ErrorText(message: message)
+            }
+            if canRetry {
+                SecondaryButton(title: "Try again", systemImage: "arrow.clockwise") {
+                    Task { await store.retryLookup() }
                 }
             }
         } bar: {
@@ -257,15 +296,7 @@ private struct WordEntry: View {
                 PrimaryButton(title: "Look up", isEnabled: issue == nil) { search() }
             }
         }
-        // Not while a result sheet covers the entry, or the keyboard would rise over it.
-        .onAppear { isFocused = !store.isReviewing }
-        .onChange(of: store.isReviewing) { _, isReviewing in
-            if !isReviewing { isFocused = true }
-        }
-    }
-
-    private var entryShape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
+        .onAppear { isFocused = true }
     }
 
     private func hint(for issue: CustomWordInput.Issue?) -> LocalizedStringKey? {
@@ -282,22 +313,60 @@ private struct WordEntry: View {
     }
 }
 
+/// Syllie flying while the backend looks the word up.
 private struct LookupProgress: View {
     var body: some View {
-        VStack(spacing: Spacing.s) {
-            ProgressView()
-                .controlSize(.large)
+        VStack(spacing: 0) {
+            SyllieLoadingView()
+                .frame(width: 112, height: 112)
+                .accessibilityHidden(true)
             Text("Looking up your word…")
-                .font(Typography.emphasis)
+                .font(Typography.tileLarge.weight(.heavy))
+                .tracking(Typography.tightTracking)
                 .foregroundStyle(Color.ink)
+                .padding(.top, Spacing.screenGutter)
             Text("New words can take up to a minute.")
                 .font(Typography.secondary)
-                .foregroundStyle(Color.mutedInk)
-                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.bodyInk)
+                .padding(.top, Spacing.xs)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Spacing.xl)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Syllie tilts his head over what was typed, so the spelling mistake is easy to see.
+private struct InvalidWord: View {
+    let text: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SyllieReactionView(reaction: .oops)
+                .frame(width: 96, height: 80)
+                .rotationEffect(.degrees(-8))
+                .accessibilityHidden(true)
+            if !text.isEmpty {
+                Text(verbatim: text)
+                    .font(Typography.body.weight(.semibold))
+                    .foregroundStyle(Color.bodyInk)
+                    .lineLimit(1)
+                    .padding(.horizontal, Spacing.m)
+                    .frame(height: Spacing.buttonSmallHeight)
+                    .background(Color.neutralSurface, in: Capsule())
+                    .padding(.top, Spacing.screenGutter)
+            }
+            Text("That doesn’t look like a word")
+                .font(Typography.screenTitle.weight(.heavy))
+                .tracking(Typography.tightTracking)
+                .foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Spacing.m)
+                .accessibilityAddTraits(.isHeader)
+            Text("Check the spelling, or try another word.")
+                .font(Typography.secondary)
+                .foregroundStyle(Color.bodyInk)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Spacing.xs)
+        }
     }
 }
 
@@ -355,6 +424,7 @@ private struct ReviewSense: Identifiable {
     }
 }
 
+/// Grouped meanings with independent selection, expansion and editing.
 private struct WordReview: View {
     /// The way to another meaning. Context only works on a word the backend already has,
     /// so a brand-new word offers none.
@@ -362,10 +432,9 @@ private struct WordReview: View {
         case otherMeaning, searchAgain
     }
 
-    /// Opened over the result sheet.
-    private enum Sheet: Identifiable {
+    /// A step pushed over the result.
+    private enum Step {
         case edit, otherMeaning
-        var id: Self { self }
     }
 
     let lemma: String
@@ -373,8 +442,12 @@ private struct WordReview: View {
     let closed: [ExistingMeaning]
     let search: Search?
     @Environment(CustomWordStore.self) private var store
-    @State private var sheet: Sheet?
+    @Environment(\.motion) private var motion
+    @State private var step: Step?
+    @State private var isMovingBack = false
     @State private var selectedID: String?
+    @State private var selectedIDs: Set<String>
+    @State private var editedIDs: Set<String> = []
     /// One editable copy per meaning, so switching between them keeps the changes.
     @State private var drafts: [String: CustomWordEditDraft]
 
@@ -385,6 +458,7 @@ private struct WordReview: View {
         self.search = search
         // Opens on a meaning that can still be added, when there is one.
         _selectedID = State(initialValue: (senses.first { $0.addition != nil } ?? senses.first)?.id)
+        _selectedIDs = State(initialValue: Set(senses.first(where: { $0.addition != nil }).map { [$0.id] } ?? []))
         _drafts = State(initialValue: Dictionary(uniqueKeysWithValues: senses.map { ($0.id, $0.draft) }))
     }
 
@@ -393,253 +467,150 @@ private struct WordReview: View {
     }
 
     var body: some View {
-        details
-            .sheet(item: $sheet) { item in
-                ZStack { sheetContent(item) }
-                    .environment(\.closeAddWord, nil)
-                    .addWordSheetStyle()
-            }
-    }
-
-    @ViewBuilder
-    private func sheetContent(_ item: Sheet) -> some View {
-        switch item {
-        case .edit:
-            if let selected, let draft = drafts[selected.id] {
-                EditStage(ipa: selected.ipa, initial: draft) { edited in
-                    drafts[selected.id] = edited
-                    sheet = nil
-                    add(selected, draft: edited)
+        ZStack {
+            switch step {
+            case nil:
+                details
+                    .transition(motion.stepTransition(isMovingBack: { isMovingBack }))
+            case .edit?:
+                if let selected, let draft = drafts[selected.id] {
+                    EditStage(initial: draft, onBack: { go(to: nil) }) { edited in
+                        drafts[selected.id] = edited
+                        selectedIDs.insert(selected.id)
+                        editedIDs.insert(selected.id)
+                        go(to: nil)
+                    }
+                    .transition(motion.stepTransition(isMovingBack: { isMovingBack }))
                 }
+            case .otherMeaning?:
+                OtherMeaningStage(
+                    lemma: lemma,
+                    context: search == .searchAgain ? store.lastContext : "",
+                    message: nil,
+                    canRetry: false,
+                    onBack: { go(to: nil) }
+                )
+                .transition(motion.stepTransition(isMovingBack: { isMovingBack }))
             }
-        case .otherMeaning:
-            OtherMeaningStage(
-                lemma: lemma,
-                context: search == .searchAgain ? store.lastContext : "",
-                message: nil,
-                canRetry: false,
-                onFind: { sheet = nil }
-            )
         }
     }
 
-    /// Swiping the sheet away returns to the word entry, so back is only for an other-meaning result.
-    private var back: (() -> Void)? {
-        guard store.baseWord != nil else { return nil }
-        return { store.goBack() }
+    private func go(to next: Step?) {
+        isMovingBack = next == nil
+        motion.perform(MotionTokens.stepSlide) { step = next }
+    }
+
+    private var pronunciationsDiffer: Bool { Set(senses.map { $0.ipa ?? "" }).count > 1 }
+    private var pending: [ReviewSense] {
+        senses.filter { selectedIDs.contains($0.id) && !store.addedSenseIDs.contains($0.id) && $0.addition != nil }
     }
 
     private var details: some View {
-        AddWordScaffold(onBack: back, menu: menu) {
-            WordHero(lemma: lemma, ipa: selected?.ipa)
-
-            if senses.count > 1 {
-                sensePicker
+        AddWordScaffold(onBack: store.goBack) {
+            WordHeroHeader(lemma: lemma, ipa: senses.first?.ipa, showsPronunciation: !pronunciationsDiffer)
+            HStack {
+                Text("Choose meanings to add").font(Typography.emphasis)
+                Spacer()
+                if let tag = senses.compactMap(\.tag).first { StatusPill(tag) }
             }
-            if let selected, let draft = drafts[selected.id] {
-                SenseDetails(draft: draft, tag: selected.tag)
+            .padding(.top, Spacing.m)
+            ForEach(PartOfSpeechGroup.grouping(senses) { $0.partOfSpeech }) { group in
+                Text(verbatim: VocabularyItem.localizedPartOfSpeech(group.partOfSpeech))
+                    .font(Typography.eyebrow).foregroundStyle(Color.mutedInk)
+                ForEach(group.items) { sense in senseCard(sense) }
             }
-
-            ForEach(closed) { meaning in
-                ClosedMeaningRow(meaning: meaning)
+            TextLink(title: "Find another meaning") {
+                if search != nil { go(to: .otherMeaning) }
+                else { store.resetLookup() }
             }
+            ForEach(closed) { meaning in ClosedMeaningRow(meaning: meaning) }
         } bar: {
-            if selected != nil || store.notice != nil {
-                PinnedActionBar {
-                    VStack(spacing: Spacing.xs) {
-                        if let notice = store.notice {
-                            ErrorText(message: notice)
+            PinnedActionBar {
+                VStack(spacing: Spacing.xs) {
+                    if let notice = store.notice { ErrorText(message: notice) }
+                    PrimaryButton(title: pending.count > 1 ? "Add \(pending.count) meanings" : "Add word",
+                                  isEnabled: !pending.isEmpty && !store.isAdding) {
+                        let selections = pending.compactMap { sense -> CustomWordStore.Selection? in
+                            guard var addition = sense.addition else { return nil }
+                            let draft = drafts[sense.id] ?? sense.draft
+                            addition.edits = draft.edits
+                            return .init(id: sense.id, addition: addition, meaning: draft.meaningText)
                         }
-                        if let standing = selected?.standing {
-                            StandingBadge(standing: standing)
-                        } else if let selected {
-                            PrimaryButton(title: "Add word", isEnabled: !store.isAdding) {
-                                add(selected, draft: drafts[selected.id])
-                            }
-                        }
+                        Task { await store.addSelected(selections, lemma: lemma) }
                     }
                 }
             }
         }
+        .disabled(store.isAdding)
     }
 
-    private var menu: [HeaderAction] {
-        var actions: [HeaderAction] = []
-        if selected?.addition != nil {
-            actions.append(HeaderAction(title: "Edit", systemImage: "pencil") { sheet = .edit })
-        }
-        switch search {
-        case .otherMeaning:
-            actions.append(HeaderAction(title: "Other meaning", systemImage: "plus") { sheet = .otherMeaning })
-        case .searchAgain:
-            actions.append(HeaderAction(title: "Search again", systemImage: "arrow.clockwise") { sheet = .otherMeaning })
-        case nil:
-            break
-        }
-        return actions
-    }
-
-    private var sensePicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.xs) {
-                ForEach(senses) { sense in
-                    senseButton(sense)
+    private func senseCard(_ sense: ReviewSense) -> some View {
+        let draft = drafts[sense.id] ?? sense.draft
+        let added = store.addedSenseIDs.contains(sense.id)
+        let canSelect = sense.addition != nil && !added
+        let chosen = canSelect && selectedIDs.contains(sense.id)
+        let open = selectedID == sense.id
+        let shape = RoundedRectangle(cornerRadius: Radii.card)
+        return VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.s) {
+                if canSelect {
+                    Button {
+                        if chosen { selectedIDs.remove(sense.id) } else { selectedIDs.insert(sense.id) }
+                    } label: {
+                        Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 24)).foregroundStyle(chosen ? Color.interactive : Color.ink300)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Select meaning"))
+                    .accessibilityAddTraits(chosen ? .isSelected : [])
                 }
-            }
-        }
-    }
-
-    private func senseButton(_ sense: ReviewSense) -> some View {
-        let isSelected = sense.id == selectedID
-        return Button {
-            selectedID = sense.id
-        } label: {
-            HStack(spacing: Spacing.xxs) {
-                if sense.standing != nil {
-                    Image(systemName: "checkmark")
-                        .font(Typography.micro.weight(.bold))
-                        .foregroundStyle(Color.successInk)
-                        .accessibilityHidden(true)
+                Button {
+                    motion.perform(MotionTokens.snap) { selectedID = open ? nil : sense.id }
+                } label: {
+                    HStack {
+                        Text(verbatim: draft.meaningText).font(Typography.emphasis).multilineTextAlignment(.leading)
+                        Spacer(minLength: 0)
+                        if added || sense.standing != nil {
+                            StatusPill(sense.standing == .learned ? "Already learned" : "On your path")
+                        } else if editedIDs.contains(sense.id) { StatusPill("Edited") }
+                        ExpandChevron(isExpanded: open)
+                    }
+                    .foregroundStyle(chosen ? Color.selectedInk : Color.ink)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
                 }
-                Text(verbatim: "\(sense.partOfSpeech) · \(drafts[sense.id]?.meaningText ?? "")")
-                    .lineLimit(1)
+                .buttonStyle(.plain)
+                .accessibilityValue(Text(open ? "Expanded" : "Collapsed"))
             }
-            .font(Typography.secondary.weight(.semibold))
-            .foregroundStyle(isSelected ? Color.selectedInk : Color.mutedInk)
-            .padding(.horizontal, Spacing.s)
-            .frame(minHeight: Spacing.minTouchTarget)
-            .background(
-                isSelected ? Color.selectedSurface : Color.neutralSurface,
-                in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-            )
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    private func add(_ sense: ReviewSense, draft: CustomWordEditDraft?) {
-        guard var addition = sense.addition else { return }
-        addition.edits = draft?.edits
-        Task { await store.add(addition, lemma: lemma, ipa: sense.ipa) }
-    }
-}
-
-/// Takes the add button's place for a meaning the learner already has.
-private struct StandingBadge: View {
-    let standing: ExistingMeaning.Standing
-
-    var body: some View {
-        HStack(spacing: Spacing.xs) {
-            Image(systemName: standing == .learned ? "checkmark.seal.fill" : "bookmark.fill")
-                .accessibilityHidden(true)
-            Text(standing == .learned ? "Already learned" : "On your path")
-        }
-        .font(Typography.action)
-        .foregroundStyle(standing == .learned ? Color.successInk : Color.selectedInk)
-        .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
-        .padding(.vertical, Spacing.xxs)
-        .background(
-            standing == .learned ? Color.successSurface : Color.selectedSurface,
-            in: RoundedRectangle(cornerRadius: Radii.primaryAction, style: .continuous)
-        )
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// The word, centered, with its IPA and a pronunciation button.
-private struct WordHero: View {
-    let lemma: String
-    let ipa: String?
-    @Environment(SpeechPlayer.self) private var speech
-
-    var body: some View {
-        VStack(spacing: Spacing.xxs) {
-            Text(verbatim: lemma)
-                .font(Typography.display)
-                .tracking(-1.2)
-                .foregroundStyle(Color.ink)
-                .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
-            HStack(spacing: Spacing.xxs) {
-                if let ipa {
-                    Text(verbatim: ipa)
-                        .font(Typography.secondary)
-                        .foregroundStyle(Color.mutedInk)
-                        .accessibilityLabel(Text("IPA: \(ipa)"))
-                }
-                speakButton
+            if pronunciationsDiffer {
+                WordPronunciation(term: lemma, ipa: sense.ipa, style: .compact, usesWhiteSurface: chosen)
+                    .padding(.leading, canSelect ? 56 : 0)
             }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var speakButton: some View {
-        Button {
-            _ = speech.speak(lemma)
-        } label: {
-            Image(systemName: speech.isAvailable ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(speech.isAvailable ? Color.selectedInk : Color.disabledInk)
-                .frame(width: 34, height: 34)
-                .background(speech.isAvailable ? Color.selectedSurface : Color.disabledSurface, in: Circle())
-                .overlay(Circle().strokeBorder(speech.isSpeaking ? Color.interactive : Color.clear, lineWidth: 1.5))
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .disabled(!speech.isAvailable)
-        .accessibilityLabel(Text(speech.isAvailable ? "Play pronunciation" : "Audio unavailable"))
-        .accessibilityValue(speech.isSpeaking ? Text("Playing") : Text(verbatim: ""))
-    }
-}
-
-private struct SenseDetails: View {
-    let draft: CustomWordEditDraft
-    let tag: LocalizedStringKey?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: Spacing.xs) {
-                    Eyebrow(text: "Meaning")
-                    Spacer(minLength: 0)
-                    if let tag {
-                        Chip(text: tag, fill: .selectedSurface, foreground: .selectedInk)
+            if open {
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    if !draft.definitionText.isEmpty {
+                        Eyebrow(text: "Definition")
+                        Text(verbatim: draft.definitionText).font(Typography.secondary)
+                    }
+                    ForEach(draft.examples) { example in
+                        Eyebrow(text: "Example")
+                        Text(highlightedExample(example.text, at: draft.locator(for: example))).font(Typography.secondary)
+                        if !example.translation.isEmpty { ExampleTranslation(text: example.translation) }
+                    }
+                    if canSelect {
+                        TextLink(title: "Edit this meaning") { selectedID = sense.id; go(to: .edit) }
                     }
                 }
-                Text(verbatim: draft.meaningText)
-                    .font(Typography.headerTitle)
-                    .foregroundStyle(Color.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            section("Definition") {
-                Text(verbatim: draft.definitionText)
-                    .font(Typography.body)
-                    .foregroundStyle(Color.ink)
-            }
-            ForEach(draft.examples) { example in
-                section("Example") {
-                    Text(highlightedExample(example.text, at: draft.locator(for: example)))
-                        .font(Typography.body)
-                        .foregroundStyle(Color.ink)
-                }
-                section("Translation") {
-                    Text(verbatim: example.translation)
-                        .font(Typography.body)
-                        .foregroundStyle(Color.mutedInk)
-                }
+                .padding(.leading, canSelect ? 56 : 0)
+                .padding(.bottom, Spacing.xs)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.s)
+        .background(chosen ? Color.selectedSurface : Color.surface, in: shape)
+        .overlay(shape.strokeBorder(chosen ? Color.interactive : Color.stroke, lineWidth: Borders.card))
     }
 
-    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Eyebrow(text: title)
-            content()
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 }
 
 /// A meaning that can't be picked: already on the path, or not available.
@@ -649,8 +620,10 @@ private struct ClosedMeaningRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.s) {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(verbatim: meaning.partOfSpeech)
-                    .font(Typography.micro)
+                Text(verbatim: VocabularyItem.localizedPartOfSpeech(meaning.partOfSpeech))
+                    .font(Typography.eyebrow)
+                    .tracking(Typography.eyebrowTracking)
+                    .textCase(.uppercase)
                     .foregroundStyle(Color.mutedInk)
                 if meaning.status == .unavailable {
                     Text("Not available right now")
@@ -671,37 +644,38 @@ private struct ClosedMeaningRow: View {
             }
             Spacer(minLength: 0)
             if meaning.inRoadmap {
-                Chip(text: "On your path", fill: .successSurface, foreground: .successInk)
+                StatusPill("On your path", tone: .success)
             }
         }
         .padding(Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface(radius: Radii.card - 2, fill: meaning.status == .unavailable ? .disabledSurface : .surface)
+        .cardSurface(fill: meaning.status == .unavailable ? .disabledSurface : .surface)
     }
 }
 
 // MARK: - Other steps
 
-/// Its sheet saves the changes and adds the word in one go.
+/// Saves the changes and adds the word in one go.
 private struct EditStage: View {
-    let ipa: String?
+    let onBack: () -> Void
     let onSave: (CustomWordEditDraft) -> Void
     @State private var draft: CustomWordEditDraft
 
-    init(ipa: String?, initial: CustomWordEditDraft, onSave: @escaping (CustomWordEditDraft) -> Void) {
-        self.ipa = ipa
+    init(initial: CustomWordEditDraft, onBack: @escaping () -> Void, onSave: @escaping (CustomWordEditDraft) -> Void) {
+        self.onBack = onBack
         self.onSave = onSave
         _draft = State(initialValue: initial)
     }
 
     var body: some View {
-        AddWordScaffold {
-            WordHero(lemma: draft.lemma, ipa: ipa)
+        AddWordScaffold(onBack: onBack) {
+            EditWordTitle(lemma: draft.lemma)
             CustomWordEditFields(draft: $draft)
+                .padding(.top, Spacing.xs)
         } bar: {
             PinnedActionBar {
                 PrimaryButton(
-                    title: "Save and add to list",
+                    title: "Save",
                     requirement: "Fill in every field",
                     isEnabled: draft.isValid
                 ) {
@@ -712,29 +686,20 @@ private struct EditStage: View {
     }
 }
 
-/// In its own sheet it closes as the search starts; shown after a failed search, it has a back button instead.
+/// A field describing the meaning to look for. Shown after a failed search too, with the error under it.
 private struct OtherMeaningStage: View {
     let lemma: String
     let message: String?
     let canRetry: Bool
-    let onBack: (() -> Void)?
-    let onFind: () -> Void
+    let onBack: () -> Void
     @Environment(CustomWordStore.self) private var store
     @State private var context: String
 
-    init(
-        lemma: String,
-        context: String,
-        message: String?,
-        canRetry: Bool,
-        onBack: (() -> Void)? = nil,
-        onFind: @escaping () -> Void = {}
-    ) {
+    init(lemma: String, context: String, message: String?, canRetry: Bool, onBack: @escaping () -> Void) {
         self.lemma = lemma
         self.message = message
         self.canRetry = canRetry
         self.onBack = onBack
-        self.onFind = onFind
         _context = State(initialValue: context)
     }
 
@@ -744,14 +709,15 @@ private struct OtherMeaningStage: View {
 
     var body: some View {
         AddWordScaffold(onBack: onBack) {
-            WordHero(lemma: lemma, ipa: nil)
+            WordHeroHeader(lemma: lemma, ipa: nil)
             EditorField(
                 title: "Meaning to find",
                 text: $context,
                 maxLength: CustomWordInput.maxContextLength,
-                lines: 4...6,
+                lines: 2...6,
                 focusesOnAppear: true
             )
+            .padding(.top, Spacing.m)
             if let message {
                 ErrorText(message: message)
             }
@@ -765,7 +731,6 @@ private struct OtherMeaningStage: View {
                 // The lemma, not the typed form: context only applies to a word the backend already has.
                 PrimaryButton(title: "Find meaning", isEnabled: isValid) {
                     let context = context
-                    onFind()
                     Task { await store.lookup(lemma, context: context) }
                 }
             }
@@ -773,29 +738,51 @@ private struct OtherMeaningStage: View {
     }
 }
 
+/// Syllie with a green check badge, then the word and meaning just added.
 private struct AddedConfirmation: View {
     let lemma: String
-    let ipa: String?
+    let meanings: [String]
     let isNew: Bool
     let onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: Spacing.m) {
-            WordHero(lemma: lemma, ipa: ipa)
-            Image(systemName: "checkmark")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Color.successInk)
-                .frame(width: 56, height: 56)
-                .background(Color.successSurface, in: Circle())
-                .accessibilityHidden(true)
-            Text(isNew ? "Word added" : "Already on your path")
-                .font(Typography.screenTitle)
-                .foregroundStyle(Color.ink)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, Spacing.screenGutter)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom) {
+        CenteredStage {
+            VStack(spacing: 0) {
+                SyllieReactionView(reaction: .happy)
+                    .frame(width: 112, height: 96)
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(width: Spacing.iconBadge, height: Spacing.iconBadge)
+                            .background(Color.success, in: Circle())
+                            .padding(Borders.focusHalo)
+                            .background(Color.surface, in: Circle())
+                            .offset(x: Spacing.xs, y: Spacing.xxs)
+                    }
+                    .accessibilityHidden(true)
+                Text(isNew ? "Word added" : "Already on your path")
+                    .font(Typography.screenTitle.weight(.heavy))
+                    .tracking(Typography.tightTracking)
+                    .foregroundStyle(Color.ink)
+                    .padding(.top, Spacing.l)
+                    .accessibilityAddTraits(.isHeader)
+                Text(verbatim: lemma).font(Typography.wordTitle).padding(.top, Spacing.xs)
+                VStack(spacing: 0) {
+                    ForEach(Array(meanings.enumerated()), id: \.offset) { index, meaning in
+                        if index > 0 { CardDivider() }
+                        HStack(spacing: Spacing.s) {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.success)
+                            Text(verbatim: meaning).font(Typography.secondary.weight(.semibold))
+                            Spacer(minLength: 0)
+                        }
+                        .padding(Spacing.m)
+                    }
+                }
+                .cardSurface()
+                .padding(.top, Spacing.m)
+            }
+        } bar: {
             PinnedActionBar {
                 PrimaryButton(title: "Done", action: onDone)
             }

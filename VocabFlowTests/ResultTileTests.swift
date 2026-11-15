@@ -64,19 +64,19 @@ final class ResultTileTests: XCTestCase {
                        ResultTile(kind: .practice, number: .none, caption: .noSkillMeasured, isEmpty: true))
     }
 
-    func testSkillsTileExplainsVerifiedWhenNothingLeveledUp() {
+    func testSkillsTileWithNothingLeveledUpShowsZero() {
         XCTAssertEqual(ResultTiles.skillsTile(ResultGroups()),
-                       ResultTile(kind: .skillsLeveledUp, number: .count(0), caption: .skillsLeveledUp, lines: [.verifiedHint]))
+                       ResultTile(kind: .skillsLeveledUp, number: .count(0), caption: .skillsLeveledUp, lines: []))
         let regressed = ResultGroups<SkillChangeGroup>([.regressed: items(1)])
         XCTAssertEqual(ResultTiles.skillsTile(regressed).lines, [.regressed(1)])
     }
 
-    func testSkillsTileCountsNewlyVerified() {
-        let changes = ResultGroups<SkillChangeGroup>([.leveledUp: items(2, "a", to: .verified) + items(1, "b", to: .demonstrated)])
+    func testSkillsTileCountsLevelUps() {
+        let changes = ResultGroups<SkillChangeGroup>([.leveledUp: items(3, "a", to: .demonstrated)])
         let tile = ResultTiles.skillsTile(changes)
         XCTAssertEqual(tile.number, .plus(3))
-        XCTAssertEqual(tile.lines, [.newlyVerified(2)])
-        let regressedToo = ResultGroups<SkillChangeGroup>([.leveledUp: items(1, to: .verified), .regressed: items(1, "r")])
+        XCTAssertEqual(tile.lines, [])
+        let regressedToo = ResultGroups<SkillChangeGroup>([.leveledUp: items(1, to: .demonstrated), .regressed: items(1, "r")])
         XCTAssertEqual(ResultTiles.skillsTile(regressedToo).lines, [.regressed(1)])
     }
 
@@ -141,7 +141,7 @@ final class ResultTileTests: XCTestCase {
     func testWeakSheetSplitsIssuesFromFrequentMistakes() {
         let practice = PracticeSummary(groups: ResultGroups([
             .clean: [ResultItem(meaningId: "a", skill: .listening, hadIssue: true)],
-            .missed: [ResultItem(meaningId: "b", skill: .writing, hadIssue: true), ResultItem(meaningId: "c", skill: .reading, hadIssue: false)],
+            .missed: [ResultItem(meaningId: "b", skill: .spelling, hadIssue: true), ResultItem(meaningId: "c", skill: .speaking, hadIssue: false)],
         ]))
         let changes = ResultGroups<SkillChangeGroup>([.pendingConfirm: [ResultItem(meaningId: "a", skill: .listening)]])
         let blocks = ResultSheetModel.blocks(for: PracticeResult(kind: .weakPractice, summary: CommitSummary(practice: practice, skillChanges: changes)))
@@ -154,12 +154,12 @@ final class ResultTileTests: XCTestCase {
 
     func testRandomSheetGroupsChosenSkillsFirst() {
         let practice = PracticeSummary(groups: ResultGroups([
-            .clean: [ResultItem(meaningId: "a", skill: .reading), ResultItem(meaningId: "b", skill: .listening)],
+            .clean: [ResultItem(meaningId: "a", skill: .spelling), ResultItem(meaningId: "b", skill: .listening)],
         ]))
         let result = PracticeResult(kind: .randomPractice, summary: CommitSummary(practice: practice, countedAsReview: [ResultItem(meaningId: "a")]),
-                                   chosenSkills: [.listening, .reading])
+                                   chosenSkills: [.listening, .spelling])
         let blocks = ResultSheetModel.blocks(for: result)
-        XCTAssertEqual(blocks.map(\.title), [.answersFor(.listening), .answersFor(.reading), .skillChanges])
+        XCTAssertEqual(blocks.map(\.title), [.answersFor(.listening), .answersFor(.spelling), .skillChanges])
         XCTAssertEqual(blocks.last?.countedAsReview.map(\.meaningId), ["a"])
     }
 

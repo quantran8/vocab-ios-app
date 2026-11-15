@@ -16,9 +16,9 @@ struct ProfileView: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Eyebrow(text: "Profile")
-                    Spacer()
+                HStack(alignment: .center) {
+                    ScreenTitle("Profile")
+                    Spacer(minLength: Spacing.s)
                     Button(action: onOpenSettings) {
                         SystemBarButtonLabel(systemImage: "gearshape")
                     }
@@ -27,41 +27,39 @@ struct ProfileView: View {
                 }
 
                 identity
-                    .padding(.top, Spacing.l - 1)
+                    .padding(.top, Spacing.l)
 
-                if let summary = learner.profile?.tierSummary {
-                    effortSection(summary)
-                        .padding(.top, Spacing.l - 1)
+                if let card = tierCard {
+                    ProfileTierCard(summary: card.summary, next: card.next)
+                        .padding(.top, Spacing.screenGutter)
                 }
 
-                Rectangle()
-                    .fill(Color.neutralSurface)
-                    .frame(height: 1)
-                    .padding(.vertical, Spacing.l - 2)
-
                 levelSection
-                    .padding(.bottom, Spacing.l - 1)
+                    .padding(.top, Spacing.xl + Spacing.xxs)
 
                 focusSection(preferences)
+                    .padding(.top, Spacing.xl)
 
                 routineSection(preferences)
-                    .padding(.top, Spacing.l - 1)
+                    .padding(.top, Spacing.xl)
 
                 reviewSection(preferences)
-                    .padding(.top, Spacing.l - 1)
+                    .padding(.top, Spacing.xl)
 
                 if let saveError {
                     Text(verbatim: saveError)
                         .font(Typography.micro)
-                        .foregroundStyle(Color.mutedInk)
+                        .foregroundStyle(Color.errorInk)
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, Spacing.s)
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
+            .padding(.top, Spacing.l)
             .padding(.bottom, Spacing.l)
         }
-        .task {
+        // `GET /me` reloads after every session; the next Tier comes from `GET /me/tier`, so it reloads with it.
+        .task(id: learner.profile?.tierSummary) {
             guard learner.profile?.tierSummary != nil else { return }
             await ranking.refreshTier()
         }
@@ -70,105 +68,101 @@ struct ProfileView: View {
         }
     }
 
-    private func effortSection(_ summary: TierSummary) -> some View {
-        ProfileTierCard(summary: summary, next: ranking.tier?.nextTier)
+    /// LP and the next Tier from one answer. LP never goes down, so whichever answer has more is the newer one.
+    /// Until `refreshTier` catches up, the older answer's next Tier is kept only if it is still ahead.
+    private var tierCard: (summary: TierSummary, next: NextTier?)? {
+        let profileSummary = learner.profile?.tierSummary
+        if let detail = ranking.tier, detail.lifetimeLP >= (profileSummary?.lifetimeLP ?? 0) {
+            return (detail.summary, detail.nextTier)
+        }
+        guard let profileSummary else { return nil }
+        let next = ranking.tier?.nextTier.flatMap { next in
+            next.level > profileSummary.level ? next : nil
+        }
+        return (profileSummary, next)
     }
 
     @ViewBuilder
     private var identity: some View {
         if let username = learner.profile?.username {
-            HStack(spacing: Spacing.s) {
-                AvatarView(key: learner.profile?.avatarKey ?? "", size: 64, cornerRadius: Radii.card)
-                Text(verbatim: username)
-                    .font(.system(.title2, weight: .heavy))
-                    .tracking(-0.8)
-                    .foregroundStyle(Color.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                    .accessibilityAddTraits(.isHeader)
+            HStack(spacing: Spacing.m) {
+                AvatarView(key: learner.profile?.avatarKey ?? "", size: Self.avatarSize, cornerRadius: Radii.card, initial: username)
+                nameText(Text(verbatim: username))
                 Spacer(minLength: Spacing.s)
-                Button {
-                    isEditingPublicProfile = true
-                } label: {
-                    Text("Edit")
-                        .font(Typography.micro.weight(.heavy))
-                        .foregroundStyle(Color.selectedInk)
-                        .frame(minHeight: Spacing.minTouchTarget)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel(Text("Edit name and avatar"))
+                editLink("Edit name and avatar") { isEditingPublicProfile = true }
             }
         } else {
             placeholderIdentity
         }
     }
 
+    /// 64 pt avatar (w-16).
+    private static let avatarSize = Spacing.xl * 2
+
     private var placeholderIdentity: some View {
         let name = String(localized: "Learner", bundle: .appLanguage)
-        return HStack(spacing: Spacing.s) {
-            RoundedRectangle(cornerRadius: Radii.card, style: .continuous)
-                .fill(Color.selectedSurface)
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Text(verbatim: String(name.prefix(1)))
-                        .font(Typography.challengeTerm)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                        .foregroundStyle(Color.selectedInk)
-                )
-                .accessibilityHidden(true)
-            Text(verbatim: name)
-                .font(.system(.title2, weight: .heavy))
-                .tracking(-0.8)
-                .foregroundStyle(Color.ink)
-                .accessibilityAddTraits(.isHeader)
+        return HStack(spacing: Spacing.m) {
+            AvatarView(key: "", size: Self.avatarSize, cornerRadius: Radii.card, initial: name)
+            nameText(Text(verbatim: name))
         }
     }
 
+    private func nameText(_ text: Text) -> some View {
+        text
+            .font(.system(.title3, weight: .heavy))
+            .tracking(Typography.tightTracking)
+            .foregroundStyle(Color.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .accessibilityAddTraits(.isHeader)
+    }
+
     private var levelSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            sectionHeader("Your level", editLabel: "Edit level", action: onEditLevel)
-            VStack(spacing: 0) {
-                dataRow("chart.bar", label: "English level", value: learner.profile?.proficiencyLevel.map { Text(verbatim: $0.rawValue) } ?? Text("Not set"))
+        VStack(alignment: .leading, spacing: 0) {
+            SectionTitle("Your level") { editLink("Edit level", action: onEditLevel) }
+            card {
+                dataRow("English level", value: learner.profile?.proficiencyLevel.map { Text(verbatim: $0.rawValue) } ?? Text("Not set"))
             }
-            .padding(.horizontal, Spacing.m)
-            .padding(.vertical, Spacing.xxs)
-            .cardSurface(radius: Radii.card - 2)
         }
     }
 
     /// Topics shown before collapsing the rest into "+N more".
-    private static let visibleTopicLimit = 4
+    private static let visibleTopicLimit = 3
 
     private func focusSection(_ preferences: LearningPreferences) -> some View {
         let topics = TopicCatalog.topics(ids: preferences.topicIDs)
         let hidden = max(0, topics.count - Self.visibleTopicLimit)
-        return VStack(alignment: .leading, spacing: Spacing.s) {
-            sectionHeader("Your focus", editLabel: "Edit focus", action: onEditFocus)
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionTitle("Your focus") { editLink("Edit focus", action: onEditFocus) }
             if let collection = preferences.collection {
-                Eyebrow(text: LocalizedStringKey(collection.name))
+                HStack(spacing: Spacing.xs) {
+                    CollectionMarkDot(color: CollectionMarkColor.color(for: collection), size: Spacing.xs)
+                    Text(verbatim: collection.name)
+                        .font(Typography.secondary.weight(.semibold))
+                        .foregroundStyle(Color.bodyInk)
+                }
+                .padding(.bottom, Spacing.s)
             }
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
                 ForEach(topics.prefix(Self.visibleTopicLimit)) { topic in
-                    Label {
-                        Text(verbatim: topic.name)
-                    } icon: {
+                    HStack(spacing: Spacing.xs - 2) {
                         Image(systemName: topic.systemImage)
+                            .font(Typography.micro.weight(.semibold))
+                            .accessibilityHidden(true)
+                        Text(verbatim: topic.name)
+                            .font(Typography.secondary.weight(.semibold))
+                            .lineLimit(1)
                     }
-                    .font(Typography.micro.weight(.semibold))
-                    .foregroundStyle(Color.ink)
-                    .padding(.horizontal, Spacing.s)
-                    .padding(.vertical, Spacing.s - 2)
-                    .overlay(Capsule().strokeBorder(Color.stroke, lineWidth: 1.5))
+                    .chipSurface(isSelected: false)
                 }
                 if hidden > 0 {
                     Button(action: onEditFocus) {
                         Text("+\(hidden) more")
-                            .font(Typography.micro.weight(.bold))
-                            .foregroundStyle(Color.selectedInk)
-                            .padding(.horizontal, Spacing.s)
-                            .padding(.vertical, Spacing.s - 2)
-                            .background(Color.selectedSurface, in: Capsule())
+                            .font(Typography.secondary.weight(.semibold))
+                            .foregroundStyle(Color.ink)
+                            .padding(.horizontal, Spacing.s + 2)
+                            .frame(minHeight: Spacing.buttonSmallHeight)
+                            .background(Color.neutralSurface, in: Capsule())
                     }
                     .buttonStyle(PressScaleButtonStyle())
                     .accessibilityHint(Text("Shows all topics"))
@@ -178,114 +172,99 @@ struct ProfileView: View {
     }
 
     private func routineSection(_ preferences: LearningPreferences) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            sectionHeader("Your routine", editLabel: "Edit routine", action: onEditRoutine)
-            VStack(spacing: 0) {
-                dataRow("book", label: "New words / day", value: Text("\(preferences.wordsPerDay) words"))
-                Divider().overlay(Color.neutralSurface)
-                dataRow("arrow.clockwise", label: "Reviews / session", value: Text("\(preferences.effectiveReviewsPerSession) words"))
-                Divider().overlay(Color.neutralSurface)
-                dataRow("calendar", label: "Learning days", value: Text(verbatim: daysSummary(preferences)))
-                Divider().overlay(Color.neutralSurface)
-                dataRow("bell", label: "Reminder", value: preferences.reminderEnabled
+        VStack(alignment: .leading, spacing: 0) {
+            SectionTitle("Your routine") { editLink("Edit routine", action: onEditRoutine) }
+            card {
+                dataRow("New words / day", value: Text("\(preferences.wordsPerDay) words"))
+                CardDivider()
+                dataRow("Reviews / session", value: Text("\(preferences.effectiveReviewsPerSession) words"))
+                CardDivider()
+                dataRow("Learning days", value: Text(verbatim: daysSummary(preferences)))
+                CardDivider()
+                dataRow("Reminder", value: preferences.reminderEnabled
                     ? Text(preferences.reminderDate, format: .dateTime.hour().minute())
                     : Text("Off"))
-                Divider().overlay(Color.neutralSurface)
-                toggleRow("scalemass", label: "Balance reviews and new words",
+                CardDivider()
+                toggleRow(label: "Balance reviews and new words",
                           hint: "Fewer new words while many words wait for review",
                           isOn: learner.home?.reviewLoad?.autoBalance ?? learner.profile?.settings.autoBalanceNewWords ?? false) { enabled in
                     try await learner.setAutoBalance(enabled)
                 }
                 if let override = learner.home?.reviewLoad?.override {
-                    Divider().overlay(Color.neutralSurface)
+                    CardDivider()
                     overrideRow(override)
                 }
             }
-            .padding(.horizontal, Spacing.m)
-            .padding(.vertical, Spacing.xxs)
-            .cardSurface(radius: Radii.card - 2)
         }
     }
 
     /// Collections the learner has learned from. The active one is always reviewed.
     private func reviewSection(_ preferences: LearningPreferences) -> some View {
         let collections = TopicCatalog.collections.filter { ($0.learned ?? 0) > 0 }
-        return VStack(alignment: .leading, spacing: Spacing.s) {
-            PlanSectionTitle(text: "Review")
+        return VStack(alignment: .leading, spacing: 0) {
+            SectionTitle("Review")
             if collections.isEmpty {
                 Text("Collections you learn from will show up here.")
                     .font(Typography.secondary)
                     .foregroundStyle(Color.mutedInk)
             } else {
-                VStack(spacing: 0) {
+                card {
                     ForEach(Array(collections.enumerated()), id: \.element.id) { index, collection in
-                        if index > 0 { Divider().overlay(Color.neutralSurface) }
+                        if index > 0 { CardDivider() }
                         reviewRow(collection, isActive: collection.id == preferences.collectionID)
                     }
                 }
-                .padding(.horizontal, Spacing.m)
-                .padding(.vertical, Spacing.xxs)
-                .cardSurface(radius: Radii.card - 2)
             }
         }
     }
 
     private func reviewRow(_ collection: VocabCollection, isActive: Bool) -> some View {
         let isReviewed = isActive || !learner.isReviewPaused(collectionID: collection.id)
-        return HStack(spacing: Spacing.s) {
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(verbatim: collection.name)
-                    .font(Typography.secondary.weight(.semibold))
-                    .foregroundStyle(Color.ink)
-                Text(isActive
-                     ? "\(collection.learned ?? 0) words · Your current collection is always reviewed"
-                     : "\(collection.learned ?? 0) words learned")
-                    .font(Typography.micro)
-                    .foregroundStyle(Color.mutedInk)
-                    .fixedSize(horizontal: false, vertical: true)
+        return Toggle(isOn: Binding(
+            get: { isReviewed },
+            set: { reviewed in save { try await learner.setReviewPaused(!reviewed, collectionID: collection.id) } }
+        )) {
+            HStack(spacing: Spacing.s) {
+                CollectionMarkDot(color: CollectionMarkColor.color(for: collection), size: Spacing.s - 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: collection.name)
+                        .font(Typography.body.weight(.semibold))
+                        .foregroundStyle(Color.ink)
+                    Text(isActive
+                         ? "\(collection.learned ?? 0) words · Your current collection is always reviewed"
+                         : "\(collection.learned ?? 0) words learned")
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            Spacer(minLength: Spacing.s)
-            Toggle("Review this collection’s words", isOn: Binding(
-                get: { isReviewed },
-                set: { reviewed in save { try await learner.setReviewPaused(!reviewed, collectionID: collection.id) } }
-            ))
-            .labelsHidden()
-            .disabled(isActive)
         }
-        .frame(minHeight: 54)
-        .accessibilityElement(children: .combine)
+        .disabled(isActive)
+        .accessibilityHint(Text("Review this collection’s words"))
+        .modifier(RowPadding())
     }
 
-    private func toggleRow(_ systemImage: String, label: LocalizedStringKey, hint: LocalizedStringKey, isOn: Bool,
+    private func toggleRow(label: LocalizedStringKey, hint: LocalizedStringKey, isOn: Bool,
                            onChange: @escaping (Bool) async throws -> Void) -> some View {
-        HStack(spacing: Spacing.s) {
-            Image(systemName: systemImage)
-                .foregroundStyle(Color.mutedInk)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
+        Toggle(isOn: Binding(get: { isOn }, set: { value in save { try await onChange(value) } })) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(label)
-                    .font(Typography.secondary.weight(.semibold))
+                    .font(Typography.body)
                     .foregroundStyle(Color.ink)
                 Text(hint)
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer(minLength: Spacing.s)
-            Toggle(label, isOn: Binding(get: { isOn }, set: { value in save { try await onChange(value) } }))
-                .labelsHidden()
         }
-        .frame(minHeight: 54)
+        .modifier(RowPadding())
     }
 
     private func overrideRow(_ override: NewWordOverride) -> some View {
         HStack(spacing: Spacing.s) {
-            Image(systemName: "arrow.down.circle")
-                .foregroundStyle(Color.mutedInk)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Lowered to \(override.value) new words")
-                    .font(Typography.secondary.weight(.semibold))
+                    .font(Typography.body)
                     .foregroundStyle(Color.ink)
                 Group {
                     if override.mode == .untilDate, let until = override.until {
@@ -296,19 +275,15 @@ struct ProfileView: View {
                 }
                 .font(Typography.micro)
                 .foregroundStyle(Color.mutedInk)
+                .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: Spacing.s)
-            Button {
+            TextLink(title: "Cancel") {
                 save { try await learner.clearNewWordOverride() }
-            } label: {
-                Text("Cancel")
-                    .font(Typography.micro.weight(.heavy))
-                    .foregroundStyle(Color.selectedInk)
-                    .frame(minHeight: Spacing.minTouchTarget)
             }
             .accessibilityLabel(Text("Cancel lowered new words"))
         }
-        .frame(minHeight: 54)
+        .modifier(RowPadding())
     }
 
     private func save(_ change: @escaping () async throws -> Void) {
@@ -322,39 +297,30 @@ struct ProfileView: View {
         }
     }
 
-    private func sectionHeader(_ title: LocalizedStringKey, editLabel: LocalizedStringKey, action: @escaping () -> Void) -> some View {
-        HStack {
-            PlanSectionTitle(text: title)
-            Spacer()
-            Button(action: action) {
-                Text("Edit")
-                    .font(Typography.micro.weight(.heavy))
-                    .foregroundStyle(Color.selectedInk)
-                    .frame(minHeight: Spacing.minTouchTarget)
-                    .contentShape(Rectangle())
-            }
-            .accessibilityLabel(Text(editLabel))
-        }
-        .padding(.bottom, -Spacing.xs)
+    /// "Edit" text link beside a section title; the VoiceOver label names what it edits.
+    private func editLink(_ accessibilityName: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        TextLink(title: "Edit", action: action)
+            .accessibilityLabel(Text(accessibilityName))
+            // Keeps the 44 pt target without pushing the section title away from its card.
+            .padding(.vertical, -Spacing.s)
     }
 
-    private func dataRow(_ systemImage: String, label: LocalizedStringKey, value: Text) -> some View {
-        HStack(spacing: Spacing.s) {
-            Label {
-                Text(label)
-            } icon: {
-                Image(systemName: systemImage)
-                    .foregroundStyle(Color.mutedInk)
-            }
-            .font(Typography.secondary.weight(.semibold))
-            .foregroundStyle(Color.ink)
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+        }
+        .cardSurface()
+    }
+
+    /// A data row: label, then the value in bold. No icon (redesign 4.1).
+    private func dataRow(_ label: LocalizedStringKey, value: Text) -> some View {
+        CardRow {
+            Text(label)
             Spacer(minLength: Spacing.s)
             value
-                .font(Typography.secondary.weight(.heavy))
-                .foregroundStyle(Color.ink)
+                .fontWeight(.bold)
                 .multilineTextAlignment(.trailing)
         }
-        .frame(minHeight: 54)
         .accessibilityElement(children: .combine)
     }
 
@@ -364,5 +330,15 @@ struct ProfileView: View {
             .filter { preferences.learningDays.contains($0.id) }
             .map(\.short)
             .formatted(.list(type: .and, width: .narrow).locale(AppLanguage.active.locale))
+    }
+}
+
+/// A card row's padding: 16 pt sides, 12 pt top and bottom, 56 pt minimum.
+private struct RowPadding: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
+            .frame(maxWidth: .infinity, minHeight: Spacing.rowMinHeight, alignment: .leading)
     }
 }

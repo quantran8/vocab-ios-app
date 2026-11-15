@@ -149,8 +149,8 @@ final class PlanDecodingTests: XCTestCase {
 
     func testSkillsUseWireValuesAndAreOmittedWhenAbsent() throws {
         let capabilities = PlanRequest.Capabilities(audioPlayback: true, microphone: true)
-        let focused = try PracticeFixtures.json(PlanRequest(mode: .randomPractice, capabilities: capabilities, skills: [.listening, .reading])) as? [String: Any]
-        XCTAssertEqual(focused?["skills"] as? [String], ["listening", "reading"])
+        let focused = try PracticeFixtures.json(PlanRequest(mode: .randomPractice, capabilities: capabilities, skills: [.listening, .spelling])) as? [String: Any]
+        XCTAssertEqual(focused?["skills"] as? [String], ["listening", "spelling"])
         XCTAssertNil(focused?["skill"])
         let mixed = try PracticeFixtures.json(PlanRequest(mode: .randomPractice, capabilities: capabilities)) as? [String: Any]
         XCTAssertNil(mixed?["skills"])
@@ -203,18 +203,32 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(meaning.meaning.examples?.first?.text, "Please clarify.")
     }
 
-    func testDecodesWordDetailSkills() throws {
+    func testDecodesWordDetailSkillsAndMemory() throws {
         let json = #"""
-        {"wordId":"w","lemma":"clarify","needsPractice":true,"fullyVerified":false,"meanings":[{"meaningId":"m",
+        {"wordId":"w","lemma":"clarify","needsPractice":true,"meanings":[{"meaningId":"m",
          "meaning":{"partOfSpeech":"verb","text":"làm rõ"},"learnedAt":"2026-10-30T10:00:00.000Z","nextReviewAt":"2026-10-31T10:00:00Z",
-         "needsPractice":true,"skills":{"reading":{"status":"verified","needsPractice":false},
-         "writing":{"status":"not_verified","needsPractice":true}}}]}
+         "memory":{"stabilityDays":3.2,"retrievability":0.87,"nextReviewAt":"2026-10-31T10:00:00Z"},
+         "needsPractice":true,"skills":{"spelling":{"status":"demonstrated","needsPractice":true,"issue":"assisted"}}}]}
         """#
         let meaning = try APIClient.decoder.decode(WordDetail.self, from: Data(json.utf8)).meanings[0]
         XCTAssertEqual(meaning.meaning.text, "làm rõ")
         XCTAssertNil(meaning.skills.listening)
-        XCTAssertEqual(meaning.skills.reading.status, .verified)
-        XCTAssertEqual(meaning.skills.writing.status, .notVerified)
+        XCTAssertEqual(meaning.skills.spelling.status, .demonstrated)
+        XCTAssertEqual(meaning.skills.spelling.issue, .assisted)
+        XCTAssertEqual(meaning.memory?.retrievability, 0.87)
+        XCTAssertEqual(meaning.memory?.stabilityDays, 3.2)
+    }
+
+    func testDecodesWordDetailFromAnOlderBackend() throws {
+        let json = #"""
+        {"wordId":"w","lemma":"clarify","needsPractice":true,"fullyVerified":false,"meanings":[{"meaningId":"m",
+         "meaning":{"partOfSpeech":"verb","text":"làm rõ"},"learnedAt":"2026-10-30T10:00:00.000Z","nextReviewAt":"2026-10-31T10:00:00Z",
+         "needsPractice":true,"skills":{"reading":{"status":"verified","needsPractice":false},
+         "writing":{"status":"verified","needsPractice":true}}}]}
+        """#
+        let meaning = try APIClient.decoder.decode(WordDetail.self, from: Data(json.utf8)).meanings[0]
+        XCTAssertNil(meaning.memory)
+        XCTAssertEqual(meaning.skills.spelling.status, .demonstrated)
     }
 
     // MARK: Commit summary for the results screen
@@ -250,7 +264,8 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertNotNil(review.groups[.solid].first?.learnedAt)
         XCTAssertEqual(review.groups[.relearn].first?.gloss, "")
         XCTAssertEqual(review.groups[.relearn].first?.cause, .outOfTries)
-        XCTAssertEqual(review.groups[.relearn].first?.struggledAt, .writing)
+        // An older session's `writing` is spelling now.
+        XCTAssertEqual(review.groups[.relearn].first?.struggledAt, .spelling)
         XCTAssertEqual(review.groups[.shaky].first?.cause, .unknown)
         XCTAssertNil(review.groups[.solid].first?.cause)
         let newWords = try XCTUnwrap(summary.newWords)

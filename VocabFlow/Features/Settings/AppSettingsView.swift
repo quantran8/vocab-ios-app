@@ -17,112 +17,118 @@ struct AppSettingsView: View {
     var body: some View {
         @Bindable var settings = settings
 
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                PunctuatedTitle(text: "Settings")
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ScreenTitle("Settings")
+                        .padding(.top, Spacing.xs)
 
-                group("Interaction") {
-                    SettingRow(systemImage: "iphone.radiowaves.left.and.right", title: "Haptics", subtitle: "Subtle touch feedback") {
-                        Toggle("Haptics", isOn: $settings.hapticsEnabled)
+                    group("Interaction") {
+                        toggleRow(systemImage: "iphone.radiowaves.left.and.right", title: "Haptics", isOn: $settings.hapticsEnabled)
+                        CardDivider()
+                        toggleRow(systemImage: "circle.dotted.and.circle", title: "Reduce motion", isOn: $settings.reduceMotion)
                     }
-                    SettingRow(systemImage: "circle.dotted.and.circle", title: "Reduce motion", subtitle: "Keep transitions minimal") {
-                        Toggle("Reduce motion", isOn: $settings.reduceMotion)
-                    }
-                }
 
-                if let visible = learner.profile?.settings.leaderboardVisible {
-                    group("Leaderboard") {
-                        SettingRow(systemImage: "trophy", title: "Show me on the leaderboard", subtitle: "Your name, avatar, Tier and LP this week become public") {
-                            Toggle("Show me on the leaderboard", isOn: Binding(get: { visible }, set: setLeaderboardVisible))
+                    if let visible = learner.profile?.settings.leaderboardVisible {
+                        group("Leaderboard") {
+                            toggleRow(
+                                systemImage: "trophy",
+                                title: "Show me on the leaderboard",
+                                subtitle: "Your name, avatar, Tier and LP this week become public",
+                                isOn: Binding(get: { visible }, set: setLeaderboardVisible)
+                            )
                         }
                         if let leaderboardError {
                             Text(verbatim: leaderboardError)
                                 .font(Typography.micro)
                                 .foregroundStyle(Color.errorInk)
+                                .fixedSize(horizontal: false, vertical: true)
                                 .padding(.top, Spacing.xs)
                         }
                     }
-                }
 
-                group("App") {
-                    Button {
-                        isChoosingLanguage = true
-                    } label: {
-                        SettingRow(systemImage: "globe", title: "Language", subtitle: "The language of the app’s interface") {
-                            HStack(spacing: Spacing.xs) {
-                                Text(verbatim: currentLanguage.nativeName)
-                                Image(systemName: "chevron.right")
-                                    .font(.subheadline.weight(.bold))
-                                    .accessibilityHidden(true)
+                    group("App") {
+                        Button {
+                            isChoosingLanguage = true
+                        } label: {
+                            SettingRow(systemImage: "globe", title: "Language") {
+                                chevron(Text(verbatim: currentLanguage.nativeName))
                             }
                         }
-                    }
-                    .buttonStyle(.plain)
-                    SettingRow(systemImage: "circle.lefthalf.filled", title: "Appearance", subtitle: "Light theme") {
-                        Text("Light")
-                    }
-                    Button {
-                        motion.perform(MotionTokens.transition) { sandbox.openLab() }
-                    } label: {
-                        SettingRow(systemImage: "flask", title: "Practice Lab", subtitle: "Try exercise templates. Doesn’t affect your progress.") {
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline.weight(.bold))
-                                .accessibilityHidden(true)
+                        .buttonStyle(.plain)
+                        CardDivider()
+                        Button {
+                            motion.perform(MotionTokens.transition) { sandbox.openLab() }
+                        } label: {
+                            SettingRow(systemImage: "flask", title: "Practice Lab") {
+                                chevron(nil)
+                            }
                         }
-                    }
-                    .buttonStyle(.plain)
-                    Button {
-                        isPreviewingSyllie = true
-                    } label: {
-                        SettingRow(systemImage: "play.circle", title: "Syllie animations", subtitle: "Preview the mascot’s Rive animations") {
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline.weight(.bold))
-                                .accessibilityHidden(true)
+                        .buttonStyle(.plain)
+                        CardDivider()
+                        // Belongs in the Practice Lab (redesign 4.3); stays here until the Lab hosts it.
+                        Button {
+                            isPreviewingSyllie = true
+                        } label: {
+                            SettingRow(systemImage: "play.circle", title: "Syllie animations") {
+                                chevron(nil)
+                            }
                         }
+                        .buttonStyle(.plain)
+                        CardDivider()
+                        SettingRow(systemImage: "info.circle", title: "About Syll") {
+                            Text(verbatim: "v\(appVersion)")
+                                .font(Typography.secondary)
+                                .foregroundStyle(Color.mutedInk)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
-                    .buttonStyle(.plain)
-                    SettingRow(systemImage: "info.circle", title: "About Syll", subtitle: "Color Pop concept") {
-                        Text(verbatim: "v\(appVersion)")
-                    }
-                }
 
-                group("Account") {
-                    Button {
-                        isChangingPassword = true
-                    } label: {
-                        SettingRow(systemImage: "key", title: "Change password", subtitle: "Set a new password for logging in") {
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline.weight(.bold))
-                                .accessibilityHidden(true)
+                    group("Account") {
+                        Button {
+                            isChangingPassword = true
+                        } label: {
+                            SettingRow(systemImage: "key", title: "Change password") {
+                                chevron(nil)
+                            }
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                    VStack(spacing: Spacing.s) {
-                        SecondaryButton(title: "Log out", systemImage: "rectangle.portrait.and.arrow.right") {
+
+                    VStack(spacing: Spacing.screenGutter) {
+                        SecondaryButton(title: "Log out") {
                             Task { await auth.signOut() }
                         }
-                        DestructiveButton(title: "Delete account", systemImage: "trash", isLoading: auth.isDeletingAccount) {
-                            isConfirmingDeletion = true
+                        HStack(spacing: Spacing.xs) {
+                            TextLink(title: "Delete account", color: .destructiveInk) {
+                                isConfirmingDeletion = true
+                            }
+                            .accessibilityValue(auth.isDeletingAccount ? Text("Deleting your account") : Text(verbatim: ""))
+                            if auth.isDeletingAccount {
+                                ProgressView()
+                            }
                         }
-                        .accessibilityValue(auth.isDeletingAccount ? Text("Deleting your account") : Text(verbatim: ""))
+                        .padding(.vertical, -Spacing.s)
                     }
+                    .frame(maxWidth: .infinity)
                     .disabled(auth.isDeletingAccount)
-                    .padding(.top, Spacing.m)
+                    .padding(.top, Spacing.xl)
+
                     if let error = auth.accountDeletionError {
                         Text(verbatim: error)
                             .font(Typography.secondary)
                             .foregroundStyle(Color.errorInk)
+                            .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, Spacing.xs)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, Spacing.m)
                     }
                 }
+                .padding(.horizontal, Spacing.screenGutter)
+                .padding(.bottom, Spacing.l)
             }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.xs)
-            .padding(.bottom, Spacing.l)
         }
         .background(Color.canvas)
-        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isChoosingLanguage, onDismiss: applyPickedLanguage) {
             LanguageSheet(selected: currentLanguage) { language in
                 pickedLanguage = language
@@ -135,13 +141,21 @@ struct AppSettingsView: View {
         .sheet(isPresented: $isChangingPassword) {
             ChangePasswordSheet()
         }
-        .alert("Delete your account?", isPresented: $isConfirmingDeletion) {
-            Button("Delete account", role: .destructive) {
-                Task { await auth.deleteAccount() }
+        .sheet(isPresented: $isConfirmingDeletion) {
+            ConfirmSheet(
+                style: .destructive(systemImage: "trash"),
+                title: "Delete your account?",
+                message: "Your progress, words and settings will be permanently deleted. This can’t be undone.",
+                cancelTitle: "Cancel",
+                confirmTitle: "Delete account",
+                isWorking: auth.isDeletingAccount
+            ) {
+                Task {
+                    await auth.deleteAccount()
+                    isConfirmingDeletion = false
+                }
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Your progress, words and settings will be permanently deleted. This can’t be undone.")
+            .interactiveDismissDisabled(auth.isDeletingAccount)
         }
     }
 
@@ -167,14 +181,42 @@ struct AppSettingsView: View {
         }
     }
 
+    /// An eyebrow header above one card of rows.
     private func group<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: Spacing.s - 2) {
             Eyebrow(text: title)
                 .accessibilityAddTraits(.isHeader)
-                .padding(.bottom, Spacing.xxs)
-            content()
+            VStack(spacing: 0) {
+                content()
+            }
+            .cardSurface()
         }
-        .padding(.top, Spacing.l)
+        .padding(.top, Spacing.l + Spacing.xxs)
+    }
+
+    private func toggleRow(systemImage: String, title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil,
+                           isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            SettingLabel(systemImage: systemImage, title: title, subtitle: subtitle)
+        }
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
+        .frame(minHeight: Spacing.rowMinHeight)
+    }
+
+    /// A value (optional) and a chevron, trailing a row that opens something.
+    private func chevron(_ value: Text?) -> some View {
+        HStack(spacing: Spacing.xs - 2) {
+            if let value {
+                value
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.mutedInk)
+            }
+            Image(systemName: "chevron.right")
+                .font(Typography.micro.weight(.bold))
+                .foregroundStyle(Color.ink400)
+                .accessibilityHidden(true)
+        }
     }
 
     private var appVersion: String {
@@ -182,40 +224,49 @@ struct AppSettingsView: View {
     }
 }
 
+/// Icon, title (and a subtitle only where it adds meaning), trailing control.
+private struct SettingLabel: View {
+    let systemImage: String
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
+
+    var body: some View {
+        HStack(spacing: Spacing.s) {
+            Image(systemName: systemImage)
+                .font(Typography.body.weight(.medium))
+                .foregroundStyle(Color.ink700)
+                .frame(width: Spacing.screenGutter + Spacing.xxs)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(Typography.body.weight(.semibold))
+                    .foregroundStyle(Color.ink)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+}
+
 private struct SettingRow<Trailing: View>: View {
     let systemImage: String
     let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-    var tint: Color = .ink
+    var subtitle: LocalizedStringKey?
     @ViewBuilder let trailing: Trailing
 
     var body: some View {
-        HStack(spacing: Spacing.s + 1) {
-            Image(systemName: systemImage)
-                .font(.body.weight(.medium))
-                .foregroundStyle(tint)
-                .frame(width: 28)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(title)
-                    .font(Typography.secondary.weight(.bold))
-                    .foregroundStyle(tint)
-                Text(subtitle)
-                    .font(Typography.micro)
-                    .foregroundStyle(Color.mutedInk)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+        HStack(spacing: Spacing.s) {
+            SettingLabel(systemImage: systemImage, title: title, subtitle: subtitle)
             Spacer(minLength: Spacing.xs)
             trailing
-                .labelsHidden()
-                .tint(Color.interactive)
-                .font(Typography.micro)
-                .foregroundStyle(Color.mutedInk)
         }
-        .frame(minHeight: 69)
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
+        .frame(maxWidth: .infinity, minHeight: Spacing.rowMinHeight, alignment: .leading)
         .contentShape(Rectangle())
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Color.neutralSurface).frame(height: 1)
-        }
     }
 }

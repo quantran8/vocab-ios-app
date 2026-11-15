@@ -250,8 +250,17 @@ struct CheckpointChallenge: Decodable, Equatable, Identifiable {
 }
 
 enum SkillStatus: String, Decodable {
-    case demonstrated, verified
+    case demonstrated
     case notVerified = "not_verified"
+
+    /// An older backend still sends `verified`; it was a stronger `demonstrated`.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        guard let status = raw == "verified" ? .demonstrated : SkillStatus(rawValue: raw) else {
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Unknown skill status \(raw)"))
+        }
+        self = status
+    }
 }
 
 enum SkillIssue: String, Decodable {
@@ -264,12 +273,37 @@ struct SkillState: Decodable, Equatable {
     let issue: SkillIssue?
 }
 
+/// Form skills only; whether the meaning is remembered is `MeaningMemory`.
 struct MeaningSkills: Decodable, Equatable {
-    let reading: SkillState
-    let writing: SkillState
+    let spelling: SkillState
     /// Absent when the meaning has no pronunciation.
     let listening: SkillState?
     let speaking: SkillState?
+
+    private enum CodingKeys: String, CodingKey { case spelling, writing, listening, speaking }
+
+    init(spelling: SkillState, listening: SkillState? = nil, speaking: SkillState? = nil) {
+        self.spelling = spelling
+        self.listening = listening
+        self.speaking = speaking
+    }
+
+    /// An older backend calls spelling `writing` and also sends `reading`, which is ignored.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        spelling = try container.decodeIfPresent(SkillState.self, forKey: .spelling) ?? container.decode(SkillState.self, forKey: .writing)
+        listening = try container.decodeIfPresent(SkillState.self, forKey: .listening)
+        speaking = try container.decodeIfPresent(SkillState.self, forKey: .speaking)
+    }
+}
+
+/// How well a learned meaning holds now (FSRS).
+struct MeaningMemory: Decodable, Equatable {
+    /// Days until recall drops to 90%.
+    let stabilityDays: Double
+    /// Chance of recalling the meaning right now, 0...1.
+    let retrievability: Double
+    let nextReviewAt: Date?
 }
 
 struct WordMeaning: Decodable, Equatable {
@@ -314,6 +348,8 @@ struct WordDetail: Decodable, Equatable {
         let meaning: WordMeaning.Sense
         let learnedAt: Date?
         let skills: MeaningSkills
+        /// Nil until learned, and from an older backend.
+        var memory: MeaningMemory? = nil
     }
 
     let wordId: String

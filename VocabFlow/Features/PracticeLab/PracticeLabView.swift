@@ -115,7 +115,7 @@ private struct TemplateCard: View {
             .padding(Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(ActionButtonStyle(kind: .secondary))
+        .buttonStyle(ActionButtonStyle(kind: .outline))
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Opens the exercise."))
     }
@@ -154,7 +154,7 @@ private struct GameCard: View {
             .padding(Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(ActionButtonStyle(kind: .secondary))
+        .buttonStyle(ActionButtonStyle(kind: .outline))
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Starts a practice round."))
     }
@@ -191,7 +191,7 @@ private struct ResultFixtureCard: View {
             .padding(Spacing.m)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(ActionButtonStyle(kind: .secondary))
+        .buttonStyle(ActionButtonStyle(kind: .outline))
         .accessibilityElement(children: .combine)
         .accessibilityHint(Text("Shows the results screen."))
     }

@@ -19,10 +19,28 @@ final class TaskAttemptTests: XCTestCase {
         XCTAssertFalse(unavailable.isRightFirstTime)
     }
 
+    func testEventsCarryTheTimeSinceTheTaskWasShown() throws {
+        var attempt = TaskAttempt(task: PracticeFixtures.typing(), phase: .dueReview)
+        attempt.elapsedMs = 1_200
+        attempt.useHint()
+        // A clock that steps back never makes the times decrease, and nothing goes past the backend's cap.
+        attempt.elapsedMs = 900
+        _ = attempt.submitText("clarify")
+        XCTAssertEqual(attempt.events.map(\.elapsedMs), [1_200, 1_200])
+        attempt.elapsedMs = 99 * 60 * 1000
+        XCTAssertEqual(attempt.elapsedMs, TaskAttempt.maxElapsedMs)
+
+        let json = try XCTUnwrap(PracticeFixtures.json(attempt.events[0]) as? [String: Any])
+        XCTAssertEqual(json["elapsedMs"] as? Int, 1_200)
+        let untimed = try XCTUnwrap(PracticeFixtures.json(TaskEvent(seq: 1, action: .hint)) as? [String: Any])
+        XCTAssertNil(untimed["elapsedMs"])
+    }
+
     func testSkillStateDecodesIssue() throws {
         let decode = { (json: String) in try JSONDecoder().decode(SkillState.self, from: Data(json.utf8)) }
-        let assisted = try decode(#"{"status":"verified","needsPractice":true,"issue":"assisted"}"#)
-        XCTAssertEqual(assisted.status, .verified)
+        let assisted = try decode(#"{"status":"demonstrated","needsPractice":true,"issue":"assisted"}"#)
+        XCTAssertEqual(assisted.status, .demonstrated)
+        XCTAssertEqual(try decode(#"{"status":"verified","needsPractice":false,"issue":null}"#).status, .demonstrated)
         XCTAssertTrue(assisted.needsPractice)
         XCTAssertEqual(assisted.issue, .assisted)
         XCTAssertNil(try decode(#"{"status":"demonstrated","needsPractice":false,"issue":null}"#).issue)

@@ -22,14 +22,17 @@ struct FeedbackActionPanel<Action: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             if let feedback {
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Label {
-                        Text(feedback.title)
-                    } icon: {
+                VStack(alignment: .leading, spacing: Spacing.xs - 2) {
+                    HStack(spacing: Spacing.s - 2) {
                         Image(systemName: icon(feedback.kind))
-                            .foregroundStyle(accent(feedback.kind))
+                            .font(.system(size: 14, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(width: 28, height: 28)
+                            .background(accent(feedback.kind), in: Circle())
+                            .accessibilityHidden(true)
+                        Text(feedback.title)
+                            .font(Typography.feedbackTitle)
                     }
-                    .font(Typography.emphasis)
                     if !feedback.message.isEmpty {
                         Text(feedback.message)
                             .font(Typography.secondary)
@@ -56,13 +59,13 @@ struct FeedbackActionPanel<Action: View>: View {
                 action
             }
         }
-        .padding(.horizontal, Spacing.screenGutter)
-        .padding(.top, feedback == nil ? Spacing.s : Spacing.m + 2)
+        .padding(.horizontal, Spacing.practiceGutter)
+        .padding(.top, feedback == nil ? Spacing.s : Spacing.l - 4)
         .padding(.bottom, Spacing.xs)
         .background {
             UnevenRoundedRectangle(
-                topLeadingRadius: Radii.card,
-                topTrailingRadius: Radii.card,
+                topLeadingRadius: Radii.hero,
+                topTrailingRadius: Radii.hero,
                 style: .continuous
             )
             .fill(feedback.map { surface($0.kind) } ?? Color.canvas)
@@ -77,9 +80,9 @@ struct FeedbackActionPanel<Action: View>: View {
 
     private func icon(_ kind: FeedbackKind) -> String {
         switch kind {
-        case .success: "checkmark.circle.fill"
-        case .error: "xmark.circle.fill"
-        case .info: "lightbulb.fill"
+        case .success: "checkmark"
+        case .error: "xmark"
+        case .info: "info"
         }
     }
 
@@ -95,7 +98,7 @@ struct FeedbackActionPanel<Action: View>: View {
         switch kind {
         case .success: .successInk
         case .error: .errorInk
-        case .info: .selectedInk
+        case .info: .infoInk
         }
     }
 
@@ -103,7 +106,7 @@ struct FeedbackActionPanel<Action: View>: View {
         switch kind {
         case .success: .successSurface
         case .error: .errorSurface
-        case .info: .selectedSurface
+        case .info: .infoSurface
         }
     }
 }

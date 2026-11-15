@@ -5,22 +5,35 @@ import Foundation
 
 /// The skill a result item is about. An unknown value hides the line that would name it.
 enum ResultSkill: String, LenientEnum, Equatable, CaseIterable {
-    case reading, writing, listening, speaking
+    case spelling, listening, speaking
     case unknown
     static let fallback = ResultSkill.unknown
+
+    /// Sessions saved by an older backend say `writing` (now spelling) and `reading` (now no skill: meaning only).
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = raw == "writing" ? .spelling : ResultSkill(rawValue: raw) ?? .fallback
+    }
 }
 
-/// Skill level in a change ("Demonstrated → Verified"); lenient, unlike `SkillStatus` on the word page.
+/// Skill level in a change ("Not verified → Demonstrated"); lenient, unlike `SkillStatus` on the word page.
 enum ResultSkillStatus: String, LenientEnum, Equatable {
     case notVerified = "not_verified"
-    case demonstrated, verified
+    case demonstrated
     case unknown
     static let fallback = ResultSkillStatus.unknown
+
+    /// Sessions saved by an older backend may say `verified`, a stronger `demonstrated`.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = raw == "verified" ? .demonstrated : ResultSkillStatus(rawValue: raw) ?? .fallback
+    }
 }
 
 /// Why a word is in a weaker group: the answer that decided it. Unknown values show no reason.
 enum ResultCause: String, LenientEnum, Equatable {
     case hinted, retried, primed
+    /// Sent by an older backend only: a correct pick now counts as remembered.
     case recognizedOnly = "recognized_only"
     case revealed
     case outOfTries = "out_of_tries"

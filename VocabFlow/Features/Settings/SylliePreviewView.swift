@@ -15,17 +15,13 @@ struct SylliePreviewView: View {
 
     var body: some View {
         VStack(spacing: Spacing.m) {
-            Text("Syllie animations")
-                .font(Typography.screenTitle)
-                .foregroundStyle(Color.ink)
-                .accessibilityAddTraits(.isHeader)
+            SheetTitle("Syllie animations")
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            Picker("Animation", selection: $mode) {
-                Text("Moods").tag(Mode.moods)
-                Text("Loading").tag(Mode.loading)
-                Text("Celebrate").tag(Mode.celebrate)
-            }
-            .pickerStyle(.segmented)
+            SegmentedControl(
+                options: [(value: Mode.moods, title: "Moods"), (value: Mode.loading, title: "Loading"), (value: Mode.celebrate, title: "Celebrate")],
+                selection: $mode
+            )
 
             // The celebration covers the whole screen (as on the results screen), so it has no card.
             if mode != .celebrate {
@@ -39,7 +35,7 @@ struct SylliePreviewView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 300)
-                .cardSurface(radius: Radii.tile)
+                .cardSurface()
             }
 
             if mode == .moods {
@@ -91,12 +87,13 @@ struct SylliePreviewView: View {
                     mood = item
                 } label: {
                     Text(verbatim: item.rawValue)
-                        .font(Typography.secondary.weight(.bold))
-                        .foregroundStyle(item == mood ? Color.canvas : Color.ink)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(item == mood ? Color.ink : Color.neutralSurface, in: Capsule())
+                        .font(Typography.secondary.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity)
+                        .chipSurface(isSelected: item == mood)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressScaleButtonStyle())
                 .accessibilityAddTraits(item == mood ? .isSelected : [])
             }
         }

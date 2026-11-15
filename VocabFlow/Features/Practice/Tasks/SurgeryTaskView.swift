@@ -23,15 +23,17 @@ struct SurgeryTaskView: View {
             if case .surgery(let word, _, _) = attempt.task.body {
                 let letters = PracticeAnswer.graphemes(word)
                 VStack(spacing: Spacing.l) {
-                    HStack(spacing: Spacing.xs) {
+                    HStack(spacing: Self.letterGap) {
                         ForEach(Array(letters.enumerated()), id: \.offset) { index, letter in
                             letterBox(letter, index: index, total: letters.count)
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    // mt-10 below the question (the scaffold already gives 24).
+                    .padding(.top, Spacing.m)
 
                     if selectedIndex != nil, isKeyboardOpen, !attempt.isFinished {
-                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                        VStack(alignment: .leading, spacing: Spacing.xs + 2) {
                             Eyebrow(text: "Replace with")
                                 .padding(.horizontal, Spacing.xxs)
                             LetterKeyboard(
@@ -40,9 +42,8 @@ struct SurgeryTaskView: View {
                                 onDelete: { pick("") }
                             )
                         }
-                        .padding(.horizontal, Spacing.xxs + 2)
-                        .padding(.vertical, Spacing.s)
-                        .cardSurface(radius: Radii.card - 2)
+                        .padding(Spacing.s)
+                        .cardSurface()
                         .transition(motion.reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -180,6 +181,10 @@ struct SurgeryTaskView: View {
     /// `MotionTokens.snap` mostly settles in this time; the slot then shows the letter for real.
     private static let incomingFlight: Double = 0.42
     private static let deleteSettle: Double = 0.3
+    /// A letter box: 38 × 50 at most, 6 pt apart.
+    private static let letterWidth: CGFloat = 38
+    private static let letterHeight: CGFloat = 50
+    private static let letterGap = Spacing.xxs + 2
 
     private func letterBox(_ letter: String, index: Int, total: Int) -> some View {
         let isSelected = selectedIndex == index
@@ -199,17 +204,21 @@ struct SurgeryTaskView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.4)
                 .padding(.horizontal, 2)
-                .frame(minWidth: 0, maxWidth: 52, minHeight: 52)
-                .background(isPlaceholder ? Color.clear : (isTinted ? Color.selectedSurface : Color.surface), in: shape)
+                .frame(minWidth: 0, maxWidth: Self.letterWidth, minHeight: Self.letterHeight)
+                .background(isPlaceholder ? Color.neutralSurface : (isTinted ? Color.selectedSurface : Color.surface), in: shape)
                 .overlay {
                     if isSelected {
-                        shape.strokeBorder(Color.interactive, lineWidth: 2)
+                        shape.strokeBorder(Color.interactive, lineWidth: Borders.card)
                     } else if !isPlaceholder {
-                        shape.strokeBorder(isFixed ? Color.selectedDepth : Color.stroke, lineWidth: 1.5)
+                        shape.strokeBorder(isFixed ? Color.selectedDepth : Color.stroke, lineWidth: Borders.card)
                     }
                 }
-                .background(shape.fill(isTinted ? Color.selectedDepth : Color.tileDepth).offset(y: isPlaceholder ? 0 : Spacing.tileDepth))
-                .padding(.bottom, Spacing.tileDepth)
+                // The selected box gets a 4 pt Blue 100 halo, like a focused field.
+                .background {
+                    if isSelected {
+                        shape.inset(by: -Borders.focusHalo).fill(Color.focusHalo)
+                    }
+                }
         }
         .buttonStyle(.plain)
         .trackFrame(.letter(index))
@@ -231,20 +240,22 @@ private struct LetterKeyboard: View {
         ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
         ["z", "x", "c", "v", "b", "n", "m"],
     ]
-    private static let gap: CGFloat = 4
-    private static let keyHeight: CGFloat = 52
+    private static let gap = Spacing.xxs
+    private static let rowGap = Spacing.xxs + 2
+    private static let keyHeight: CGFloat = 36
+    private static let keyRadius: CGFloat = 8
 
     var body: some View {
         GeometryReader { proxy in
             let columns = CGFloat(Self.rows[0].count)
             let keyWidth = max(0, (proxy.size.width - Self.gap * (columns - 1)) / columns)
-            VStack(spacing: Self.gap) {
+            VStack(spacing: Self.rowGap) {
                 ForEach(Array(Self.rows.enumerated()), id: \.offset) { rowIndex, row in
                     HStack(spacing: Self.gap) {
                         ForEach(row, id: \.self) { letter in
                             key(width: keyWidth) {
                                 Text(verbatim: letter)
-                                    .font(.system(.title2, design: .monospaced, weight: .bold))
+                                    .font(Typography.secondary.weight(.semibold))
                                     .foregroundStyle(Color.ink)
                             } action: {
                                 onLetter(letter)
@@ -253,11 +264,13 @@ private struct LetterKeyboard: View {
                             .accessibilityLabel(Text(verbatim: letter))
                         }
                         if rowIndex == Self.rows.count - 1 {
-                            // Fills the rest of the row: 10 keys + 9 gaps = 7 keys + 7 gaps + this key.
-                            key(width: keyWidth * 3 + Self.gap * 2) {
-                                Image(systemName: "delete.left")
-                                    .font(.system(size: 20, weight: .bold))
-                                    .foregroundStyle(Color.mutedInk)
+                            // Two keys wide, the row centered under the others.
+                            key(width: keyWidth * 2 + Self.gap, fill: .stroke) {
+                                Text("Remove")
+                                    .font(Typography.micro.weight(.semibold))
+                                    .foregroundStyle(Color.ink)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                             } action: {
                                 onDelete()
                             }
@@ -268,20 +281,19 @@ private struct LetterKeyboard: View {
                 }
             }
         }
-        .frame(height: Self.keyHeight * CGFloat(Self.rows.count) + Self.gap * CGFloat(Self.rows.count - 1) + Spacing.tileDepth)
+        .frame(height: Self.keyHeight * CGFloat(Self.rows.count) + Self.rowGap * CGFloat(Self.rows.count - 1))
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.6)
     }
 
-    private func key<Label: View>(width: CGFloat, @ViewBuilder label: () -> Label, action: @escaping () -> Void) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
+    /// A flat key: Ink 100 face (the delete key Ink 200), no border or depth.
+    private func key<Label: View>(width: CGFloat, fill: Color = .neutralSurface, @ViewBuilder label: () -> Label, action: @escaping () -> Void) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Self.keyRadius, style: .continuous)
         return Button(action: action) {
             label()
-                .frame(width: width, height: Self.keyHeight - Spacing.tileDepth)
-                .background(Color.surface, in: shape)
-                .overlay(shape.strokeBorder(Color.stroke, lineWidth: 1.5))
-                .background(shape.fill(Color.tileDepth).offset(y: Spacing.tileDepth))
-                .padding(.bottom, Spacing.tileDepth)
+                .frame(width: width, height: Self.keyHeight)
+                .background(fill, in: shape)
+                .contentShape(shape)
         }
         .buttonStyle(PressScaleButtonStyle())
     }
@@ -310,15 +322,13 @@ private struct FlyingPiece: View {
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-        let face = CGSize(width: flyer.size.width, height: flyer.size.height - Spacing.tileDepth)
         // Both pieces wear the selected look: the slot they leave or land in is the selected one.
         Text(verbatim: flyer.letter)
             .font(.system(.title2, design: .monospaced, weight: .bold))
             .foregroundStyle(Color.selectedInk)
-            .frame(width: face.width, height: face.height)
+            .frame(width: flyer.size.width, height: flyer.size.height)
             .background(Color.selectedSurface, in: shape)
-            .overlay(shape.strokeBorder(Color.interactive, lineWidth: 2))
-            .background(shape.fill(Color.selectedDepth).offset(y: Spacing.tileDepth))
+            .overlay(shape.strokeBorder(Color.interactive, lineWidth: Borders.card))
             .scaleEffect(arrived ? (flyer.isThrown ? 1.4 : 1) : (flyer.isThrown ? 1.3 : 0.8))
             .rotationEffect(.degrees(arrived ? flyer.spin : 0))
             .opacity(arrived && flyer.isThrown ? 0 : 1)

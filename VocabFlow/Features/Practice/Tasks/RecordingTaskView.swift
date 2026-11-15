@@ -99,7 +99,7 @@ struct RecordingTaskView: View {
     private func statusText(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(Typography.secondary)
-            .foregroundStyle(Color.mutedInk)
+            .foregroundStyle(Color.bodyInk)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -107,10 +107,12 @@ struct RecordingTaskView: View {
     @ViewBuilder
     private var actions: some View {
         switch store.recording {
+        // Buttons follow the feedback panel: Green after a pass, Coral "Try again" after a scored miss,
+        // Ink otherwise (an unclear take shows the Blue info panel).
         case .assessed(let assessment) where assessment.passed == true || !attempt.canRecordAgain:
-            PrimaryButton(title: "Continue") { store.acceptRecording() }
+            PrimaryButton(title: "Continue", kind: assessment.passed == true ? .success : .app) { store.acceptRecording() }
         case .assessed(let assessment):
-            PrimaryButton(title: "Try again") { store.retryRecording() }
+            PrimaryButton(title: "Try again", kind: assessment.isValid ? .retry : .app) { store.retryRecording() }
             // An invalid take is nothing to keep, so leaving it reads as skipping.
             SecondaryButton(title: assessment.isValid ? "Continue" : "Can’t speak now") { store.acceptRecording() }
         case .uploadFailed:
@@ -138,9 +140,13 @@ private struct RecordingPulseButton: View {
     @Environment(\.motion) private var motion
 
     private static let buttonSize: CGFloat = 128
+    /// The Blue 50 disc the button always sits in (w-44).
+    private static let restHaloSize: CGFloat = 176
+    /// The button's depth edge, a step deeper than a regular button's.
+    private static let buttonDepth = Spacing.buttonDepth + 1
     private static let haloScales: [CGFloat] = [1.3, 1.65, 2.0]
     /// Inner to outer ring, fading toward the canvas.
-    private static let haloColors: [Color] = [.selectedDepth, .slotTargetedSurface, .selectedSurface]
+    private static let haloColors: [Color] = [.blue100, .blue50, .blue50]
     private static let haloSwell: CGFloat = 0.12
     private static let haloPulseDepth: CGFloat = 0.04
     private static let haloPulsePeriod: Double = 1.4
@@ -152,7 +158,7 @@ private struct RecordingPulseButton: View {
     @State private var envelope = VoiceEnvelope()
 
     private var isLive: Bool { isRecording && !motion.reduceMotion }
-    private var isBreathing: Bool { !isRecording && isEnabled && !motion.reduceMotion }
+    private var isBreathing: Bool { false }
 
     var body: some View {
         TimelineView(.animation(paused: !isLive && !isBreathing)) { context in
@@ -163,9 +169,15 @@ private struct RecordingPulseButton: View {
                 : VoiceEnvelope.Output(presence: isRecording ? 1 : 0, swell: 0)
             ZStack {
                 ZStack {
-                    halo(growth: CGFloat(voice.presence), swell: CGFloat(voice.swell), pulse: isLive ? pulse(at: time) : 0)
-                        .compositingGroup()
-                        .opacity(min(voice.presence * 2, 1))
+                    if motion.reduceMotion {
+                        Circle().fill(Color.blue100)
+                            .frame(width: 176, height: 176)
+                            .opacity(isRecording ? 1 : 0)
+                    } else {
+                        halo(growth: CGFloat(voice.presence), swell: CGFloat(voice.swell), pulse: isLive ? pulse(at: time) : 0)
+                            .compositingGroup()
+                            .opacity(min(voice.presence * 2, 1))
+                    }
                     if isLive {
                         ripples(at: time, presence: voice.presence, swell: voice.swell)
                     }
@@ -192,15 +204,21 @@ private struct RecordingPulseButton: View {
 
     private var recordButton: some View {
         Button(action: action) {
-            Image(systemName: isRecording ? "pause.fill" : "play.fill")
+            Image(systemName: isRecording ? "stop.fill" : "mic.fill")
                 .font(.system(size: 46, weight: .bold))
                 .foregroundStyle(isEnabled ? Color.surface : Color.disabledInk)
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: Self.buttonSize, height: Self.buttonSize)
                 .background(isEnabled ? Color.interactive : Color.disabledSurface, in: Circle())
+                .background {
+                    // Blue 700 depth edge under the face.
+                    if isEnabled {
+                        Circle().fill(Color.interactiveDepth).offset(y: Self.buttonDepth)
+                    }
+                }
                 .contentShape(Circle())
         }
-        .buttonStyle(PressScaleButtonStyle())
+        .buttonStyle(SoundControlButtonStyle())
         .disabled(!isEnabled)
         .accessibilityLabel(Text(isRecording ? "Stop recording" : "Start recording"))
     }

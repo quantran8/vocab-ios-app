@@ -7,10 +7,10 @@ struct LanguageSheet: View {
     let onSelect: (AppLanguage) -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                HStack {
-                    PunctuatedTitle(text: "Choose your language", font: Typography.screenTitle)
+        FittedSheet {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                HStack(alignment: .top) {
+                    SheetTitle("Choose your language")
                     Spacer(minLength: Spacing.xs)
                     SheetCloseButton()
                 }
@@ -24,11 +24,8 @@ struct LanguageSheet: View {
                 }
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.m)
-            .padding(.bottom, Spacing.l)
+            .padding(.top, Spacing.l)
+            .padding(.bottom, Spacing.m)
         }
-        .presentationDetents([.height(270)])
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Color.canvas)
     }
 }

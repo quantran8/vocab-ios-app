@@ -20,10 +20,10 @@ struct FlowHeader: View {
         HStack(spacing: Spacing.m) {
             Button(action: onClose) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 22, weight: .semibold))
                     .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
             }
-            .foregroundStyle(Color.mutedInk)
+            .foregroundStyle(Color.ink400)
             .padding(.leading, -Spacing.s)
             .accessibilityLabel(Text(closeLabel))
 
@@ -51,14 +51,14 @@ struct FlowHeader: View {
             ForEach(0..<max(totalSteps, 1), id: \.self) { index in
                 Capsule()
                     .fill(index < step ? Color.interactive : Color.track)
-                    .frame(height: 6)
+                    .frame(height: 10)
             }
         }
         .animation(motion.animation(MotionTokens.progress), value: step)
     }
 
     private var continuousBar: some View {
-        ProgressTrack(fraction: fraction)
+        ProgressTrack(fraction: fraction, height: 10)
     }
 
     private var fraction: CGFloat {

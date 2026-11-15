@@ -8,8 +8,9 @@ final class CustomWordStore {
     enum LookupPhase: Equatable {
         case idle, loading
         case result(CustomWordLookup)
-        /// `isNew` is false when the word was already on the roadmap.
-        case added(lemma: String, isNew: Bool, ipa: String? = nil)
+        /// `isNew` is false when the word was already on the roadmap. `meaning` is what the learner added, for the
+        /// confirmation.
+        case added(lemma: String, isNew: Bool, ipa: String? = nil, meaning: String? = nil)
         case failed(String, canRetry: Bool)
     }
 
@@ -21,6 +22,42 @@ final class CustomWordStore {
     /// Why the last add didn't go through. The result stays on screen so the learner can act on it.
     private(set) var notice: String?
     private(set) var isAdding = false
+    private(set) var addedSenseIDs: Set<String> = []
+    private(set) var addedMeanings: [String] = []
+
+    struct Selection {
+        let id: String
+        let addition: CustomWordAddition
+        let meaning: String
+    }
+
+    /// Successful senses stay closed on a partial failure; retries submit only the remainder.
+    func addSelected(_ selections: [Selection], lemma: String) async {
+        guard !isAdding, !selections.isEmpty else { return }
+        isAdding = true
+        defer { isAdding = false }
+        notice = nil
+        let token = lookupToken
+        var failed = false
+        for selection in selections where !addedSenseIDs.contains(selection.id) {
+            guard token == lookupToken else { return }
+            do {
+                _ = try await api.addCustomWord(selection.addition)
+                guard token == lookupToken else { return }
+                addedSenseIDs.insert(selection.id)
+                addedMeanings.append(selection.meaning)
+            } catch {
+                guard token == lookupToken else { return }
+                notice = error.asAPIError.userMessage
+                failed = true
+            }
+        }
+        await onRoadmapChanged?()
+        guard token == lookupToken else { return }
+        if !failed {
+            phase = .added(lemma: lemma, isNew: true, meaning: addedMeanings.first)
+        }
+    }
     /// The word an "other meaning" search started from, which going back returns to.
     private(set) var baseWord: ExistingWord?
     /// Set once a lookup answers: from then on, lookups and adds show in the result sheet over the word entry.
@@ -68,6 +105,8 @@ final class CustomWordStore {
         let token = UUID()
         lookupToken = token
         lastQuery = query
+        addedSenseIDs = []
+        addedMeanings = []
         phase = .loading
         do {
             let result = try await api.lookupCustomWord(query)
@@ -81,7 +120,7 @@ final class CustomWordStore {
         }
     }
 
-    func add(_ addition: CustomWordAddition, lemma: String, ipa: String? = nil) async {
+    func add(_ addition: CustomWordAddition, lemma: String, ipa: String? = nil, meaning: String? = nil) async {
         guard !isAdding else { return }
         isAdding = true
         defer { isAdding = false }
@@ -91,7 +130,7 @@ final class CustomWordStore {
             let response = try await api.addCustomWord(addition)
             await onRoadmapChanged?()
             guard token == lookupToken else { return }
-            phase = .added(lemma: lemma, isNew: response.added, ipa: ipa)
+            phase = .added(lemma: lemma, isNew: response.added, ipa: ipa, meaning: meaning)
         } catch {
             guard token == lookupToken else { return }
             await recover(from: error.asAPIError)
@@ -118,6 +157,8 @@ final class CustomWordStore {
         isReviewing = false
         phase = .idle
         notice = nil
+        addedSenseIDs = []
+        addedMeanings = []
     }
 
     func goBack() {

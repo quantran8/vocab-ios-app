@@ -1,28 +1,43 @@
 import SwiftUI
 
 /// A learner's chosen avatar from the server allowlist. Stand-in art until the Syllie set is drawn.
+/// Without a key it shows `initial` (Blue 100 / Blue 700), as the redesign draws avatars.
 struct AvatarView: View {
     let key: String
-    var size: CGFloat = 44
+    var size: CGFloat = Spacing.iconBadge
     /// Nil draws a circle.
     var cornerRadius: CGFloat? = nil
+    /// Shown when there is no avatar key yet.
+    var initial: String? = nil
 
     var body: some View {
         let shape = cornerRadius.map { AnyShape(RoundedRectangle(cornerRadius: $0, style: .continuous)) } ?? AnyShape(Circle())
-        shape
-            .fill(AvatarStyle.background(key))
-            .frame(width: size, height: size)
-            .overlay(
-                Image(systemName: AvatarStyle.symbol(key))
-                    .font(.system(size: size * 0.4, weight: .bold))
-                    .foregroundStyle(Color.ink)
-            )
-            .overlay(shape.stroke(Color.stroke.opacity(0.6), lineWidth: 1))
-            .accessibilityHidden(true)
+        Group {
+            if key.isEmpty, let initial, !initial.isEmpty {
+                shape
+                    .fill(Color.blue100)
+                    .overlay(
+                        Text(verbatim: initial.prefix(1).uppercased())
+                            .font(.system(size: size * 0.4, weight: .heavy))
+                            .foregroundStyle(Color.blue700)
+                    )
+            } else {
+                shape
+                    .fill(AvatarStyle.background(key))
+                    .overlay(
+                        Image(systemName: AvatarStyle.symbol(key))
+                            .font(.system(size: size * 0.4, weight: .bold))
+                            .foregroundStyle(Color.ink)
+                    )
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 }
 
-/// Profile's Tier card: current Tier and the LP still to go to the next one. Learning days stay on the detail screen.
+/// Profile's Tier card: current Tier, LP toward the next one and a Sun progress bar.
+/// Learning days stay on the detail screen.
 struct ProfileTierCard: View {
     let summary: TierSummary
     var next: NextTier?
@@ -30,52 +45,50 @@ struct ProfileTierCard: View {
     private var key: TierKey? { summary.level > 0 ? summary.key : nil }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(spacing: Spacing.s) {
-                RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
-                    .fill(key == nil ? Color.neutralSurface : Color.reward)
-                    .frame(width: 52, height: 52)
-                    .overlay(
-                        Image(systemName: key?.systemImage ?? "leaf")
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(Color.ink)
-                    )
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Eyebrow(text: "Current Tier")
+                IconBadge(systemImage: key?.systemImage ?? "trophy", tone: key == nil ? .neutral : .reward)
+                VStack(alignment: .leading, spacing: 2) {
                     Group {
                         if let key { Text(key.name) } else { Text("No Tier yet") }
                     }
-                    .font(Typography.tileLarge.weight(.bold))
+                    .font(Typography.emphasis)
                     .foregroundStyle(Color.ink)
+                    Group {
+                        if let next {
+                            Text("Progress to \((next.key ?? .unknown).localizedName)")
+                        } else {
+                            Text("Current Tier")
+                        }
+                    }
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: Spacing.xs)
+                if let next {
+                    Text("\(summary.lifetimeLP) / \(next.minLifetimeLP) LP")
+                        .font(Typography.secondary.weight(.bold).monospacedDigit())
+                        .foregroundStyle(Color.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
             if let next {
-                Divider().overlay(Color.neutralSurface)
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Progress to \((next.key ?? .unknown).localizedName)")
-                            .font(Typography.secondary.weight(.bold))
-                            .foregroundStyle(Color.ink)
-                        Spacer(minLength: Spacing.xs)
-                        Text("\(min(summary.lifetimeLP, next.minLifetimeLP)) / \(next.minLifetimeLP) LP")
-                            .font(Typography.micro.weight(.bold).monospacedDigit())
-                            .foregroundStyle(Color.mutedInk)
-                    }
-                    ProgressTrack(fraction: next.minLifetimeLP > 0
-                                  ? CGFloat(min(Double(summary.lifetimeLP) / Double(next.minLifetimeLP), 1)) : 1)
-                }
+                ProgressBar(
+                    fraction: next.minLifetimeLP > 0
+                        ? CGFloat(min(Double(summary.lifetimeLP) / Double(next.minLifetimeLP), 1)) : 1,
+                    color: .reward,
+                    height: Spacing.s - 2
+                )
             } else if key != nil {
-                Divider().overlay(Color.neutralSurface)
-                Text("You’ve reached the highest Tier. Your LP and learning days keep adding up.")
+                Text("You’ve reached the highest Tier. Your LP keeps adding up.")
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(Spacing.m)
-        .cardSurface(radius: Radii.card)
+        .cardSurface()
         .accessibilityElement(children: .combine)
     }
 }

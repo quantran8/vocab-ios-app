@@ -156,7 +156,7 @@ struct HomeView: View {
 
                 if case .exhaustedNoCustom = status.scope {
                     HStack(alignment: .top, spacing: Spacing.s) {
-                        IconBadge(systemImage: "trophy", tone: .reward)
+                        IconBadge(systemImage: "trophy.fill", tone: .reward)
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             (plan.current.hasAllTopics
                              ? Text("You’ve learned all of \(plan.current.collection?.name ?? "")")
@@ -185,7 +185,7 @@ struct HomeView: View {
                     CardDivider()
                     Button(action: startReviewOnly) {
                         HStack(spacing: Spacing.s) {
-                            IconBadge(systemImage: "arrow.counterclockwise", tone: .success)
+                            IconBadge(systemImage: "arrow.clockwise", tone: .success)
                             VStack(alignment: .leading, spacing: Spacing.xxs) {
                                 Text("\(max(0, status.backlog - status.sessionReviews)) more words waiting")
                                     .font(Typography.secondary.weight(.bold))

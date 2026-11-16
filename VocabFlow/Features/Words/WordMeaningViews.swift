@@ -43,7 +43,7 @@ struct MeaningFields: View {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text(LearnView.highlight(lemma, in: example.text))
                         if let translation = example.translation, !translation.isEmpty {
-                            ExampleTranslation(text: translation, showsIcon: style == .divided)
+                            ExampleTranslation(text: translation)
                         }
                     }
                 }
@@ -86,6 +86,7 @@ struct ExpandChevron: View {
         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
             .font(.subheadline.weight(.medium))
             .foregroundStyle(Color.mutedInk)
+            .symbolReplace(value: isExpanded)
             .accessibilityHidden(true)
     }
 }
@@ -177,7 +178,7 @@ struct OtherMeaningsSheet: View {
 
 // MARK: - Word hero (word detail, add word)
 
-/// The word, centered, over its IPA and a 36 pt pronunciation button. Plays recorded audio when there is some;
+/// The word, centered, over its IPA and a 44 pt pronunciation button. Plays recorded audio when there is some;
 /// otherwise the device speaks the word.
 struct WordHeroHeader: View {
     let lemma: String
@@ -200,10 +201,10 @@ struct WordHeroHeader: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             if showsPronunciation {
-                HStack(spacing: Spacing.s - 2) {
+                HStack(spacing: Spacing.s) {
                     if let ipa {
                         Text(verbatim: ipa)
-                            .font(Typography.body)
+                            .font(Typography.ipaHero)
                             .foregroundStyle(Color.bodyInk)
                             .accessibilityLabel(Text("IPA: \(ipa)"))
                     }
@@ -216,16 +217,15 @@ struct WordHeroHeader: View {
                     } label: {
                         Group {
                             if playAudio != nil || speech.isAvailable {
-                                SpeakerWaveIcon(isPlaying: isPlaying, side: 18)
+                                SpeakerWaveIcon(isPlaying: isPlaying, side: 22)
                             } else {
                                 Image(systemName: "speaker.slash")
-                                    .font(.callout.weight(.semibold))
+                                    .font(.title3.weight(.semibold))
                             }
                         }
                         .foregroundStyle((playAudio != nil || speech.isAvailable) ? Color.link : Color.disabledInk)
-                        .frame(width: Spacing.iconButton, height: Spacing.iconButton)
-                        .background((playAudio != nil || speech.isAvailable) ? Color.selectedSurface : Color.disabledSurface, in: Circle())
                         .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
+                        .background((playAudio != nil || speech.isAvailable) ? Color.selectedSurface : Color.disabledSurface, in: Circle())
                         .contentShape(Circle())
                     }
                     .buttonStyle(PressScaleButtonStyle())
@@ -396,6 +396,7 @@ struct WordDetailSheet: View {
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.ink400)
+                        .symbolReplace(value: isExpanded)
                         .accessibilityHidden(true)
                 }
                 .padding(.horizontal, Spacing.m)

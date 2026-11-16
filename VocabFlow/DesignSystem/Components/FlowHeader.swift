@@ -19,12 +19,9 @@ struct FlowHeader: View {
     var body: some View {
         HStack(spacing: Spacing.m) {
             Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 22, weight: .semibold))
-                    .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
+                SystemBarButtonLabel(systemImage: "xmark")
             }
-            .foregroundStyle(Color.ink400)
-            .padding(.leading, -Spacing.s)
+            .buttonStyle(PressScaleButtonStyle())
             .accessibilityLabel(Text(closeLabel))
 
             Group {

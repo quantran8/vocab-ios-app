@@ -142,15 +142,15 @@ struct WordPronunciation: View {
     @Environment(SpeechPlayer.self) private var speech
 
     private var isPlaying: Bool { playAudio == nil ? (speech.isSpeaking && speech.spokenText == term && speech.spokenIPA == ipa) : isPlayingAudio }
-    private var buttonSize: CGFloat { style == .hero ? 44 : (style == .compact ? 28 : 36) }
-    /// Icon side: half the hero button, as in the design; the standard size is unchanged.
-    private var iconSide: CGFloat { style == .hero ? 22 : (style == .compact ? 16 : 18) }
+    private var buttonSize: CGFloat { style == .hero ? 44 : 36 }
+    /// Icon side: half the button.
+    private var iconSide: CGFloat { style == .hero ? 22 : 18 }
 
     var body: some View {
         HStack(spacing: Spacing.s) {
             if let ipa {
                 Text(verbatim: ipa)
-                    .font(Typography.body)
+                    .font(style == .compact ? Typography.ipaCard : Typography.body)
                     .foregroundStyle(style == .hero ? Color.bodyInk : Color.mutedInk)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -185,21 +185,15 @@ struct WordPronunciation: View {
     }
 }
 
-/// The icon only identifies the line as a translation; it isn't a control.
+/// The example's translation; its place under the sentence marks it, so it has no icon.
 struct ExampleTranslation: View {
     let text: String
-    var showsIcon = true
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-            if showsIcon {
-                Image(systemName: "translate")
-                    .accessibilityLabel(Text("Translation"))
-            }
-            Text(verbatim: text)
-        }
-        .font(Typography.secondary)
-        .foregroundStyle(Color.mutedInk)
-        .accessibilityElement(children: .combine)
+        Text(verbatim: text)
+            .font(Typography.secondary)
+            .foregroundStyle(Color.mutedInk)
+            .accessibilityLabel(Text("Translation"))
+            .accessibilityValue(Text(verbatim: text))
     }
 }

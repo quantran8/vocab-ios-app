@@ -24,9 +24,9 @@ struct AppSettingsView: View {
                         .padding(.top, Spacing.xs)
 
                     group("Interaction") {
-                        toggleRow(systemImage: "iphone.radiowaves.left.and.right", title: "Haptics", isOn: $settings.hapticsEnabled)
+                        toggleRow(systemImage: "hand.tap", title: "Haptics", isOn: $settings.hapticsEnabled)
                         CardDivider()
-                        toggleRow(systemImage: "circle.dotted.and.circle", title: "Reduce motion", isOn: $settings.reduceMotion)
+                        toggleRow(systemImage: "figure.walk.motion", title: "Reduce motion", isOn: $settings.reduceMotion)
                     }
 
                     if let visible = learner.profile?.settings.leaderboardVisible {
@@ -199,6 +199,7 @@ struct AppSettingsView: View {
         Toggle(isOn: isOn) {
             SettingLabel(systemImage: systemImage, title: title, subtitle: subtitle)
         }
+        .tint(Color.interactive)
         .padding(.horizontal, Spacing.m)
         .padding(.vertical, Spacing.s)
         .frame(minHeight: Spacing.rowMinHeight)

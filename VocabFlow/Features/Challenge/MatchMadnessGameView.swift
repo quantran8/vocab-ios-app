@@ -232,12 +232,9 @@ struct CloseRunButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "xmark")
-                .font(.system(size: 20, weight: .semibold))
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
+            SystemBarButtonLabel(systemImage: "xmark")
         }
-        .foregroundStyle(Color.mutedInk)
-        .padding(.leading, -Spacing.s)
+        .buttonStyle(PressScaleButtonStyle())
         .accessibilityLabel(Text(label))
     }
 }

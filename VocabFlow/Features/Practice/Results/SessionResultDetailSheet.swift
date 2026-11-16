@@ -165,6 +165,7 @@ struct SessionResultDetailSheet: View {
                     Image(systemName: open ? "chevron.up" : "chevron.down")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(Color.ink400)
+                        .symbolReplace(value: open)
                         .accessibilityHidden(true)
                 }
                 .padding(.horizontal, Spacing.m)

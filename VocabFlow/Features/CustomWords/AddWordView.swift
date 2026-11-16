@@ -559,6 +559,7 @@ private struct WordReview: View {
                     } label: {
                         Image(systemName: chosen ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 24)).foregroundStyle(chosen ? Color.interactive : Color.ink300)
+                            .symbolReplace(value: chosen)
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)

@@ -706,7 +706,8 @@ struct ScopeCompletionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(alignment: .top, spacing: Spacing.s) {
-                IconBadge(systemImage: "trophy", tone: .reward)
+                IconBadge(systemImage: "trophy.fill", tone: .reward)
+                    .symbolBounceOnce(after: MotionTokens.resultSymbolBounce)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     title

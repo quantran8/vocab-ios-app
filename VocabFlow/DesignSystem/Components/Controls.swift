@@ -184,20 +184,12 @@ struct SelectionMark: View {
     let isOn: Bool
 
     var body: some View {
-        Group {
-            if isOn {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .frame(width: 24, height: 24)
-                    .background(Color.interactive, in: Circle())
-            } else {
-                Circle()
-                    .strokeBorder(Color.ink300, lineWidth: Borders.card)
-                    .frame(width: 24, height: 24)
-            }
-        }
-        .accessibilityHidden(true)
+        Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 24, weight: .medium))
+            .foregroundStyle(isOn ? Color.interactive : Color.ink300)
+            .symbolReplace(value: isOn)
+            .frame(width: 24, height: 24)
+            .accessibilityHidden(true)
     }
 }
 
@@ -252,6 +244,7 @@ struct SectionTitle<Trailing: View>: View {
             Spacer(minLength: Spacing.s)
             trailing
         }
+        .staticLabelRow()
         .padding(.bottom, Spacing.s)
     }
 }
@@ -283,6 +276,14 @@ struct TextLink: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+extension View {
+    /// A header row whose text swaps ("Select all" ⇄ "Clear all", "3/12") snaps instead of fading and sliding
+    /// with the caller's animation, which is meant for the content below. See memory no-text-label-animation.
+    func staticLabelRow() -> some View {
+        transaction { $0.animation = nil }
     }
 }
 

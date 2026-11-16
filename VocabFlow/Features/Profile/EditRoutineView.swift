@@ -16,7 +16,6 @@ struct EditRoutineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Eyebrow(text: "Learning plan")
                     Spacer()
                     SheetCloseButton()
                 }
@@ -33,7 +32,7 @@ struct EditRoutineView: View {
                             settings.feedback.selectionChanged()
                         }
                     }
-                    reviewsSection
+                    ReviewsPerSessionPicker(preferences: $draft)
                     LearningDaysPicker(
                         selected: draft.learningDays,
                         onToggleDay: { day in
@@ -54,42 +53,6 @@ struct EditRoutineView: View {
         }
         .safeAreaInset(edge: .bottom) {
             saveBar
-        }
-    }
-
-    private var reviewsSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.s - 2) {
-            HStack(alignment: .firstTextBaseline) {
-                PlanSectionTitle(text: "Reviews / session")
-                Spacer(minLength: Spacing.s)
-                if draft.reviewsPerSession != nil {
-                    TextLink(title: "Match new words") {
-                        draft.reviewsPerSession = nil
-                        settings.feedback.selectionChanged()
-                    }
-                    .padding(.vertical, -Spacing.s)
-                }
-            }
-            WordsPerDayStepper(
-                value: draft.effectiveReviewsPerSession,
-                range: LearningPreferences.reviewsPerSessionRange,
-                label: "Reviews per session",
-                decreaseLabel: "Decrease reviews per session",
-                increaseLabel: "Increase reviews per session"
-            ) { amount in
-                draft.adjustReviewsPerSession(by: amount)
-                settings.feedback.selectionChanged()
-            }
-            Group {
-                if draft.reviewsPerSession == nil {
-                    Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionRange.lowerBound).")
-                } else {
-                    Text("Words due for review wait for the next session.")
-                }
-            }
-            .font(Typography.micro)
-            .foregroundStyle(Color.mutedInk)
-            .fixedSize(horizontal: false, vertical: true)
         }
     }
 

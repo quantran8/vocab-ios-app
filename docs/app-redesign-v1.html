@@ -623,8 +623,9 @@ function home(done = false) {
     <div class="mt-10">${sectionTitle('Đang học', '<span class="link">Đổi</span>')}
       <div class="card">
         <div class="p-4">
-          <div class="flex items-center gap-2"><i class="w-2.5 h-2.5 rounded-full" style="background:${MARK.everyday}"></i><span class="font-bold text-[17px] flex-1">Everyday</span>${done ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Hoàn thành</span>` : ''}<span class="text-[14px] text-ink-500 tabular-nums">${done ? '600' : '128'} / 600 từ</span></div>
+          <div class="flex items-center gap-2 min-w-0"><i class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${MARK.everyday}"></i><span class="font-bold text-[17px] flex-1 min-w-0 truncate">Everyday</span></div>
           <div class="mt-3 h-2.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${MARK.everyday};width:${done ? 100 : 21}%"></div></div>
+          <div class="mt-2 flex items-center gap-2 text-[14px] text-ink-500 tabular-nums">${done ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Hoàn thành</span>600 từ` : '128 / 600 từ'}</div>
         </div>
         ${topics.map(([i, n, a, b]) => `<div class="flex items-center gap-3 px-4 py-3.5 border-t-[1.5px] border-ink-100">
           <span class="ico w-9 h-9 bg-ink-50 text-ink-700">${ic(i, 'w-[18px] h-[18px]')}</span>
@@ -669,7 +670,7 @@ const wdHl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md p
 function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
   const pill = learned ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã học</span>` : '<span class="pill bg-ink-100 text-ink-600">Chưa học</span>';
   /* Its own line under the meaning, indented past the number: the pill and chevron stay on the meaning's line. */
-  const sound = ipa ? `<div class="-mt-2 pb-3 pl-11 pr-4 flex items-center gap-2 text-[15px] text-ink-600">${ipa}${soundInline('s')}</div>` : '';
+  const sound = ipa ? `<div class="-mt-2 pb-3 pl-11 pr-4 flex items-center gap-2.5 text-[17px] text-ink-600">${ipa}${soundInline('m')}</div>` : '';
   return `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="text-ink-400 font-bold w-4">${n}</span>
       <span class="font-bold text-[16px] flex-1 min-w-0">${m}</span>${pill}${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>${sound}
     ${open ? `<div class="px-4 pb-4 pl-11 space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
@@ -679,7 +680,7 @@ function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
       <div class="text-[13px] text-ink-500">Đã học ${date}</div>` : ''}</div>` : ''}</div>`;
 }
 const wdHero = (w, ipa) => `<div class="text-center"><div class="text-[38px] font-extrabold tracking-[-1.2px]">${w}</div>
-  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-2.5 text-ink-600">${ipa}${soundInline('m')}</div>` : ''}</div>`;
+  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-3 text-[19px] text-ink-600">${ipa}${soundInline('l')}</div>` : ''}</div>`;
 const wdSheet = (hero, learned, total, body) => sheetOver(blankUnder, `
     <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
     <div class="flex-1 overflow-hidden px-5">${hero}
@@ -799,7 +800,7 @@ function profile() {
 function editRoutine() {
   const stepper = n => `<div class="card p-3 flex items-center gap-4"><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('minus')}</span><div class="flex-1 text-center"><span class="text-[30px] font-extrabold tracking-tight">${n}</span> <span class="text-ink-500 font-semibold">từ</span></div><span class="w-12 h-12 rounded-full bg-ink-100 grid place-items-center">${ic('plus')}</span></div>`;
   return sheetOver(blankUnder, `
-    <div class="flex items-center justify-between px-5 pt-3"><span class="eyebrow">Kế hoạch học</span><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex items-center justify-end px-5 pt-3"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
     <div class="flex-1 overflow-hidden px-5">
       <h2 class="h-sheet mt-2">Lịch học của bạn</h2>
       <div class="mt-7"><div class="font-bold mb-2.5">Từ mới / ngày</div>${stepper(10)}</div>
@@ -867,7 +868,7 @@ const kb = () => {
 const addHeader = (back = true) => `<div class="flex items-center justify-between px-5 pt-2">${back ? `<span class="icon-btn">${ic('back', 'w-4 h-4')}</span>` : '<span></span>'}<span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>`;
 /* ipa null: the senses sound different, so the hero has no IPA or speaker (each sense card carries its own). */
 const wordHero = (w = 'serendipity', ipa = '/ˌserənˈdɪpəti/') => `<div class="text-center"><div class="text-[36px] font-extrabold tracking-[-1.2px]">${w}</div>
-  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-2.5 text-ink-600">${ipa}${soundInline('m')}</div>` : ''}</div>`;
+  ${ipa ? `<div class="mt-2 flex items-center justify-center gap-3 text-[19px] text-ink-600">${ipa}${soundInline('l')}</div>` : ''}</div>`;
 const area = (label, value, rows = 1, focus = false) => `<div><div class="eyebrow mb-2">${label}</div>
   <div class="rounded-2xl border-2 ${focus ? 'border-blue-500 ring-4 ring-blue-100' : 'border-ink-200'} px-4 py-3 text-[16px] leading-snug" style="min-height:${rows === 1 ? 48 : 76}px">${value}</div></div>`;
 
@@ -897,7 +898,7 @@ const hlWord = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md
 function addSense({ m, on, open, edited, def, ex, tr, ipa }) {
   return `<div class="mt-3 rounded-[20px] border-2 ${on ? 'border-blue-500 bg-blue-50' : 'border-ink-200 bg-white'}">
     <div class="flex items-center gap-3 px-4 min-h-14 py-3">${tick(on)}<span class="flex-1 font-bold text-[16px] ${on ? 'text-blue-800' : ''}">${m}</span>${edited ? '<span class="pill bg-white text-blue-700">Đã sửa</span>' : ''}${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
-    ${ipa ? `<div class="-mt-2 pb-3 pl-[52px] pr-4 flex items-center gap-2 text-[15px] ${on ? 'text-blue-800' : 'text-ink-600'}">${ipa}${on ? soundInline('s').replace('bg-blue-50', 'bg-white') : soundInline('s')}</div>` : ''}
+    ${ipa ? `<div class="-mt-2 pb-3 pl-[52px] pr-4 flex items-center gap-2.5 text-[17px] ${on ? 'text-blue-800' : 'text-ink-600'}">${ipa}${on ? soundInline('m').replace('bg-blue-50', 'bg-white') : soundInline('m')}</div>` : ''}
     ${open ? `<div class="px-4 pb-4 pl-[52px] space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
       <div><div class="eyebrow mb-1.5">Ví dụ</div><p class="text-[15px] leading-snug">${ex}</p>
         <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div>
@@ -1166,6 +1167,7 @@ function obRoutine() {
   <div class="flex-1 overflow-hidden px-5">
     ${obTitle('Lịch học của bạn')}
     <div class="mt-7"><div class="font-bold mb-2.5">Từ mới / ngày</div>${stepper(10)}</div>
+    <div class="mt-6"><div class="font-bold mb-2.5">Từ ôn / buổi</div>${stepper(10)}<div class="mt-2 text-[13px] text-ink-500">Theo số từ mới, ít nhất 5.</div></div>
     <div class="mt-6"><div class="flex justify-between items-baseline mb-2.5"><span class="font-bold">Ngày học</span><span class="link text-[14px]">Mỗi ngày</span></div>
       <div class="flex gap-1.5">${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d, i) => `<span class="day ${i < 5 ? 'on' : ''}">${d}</span>`).join('')}</div></div>
     <div class="mt-6 card">
@@ -1274,6 +1276,7 @@ document.getElementById('flows').innerHTML = [
       'Bỏ card "Ôn thêm" đứng riêng (không đọc được mục đích). Thay bằng một dòng trong chính card Bài học hôm nay, nói rõ lý do và việc sẽ xảy ra: "Còn 24 từ khác chờ ôn" / "Ôn riêng 10 từ, không có từ mới". 24 = số từ đến hạn trừ phần bài học đã lấy (backlog − dueCap); 10 = dueCap.',
       'Dòng này chỉ hiện khi số từ chờ ôn vượt ngưỡng (> 10, <code>ReviewLoad.statusThreshold</code>). Chạm: bắt đầu buổi chỉ ôn (<code>reviewOnly</code>).',
       'Thêm khối "Đang học": tiến độ Collection và các Topic đang học, mọi thanh tiến độ dùng màu dấu của Collection (Everyday = xanh trời).',
+      'Dòng tên Collection chỉ có chấm màu và tên, chiếm trọn chiều ngang; tên dài thu nhỏ tới 80% rồi cắt "…". Số từ "128 / 600 từ" nằm dưới thanh tiến độ.',
       'Lời chào tách hai dòng: "Chào buổi sáng" nhỏ, tên một dòng; tên dài tự thu nhỏ tới 80% rồi cắt "…" ở cuối (ảnh chụp app: tên mellow_puffin_5001 làm lời chào vỡ thành 4 dòng).',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
     ], 1120),
@@ -1348,7 +1351,7 @@ document.getElementById('flows').innerHTML = [
     frame('1.1a', 'Trang chủ · đã học hết Collection', home(true), [
       'Card Bài học hôm nay nói thẳng trạng thái (không giấu trong ⓘ): icon cúp Sun, "Bạn đã học hết Everyday", một dòng hướng dẫn.',
       'Nút Blue là việc còn làm được hôm nay: "Ôn N từ" khi có từ đến hạn, không có thì "Luyện tập" (mở Luyện tập ngẫu nhiên). "Chọn bộ từ khác" là nút viền.',
-      'Không hiện "Ôn thêm": nút chính đã là ôn tập. Khối Đang học: thanh đầy, pill "Hoàn thành" cạnh tên Collection.',
+      'Không hiện "Ôn thêm": nút chính đã là ôn tập. Khối Đang học: thanh đầy; dòng dưới thanh đổi thành pill "Hoàn thành" kèm "600 từ" (không lặp "600 / 600").',
       'Còn từ người dùng tự thêm chưa học: không phải trạng thái này; card vẫn là buổi học bình thường với số từ mới còn lại.',
       'Chỉ hết các Topic đang chọn: "Bạn đã học hết các chủ đề đang chọn", nút viền "Chọn thêm chủ đề" thay "Chọn bộ từ khác".',
     ], 1120),
@@ -1463,7 +1466,7 @@ document.getElementById('sound-controls').innerHTML = (() => {
   const inl = (sz, cap) => `<div class="flex flex-col items-center gap-2">${soundInline(sz)}<div class="text-[12px] text-ink-500 whitespace-nowrap">${cap}</div></div>`;
   return `<div class="grid grid-cols-[300px_1fr] gap-10 items-start">
     <div><div class="text-[14px] font-bold mb-3">Cạnh IPA · phẳng</div>
-      <div class="flex items-end gap-4">${inl('s', '28 · card')}${inl('m', '36 · dưới từ')}${inl('l', '44 · giới thiệu')}<div class="flex flex-col items-center gap-2">${soundInline('l', 'active')}<div class="text-[12px] text-ink-500 whitespace-nowrap">Đang phát</div></div></div>
+      <div class="flex items-end gap-4">${inl('m', '36 · card')}${inl('l', '44 · dưới từ, giới thiệu')}<div class="flex flex-col items-center gap-2">${soundInline('l', 'active')}<div class="text-[12px] text-ink-500 whitespace-nowrap">Đang phát</div></div></div>
       <p class="mt-4 text-[13px] text-ink-500 leading-relaxed">Nền Blue 50, icon Blue 600, không cạnh dày. Vùng chạm luôn 44pt. Icon loa có 3 vạch sóng. Đang phát: các vạch chạy 1 → 2 → 3 lặp lại (mỗi bước 280ms), màu nền không đổi. Không có audio: Ink 100 / Ink 400.</p></div>
     <div><div class="text-[14px] font-bold mb-3">Giữa bài tập · cạnh dày (một kích thước cho loa và micro)</div>
       <div class="grid grid-cols-5 gap-x-12">

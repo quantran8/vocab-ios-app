@@ -24,7 +24,6 @@ struct EditFocusView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Eyebrow(text: "Learning plan")
                     Spacer()
                     SheetCloseButton()
                 }
@@ -93,8 +92,8 @@ struct EditFocusView: View {
             ForEach(TopicCatalog.collections) { collection in
                 TopicChip(
                     title: collection.name,
-                    systemImage: collection.systemImage,
-                    isSelected: collection.id == draft.collectionID
+                    isSelected: collection.id == draft.collectionID,
+                    mark: CollectionMarkColor.color(for: collection)
                 ) {
                     guard collection.id != draft.collectionID else { return }
                     draft.selectCollection(collection.id)

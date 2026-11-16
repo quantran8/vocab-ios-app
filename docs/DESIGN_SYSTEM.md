@@ -229,10 +229,10 @@ Mặt nút Ink dùng ink-800 trên cạnh ink-950 (đổi từ ink-700 ngày 14/
 
 ### 5.3 Header và điều hướng
 
-- **Trang con (push):** thanh điều hướng của iOS chỉ có nút quay lại; iOS 26 vẽ nút này thành vòng tròn kính. Không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.
-- **Sheet:** grabber của hệ thống, nút đóng tròn ink-100 ở góc phải. Một luồng nhiều bước (ví dụ Thêm từ) nằm trong **một sheet**, chuyển bước bên trong sheet. Không chồng nhiều sheet lên nhau.
+- **Trang con (push):** thanh điều hướng của iOS chỉ có nút quay lại; iOS 26 vẽ nút này thành vòng tròn kính, dưới iOS 26 giữ mũi tên của hệ thống. Nút ✕ và nút quay lại tự vẽ (màn không có thanh điều hướng) thì dưới iOS 26 là vòng tròn ink-100 36pt. Không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.
+- **Sheet:** grabber của hệ thống, nút đóng ✕ ở góc phải (bước trong sheet có thêm ‹ ở góc trái), vẽ như nút trên thanh điều hướng: vòng tròn kính trên iOS 26, icon ink trơn trước đó (`SystemBarButtonLabel`, giống nút bánh răng ở Hồ sơ). Một luồng nhiều bước (ví dụ Thêm từ) nằm trong **một sheet**, chuyển bước bên trong sheet. Không chồng nhiều sheet lên nhau.
 - **Tab bar:** tab bar của iOS, bốn mục Trang chủ, Từ của tôi, Xếp hạng, Hồ sơ. Tint blue-500.
-- **Buổi học:** nút ✕ và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng.
+- **Buổi học:** nút ✕ (cùng kiểu nút hệ thống như sheet) và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng.
 
 ### 5.4 Điều khiển
 
@@ -264,7 +264,7 @@ Một họ nút, hai cấp. Cùng icon nét, cùng màu Blue, cùng cách báo t
 
 | Cấp | Dùng ở | Giao diện |
 |---|---|---|
-| **Cạnh IPA** | Giới thiệu từ (44), dưới từ trong sheet (36), trong card nghĩa (28) | Tròn phẳng, nền blue-50, icon blue-600, không cạnh dày. Vùng chạm luôn 44pt |
+| **Cạnh IPA** | Giới thiệu từ và dưới từ trong sheet (44, IPA 19pt), trong card nghĩa (36, IPA 17pt) | Tròn phẳng, nền blue-50, icon blue-600, không cạnh dày. Vùng chạm luôn 44pt |
 | **Giữa bài tập** | Loa của đề nghe, micro của Đọc to | Một kích thước chung: nút 128pt mặt blue-500, icon trắng, cạnh dày 5pt blue-700, đứng một mình, lúc nghỉ không có quầng hay đĩa nền. Nhấn lún như nút Blue |
 
 | Trạng thái | Cạnh IPA | Giữa bài tập |
@@ -375,8 +375,8 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Card "Bài học hôm nay" chỉ nói buổi học kế tiếp có gì ("10 từ ôn · 8 từ mới") và nút Blue "Bắt đầu". Không có thanh tiến độ hay ước lượng thời gian: không có dữ liệu đứng sau.
   - Thử thách tạm ẩn.
   - Khi số từ chờ ôn vượt ngưỡng, card Bài học hôm nay có thêm một dòng dưới đường kẻ: "Còn N từ khác chờ ôn" / "Ôn riêng 10 từ, không có từ mới" (N = số từ đến hạn trừ phần bài học đã lấy). Chạm để bắt đầu buổi chỉ ôn. Không đặt thành card riêng tên "Ôn thêm": tách khỏi bài học thì không đọc được mục đích.
-  - **Đã học hết Collection:** card Bài học hôm nay nói thẳng trạng thái (icon cúp nền sun-50, "Bạn đã học hết …", một dòng hướng dẫn), nút Blue "Ôn N từ" (không có từ đến hạn thì "Luyện tập") và nút viền "Chọn bộ từ khác". Không hiện "Ôn thêm". Khối Đang học có pill "Hoàn thành" cạnh tên Collection. Chỉ hết các Topic đang chọn thì nút viền là "Chọn thêm chủ đề".
-  - Khối "Đang học": tiến độ Collection và các Topic; mọi thanh tiến độ dùng màu dấu của Collection.
+  - **Đã học hết Collection:** card Bài học hôm nay nói thẳng trạng thái (icon cúp nền sun-50, "Bạn đã học hết …", một dòng hướng dẫn), nút Blue "Ôn N từ" (không có từ đến hạn thì "Luyện tập") và nút viền "Chọn bộ từ khác". Không hiện "Ôn thêm". Khối Đang học: dòng dưới thanh tiến độ đổi thành pill "Hoàn thành" kèm tổng số từ. Chỉ hết các Topic đang chọn thì nút viền là "Chọn thêm chủ đề".
+  - Khối "Đang học": tiến độ Collection và các Topic; mọi thanh tiến độ dùng màu dấu của Collection. Dòng tên Collection chỉ có chấm màu và tên (tên dài thu nhỏ tới 80% rồi cắt "…"); số từ "128 / 600 từ" nằm dưới thanh.
 - **Từ của tôi:**
   - Hai số thống kê trong một card.
   - Khối Luyện tập là hai dòng trong một card: Luyện tập ngẫu nhiên có › vì còn bước chọn kỹ năng; Từ còn yếu có nút "Luyện ngay".

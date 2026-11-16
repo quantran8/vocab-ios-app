@@ -22,6 +22,12 @@ enum MotionTokens {
     /// One wave of `SpeakerWaveIcon` appearing, and the time between waves while it plays.
     static let speakerWave = Animation.easeOut(duration: 0.18)
     static let speakerWaveStep: Double = 0.28
+    /// An SF Symbol swapping glyph (radio, password eye, chevron).
+    static let symbolSwap = Animation.easeInOut(duration: 0.2)
+    /// The feedback check bounces once the panel has slid in.
+    static let feedbackSymbolBounce: Double = 0.25
+    /// LP bolt and trophy on a results screen bounce once Syllie has landed and the confetti started.
+    static let resultSymbolBounce: Double = 1.4
     static let transitionDuration: Double = 0.36
     static let transition = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: transitionDuration)
     /// A step sliding in a flow that goes both ways: eases in and settles without overshoot, like a system push.

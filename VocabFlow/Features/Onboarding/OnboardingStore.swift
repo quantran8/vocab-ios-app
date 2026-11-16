@@ -120,7 +120,10 @@ final class OnboardingStore {
         let draft = draft
         await save {
             try await self.api.updateScope(LearningScope(collectionId: draft.collectionID, topicIds: Array(draft.topicIDs)))
-            try await self.api.updateSettings(SettingsUpdate(dailyNewWordGoal: draft.wordsPerDay, weeklySessionGoal: draft.weeklySessionGoal))
+            var settings = SettingsUpdate(dailyNewWordGoal: draft.wordsPerDay, weeklySessionGoal: draft.weeklySessionGoal)
+            // Left out while it follows the new-word goal, so a backend without the field never sees it.
+            if let reviews = draft.reviewsPerSession { settings.reviewsPerSession = .some(reviews) }
+            try await self.api.updateSettings(settings)
             self.plan.save(draft)
             self.haptics.success()
             self.step = .ready

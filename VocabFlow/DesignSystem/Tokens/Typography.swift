@@ -37,6 +37,10 @@ enum Typography {
     static let tile = Font.system(.callout, weight: .semibold)
     static let tileLarge = Font.system(.title3, weight: .semibold)
     /// Word introduction values; definition and example use `body`.
+    /// IPA under the word on word detail / add word: 19.
+    static var ipaHero: Font { scaled(19, .regular, relativeTo: .title3) }
+    /// IPA line inside a meaning card: 17.
+    static let ipaCard = Font.system(.body)
     static let wordClass = Font.system(.headline, weight: .semibold)
     /// The meaning on the word card: 26 extrabold.
     static var wordMeaning: Font { scaled(26, .heavy, relativeTo: .title1) }

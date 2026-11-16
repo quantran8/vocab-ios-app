@@ -82,6 +82,7 @@ struct PasswordInput<Field: Hashable>: View {
                 Image(systemName: isVisible ? "eye.slash" : "eye")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Color.mutedInk)
+                    .symbolReplace(value: isVisible)
                     .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
                     .contentShape(Rectangle())
             }

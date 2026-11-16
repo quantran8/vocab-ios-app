@@ -29,6 +29,7 @@ struct FeedbackActionPanel<Action: View>: View {
                             .foregroundStyle(.white)
                             .frame(width: 28, height: 28)
                             .background(accent(feedback.kind), in: Circle())
+                            .symbolBounceOnce(after: MotionTokens.feedbackSymbolBounce, when: feedback.kind == .success)
                             .accessibilityHidden(true)
                         Text(feedback.title)
                             .font(Typography.feedbackTitle)

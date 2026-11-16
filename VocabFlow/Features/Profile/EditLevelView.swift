@@ -24,7 +24,6 @@ struct EditLevelView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Eyebrow(text: "Learning plan")
                     Spacer()
                     SheetCloseButton()
                 }
@@ -33,21 +32,20 @@ struct EditLevelView: View {
                     .padding(.top, Spacing.xs)
                     .padding(.bottom, Spacing.l)
 
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible())], spacing: Spacing.s) {
-                    ForEach(CEFRLevel.allCases) { level in
-                        LevelTile(level: level, isSelected: draft == level) {
-                            guard level != draft else { return }
-                            motion.perform(MotionTokens.snap) { draft = level }
-                            settings.feedback.selectionChanged()
-                        }
-                    }
-                }
-
-                SecondaryButton(title: "Take the placement test", systemImage: "checklist") {
+                PlacementTestCard {
                     placement.start()
                     isTakingTest = true
                 }
-                .padding(.top, Spacing.l)
+
+                Eyebrow(text: "Or choose it yourself")
+                    .padding(.top, Spacing.l)
+                    .padding(.bottom, Spacing.s - 2)
+
+                LevelList(selected: draft) { level in
+                    guard level != draft else { return }
+                    motion.perform(MotionTokens.snap) { draft = level }
+                    settings.feedback.selectionChanged()
+                }
             }
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.top, Spacing.s)

@@ -16,44 +16,29 @@ struct PunctuatedTitle: View {
     }
 }
 
-/// An icon drawn like a system navigation bar button, for screens without a bar:
-/// a Liquid Glass circle on iOS 26+, a bare black icon before that.
+/// An icon drawn like a system navigation bar button, for screens without a bar: a Liquid Glass circle
+/// on iOS 26+, a 36 pt Ink 100 circle before that.
 struct SystemBarButtonLabel: View {
     let systemImage: String
 
     var body: some View {
         if #available(iOS 26.0, *) {
-            icon
+            Image(systemName: systemImage)
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Color.ink)
+                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
                 .contentShape(Circle())
                 .glassEffect(.regular.interactive(), in: .circle)
         } else {
-            icon
-                .foregroundStyle(Color.ink)
-                .contentShape(Circle())
+            IconButtonLabel(systemImage: systemImage)
         }
-    }
-
-    private var icon: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: 17, weight: .semibold))
-            .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
     }
 }
 
-/// Stands in for the system back button on screens without a navigation bar:
-/// a Liquid Glass circle on iOS 26+, a bare black chevron (no text) before that.
+/// Stands in for the system back button on screens without a navigation bar.
 struct BackButtonLabel: View {
     var body: some View {
-        if #available(iOS 26.0, *) {
-            SystemBarButtonLabel(systemImage: "chevron.left")
-        } else {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Color.ink)
-                .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget, alignment: .leading)
-                .contentShape(Rectangle())
-        }
+        SystemBarButtonLabel(systemImage: "chevron.left")
     }
 }
 
@@ -111,8 +96,10 @@ struct ChoiceRow<Content: View>: View {
 /// Pill toggle with a leading icon. Selection is shown by colour and border, never a checkmark.
 struct TopicChip: View {
     let title: String
-    let systemImage: String
+    var systemImage: String? = nil
     let isSelected: Bool
+    /// A collection's mark colour, shown as a dot in place of the icon.
+    var mark: Color? = nil
     /// Learning progress such as "45/120"; nil hides it.
     var progress: (learned: Int, total: Int)? = nil
     /// Every word learned: labelled, still selectable.
@@ -125,9 +112,17 @@ struct TopicChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.xs - 2) {
-                Image(systemName: isFinished ? "checkmark.seal" : systemImage)
-                    .font(.footnote.weight(.semibold))
-                    .accessibilityHidden(true)
+                if isFinished {
+                    Image(systemName: "checkmark.seal")
+                        .font(.footnote.weight(.semibold))
+                        .accessibilityHidden(true)
+                } else if let mark {
+                    CollectionMarkDot(color: mark)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.footnote.weight(.semibold))
+                        .accessibilityHidden(true)
+                }
                 Text(verbatim: title)
                     .font(Typography.secondary.weight(.semibold))
                     .lineLimit(1)
@@ -225,21 +220,20 @@ struct PressScaleButtonStyle: ButtonStyle {
     }
 }
 
-/// Round ‹ for steps inside a sheet, the counterpart of `SheetCloseButton`.
+/// ‹ for steps inside a sheet, drawn like the system bar button; the counterpart of `SheetCloseButton`.
 struct SheetBackButton: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            IconButtonLabel(systemImage: "chevron.left")
+            SystemBarButtonLabel(systemImage: "chevron.left")
         }
         .buttonStyle(PressScaleButtonStyle())
-        .padding(.leading, -Spacing.xs)
         .accessibilityLabel(Text("Back"))
     }
 }
 
-/// Round ✕ for sheets, sized to a full touch target. Dismisses the presenting sheet.
+/// ✕ for sheets, drawn like the system bar button. Dismisses the presenting sheet.
 struct SheetCloseButton: View {
     /// Replaces dismissing the enclosing sheet, e.g. to close a whole stack of sheets.
     var action: (() -> Void)?
@@ -249,10 +243,9 @@ struct SheetCloseButton: View {
         Button {
             if let action { action() } else { dismiss() }
         } label: {
-            IconButtonLabel(systemImage: "xmark")
+            SystemBarButtonLabel(systemImage: "xmark")
         }
         .buttonStyle(PressScaleButtonStyle())
-        .padding(.trailing, -Spacing.xs)
         .accessibilityLabel(Text("Close"))
     }
 }

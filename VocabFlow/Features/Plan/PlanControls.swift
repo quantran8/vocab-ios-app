@@ -108,34 +108,36 @@ enum LearningDaysSummary {
     }
 }
 
-/// One CEFR level with a short plain-language name, for the level grids.
-struct LevelTile: View {
-    let level: CEFRLevel
-    let isSelected: Bool
+/// "Not sure? Take the test": first on a level screen, so someone unsure sees it before guessing on the list.
+struct PlacementTestCard: View {
     let action: () -> Void
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         Button(action: action) {
-            VStack(spacing: Spacing.xxs) {
-                Text(verbatim: level.rawValue)
-                    .font(Typography.tileLarge.weight(.bold))
-                    .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
-                Text(level.title)
-                    .font(Typography.micro)
-                    .foregroundStyle(Color.mutedInk)
-                    .multilineTextAlignment(.center)
+            HStack(spacing: Spacing.s) {
+                IconBadge(systemImage: "checklist", tone: .accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Not sure? Take the test")
+                        .font(Typography.emphasis)
+                        .foregroundStyle(Color.ink)
+                    Text("Syll scores it and picks your level")
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                }
+                .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.ink400)
+                    .accessibilityHidden(true)
             }
-            .padding(.horizontal, Spacing.xs)
-            .padding(.vertical, Spacing.s)
-            .frame(maxWidth: .infinity, minHeight: 74)
-            .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
+            .padding(Spacing.m)
+            .cardSurface()
+            .contentShape(RoundedRectangle(cornerRadius: Radii.card, style: .continuous))
         }
         .buttonStyle(PressScaleButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -163,6 +165,7 @@ struct TopicPicker: View {
                 TextLink(title: hasAll ? "Clear all" : "Select all", action: onToggleAll)
                     .padding(.vertical, -Spacing.s)
             }
+            .staticLabelRow()
 
             // Topics with new words left first; finished ones last but still selectable.
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
@@ -263,6 +266,7 @@ struct LearningDaysPicker: View {
                 TextLink(title: isEveryDay ? "Clear all" : "Every day", action: onToggleEveryDay)
                     .padding(.vertical, -Spacing.s)
             }
+            .staticLabelRow()
 
             HStack(spacing: Spacing.xs - 2) {
                 ForEach(Weekday.ordered) { day in
@@ -291,6 +295,49 @@ struct LearningDaysPicker: View {
     }
 }
 
+/// "Reviews / session": follows the new-word goal until the learner sets a number.
+struct ReviewsPerSessionPicker: View {
+    @Binding var preferences: LearningPreferences
+    @Environment(AppSettingsStore.self) private var settings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.s - 2) {
+            HStack(alignment: .firstTextBaseline) {
+                PlanSectionTitle(text: "Reviews / session")
+                Spacer(minLength: Spacing.s)
+                if preferences.reviewsPerSession != nil {
+                    TextLink(title: "Match new words") {
+                        preferences.reviewsPerSession = nil
+                        settings.feedback.selectionChanged()
+                    }
+                    .padding(.vertical, -Spacing.s)
+                }
+            }
+            WordsPerDayStepper(
+                value: preferences.effectiveReviewsPerSession,
+                range: LearningPreferences.reviewsPerSessionRange,
+                label: "Reviews per session",
+                decreaseLabel: "Decrease reviews per session",
+                increaseLabel: "Increase reviews per session"
+            ) { amount in
+                let before = preferences.effectiveReviewsPerSession
+                preferences.adjustReviewsPerSession(by: amount)
+                if preferences.effectiveReviewsPerSession != before { settings.feedback.selectionChanged() }
+            }
+            Group {
+                if preferences.reviewsPerSession == nil {
+                    Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionRange.lowerBound).")
+                } else {
+                    Text("Words due for review wait for the next session.")
+                }
+            }
+            .font(Typography.micro)
+            .foregroundStyle(Color.mutedInk)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
 /// One card: a "Remind me" switch row above the reminder time. Tapping the time opens the system time
 /// picker as a popup (compact `DatePicker`); the row dims while reminders are off.
 struct ReminderPicker: View {
@@ -303,6 +350,7 @@ struct ReminderPicker: View {
             Toggle(isOn: $preferences.reminderEnabled.animation(motion.animation(MotionTokens.press))) {
                 PlanSectionTitle(text: "Remind me")
             }
+            .tint(Color.interactive)
             .padding(.horizontal, Spacing.m)
             .padding(.vertical, Spacing.s)
             .frame(minHeight: Spacing.rowMinHeight)

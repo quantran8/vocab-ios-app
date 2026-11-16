@@ -131,7 +131,7 @@ private struct WordSourceEntry: Identifiable {
     var mark: Color?
 
     static let all = WordSourceEntry(id: "all", title: "All learned words", detail: nil,
-                                     systemImage: "square.stack.3d.up", collection: nil)
+                                     systemImage: "square.stack", collection: nil)
     static let custom = WordSourceEntry(id: "custom", title: "Words you added", detail: nil,
                                         systemImage: "plus.bubble", collection: nil, mark: CollectionMarkColor.custom)
 
@@ -224,6 +224,7 @@ private struct WordSourceSheet: View {
                     setTopics(collection, allPicked ? [] : Set(topics.map(\.id)))
                 }
             }
+            .staticLabelRow()
             .padding(.top, Spacing.xxs)
             FlowLayout(spacing: Spacing.xs, lineSpacing: Spacing.xs, alignment: .leading) {
                 ForEach(topics) { topic in

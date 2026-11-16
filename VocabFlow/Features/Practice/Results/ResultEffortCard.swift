@@ -25,6 +25,7 @@ struct ResultEffortCard: View {
                 Image(systemName: "bolt.fill")
                     .font(Typography.screenTitle)
                     .foregroundStyle(Color.reward)
+                    .symbolBounceOnce(after: MotionTokens.resultSymbolBounce, when: effort.earned > 0)
                     .accessibilityHidden(true)
                 Text("+\(effort.earned) LP")
                     .font(Typography.screenTitle.weight(.heavy).monospacedDigit())

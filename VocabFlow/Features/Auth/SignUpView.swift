@@ -90,7 +90,7 @@ struct SignUpView: View {
                 SyllieView(mood: .happy)
                     .frame(width: 186, height: 154)
                     .padding(.vertical, -Spacing.m)
-                Image(systemName: "envelope.fill")
+                Image(systemName: "envelope")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)

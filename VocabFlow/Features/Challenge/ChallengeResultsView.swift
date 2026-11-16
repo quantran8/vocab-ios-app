@@ -29,6 +29,7 @@ struct ChallengeResultsView: View {
                             .font(.system(size: 52, weight: .bold))
                             .foregroundStyle(Color.reward)
                             .shadow(color: Color.rewardDepth, radius: 0, y: 3)
+                            .symbolBounceOnce(after: MotionTokens.resultSymbolBounce)
                             .padding(.bottom, Spacing.m)
                             .accessibilityHidden(true)
                     } else if motion.reduceMotion, celebrationEarned {

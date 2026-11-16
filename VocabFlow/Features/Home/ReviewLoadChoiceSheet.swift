@@ -120,6 +120,7 @@ struct ReviewLoadChoiceSheet: View {
                 Spacer()
                 Image(systemName: mode == option ? "checkmark.circle.fill" : "circle")
                     .foregroundStyle(mode == option ? Color.interactive : Color.stroke)
+                    .symbolReplace(value: mode == option)
                     .accessibilityHidden(true)
             }
             .frame(minHeight: Spacing.minTouchTarget)

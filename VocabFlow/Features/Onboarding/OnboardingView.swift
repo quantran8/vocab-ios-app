@@ -182,7 +182,7 @@ private struct SetupFlowView: View {
     }
 }
 
-/// Round back button and one segment per question; the bar says which step this is, so there's no "Step 2 of 4".
+/// System-style back button and one segment per question; the bar says which step this is, so there's no "Step 2 of 4".
 private struct SetupHeader: View {
     let step: Int
     let onBack: () -> Void
@@ -190,7 +190,7 @@ private struct SetupHeader: View {
 
     var body: some View {
         HStack(spacing: Spacing.s) {
-            IconButton(systemImage: "chevron.left", label: "Back", action: onBack)
+            BackButton(label: "Back", action: onBack)
 
             HStack(spacing: Spacing.xs - 2) {
                 ForEach(1...setupStepCount, id: \.self) { index in
@@ -256,8 +256,11 @@ private struct LevelStep: View {
         StepPage {
             OnboardingTitle(title: "What’s your English level?")
 
-            placementCard
-                .padding(.top, Spacing.l)
+            PlacementTestCard {
+                placement.start()
+                store.openPlacementTest()
+            }
+            .padding(.top, Spacing.l)
 
             Eyebrow(text: "Or choose it yourself")
                 .padding(.top, Spacing.l)
@@ -269,38 +272,6 @@ private struct LevelStep: View {
 
             SaveErrorText(message: store.errorMessage)
         }
-    }
-
-    /// First, so someone unsure sees it before guessing on the list.
-    private var placementCard: some View {
-        Button {
-            placement.start()
-            store.openPlacementTest()
-        } label: {
-            HStack(spacing: Spacing.s) {
-                IconBadge(systemImage: "scope", tone: .accent)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Not sure? Take the test")
-                        .font(Typography.emphasis)
-                        .foregroundStyle(Color.ink)
-                    Text("Syll scores it and picks your level")
-                        .font(Typography.micro)
-                        .foregroundStyle(Color.mutedInk)
-                }
-                .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.ink400)
-                    .accessibilityHidden(true)
-            }
-            .padding(Spacing.m)
-            .cardSurface()
-            .contentShape(RoundedRectangle(cornerRadius: Radii.card, style: .continuous))
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -389,6 +360,7 @@ private struct RoutineStep: View {
                     PlanSectionTitle(text: "New words / day")
                     WordsPerDayStepper(value: store.draft.wordsPerDay) { store.adjustWordsPerDay(by: $0) }
                 }
+                ReviewsPerSessionPicker(preferences: $store.draft)
                 LearningDaysPicker(
                     selected: store.draft.learningDays,
                     onToggleDay: { store.toggleDay($0) },

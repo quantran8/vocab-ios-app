@@ -16,9 +16,9 @@ enum MainTab: CaseIterable, Hashable {
     var systemImage: String {
         switch self {
         case .home: "house"
-        case .words: "book"
+        case .words: "books.vertical"
         case .ranking: "trophy"
-        case .profile: "person"
+        case .profile: "person.crop.circle"
         }
     }
 }

@@ -13,4 +13,6 @@ enum Radii {
     /// Icon badges, day toggles, letter tiles, skill cells (rounded-xl).
     static let chip: CGFloat = 12
     static let field: CGFloat = 16
+    /// Small code badges such as the level codes (rounded-lg).
+    static let badge: CGFloat = 8
 }

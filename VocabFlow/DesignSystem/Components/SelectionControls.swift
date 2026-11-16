@@ -41,40 +41,6 @@ struct SystemBarButtonLabel: View {
     }
 }
 
-/// Back button plus an optional segmented step indicator, for short linear flows.
-struct StepHeader: View {
-    var step: Int?
-    var totalSteps = 2
-    let backLabel: LocalizedStringKey
-    let onBack: () -> Void
-    @Environment(\.motion) private var motion
-
-    var body: some View {
-        ZStack {
-            HStack {
-                Button(action: onBack) { BackButtonLabel() }
-                    .buttonStyle(PressScaleButtonStyle())
-                    .accessibilityLabel(Text(backLabel))
-
-                Spacer()
-            }
-
-            if let step {
-                HStack(spacing: Spacing.xs) {
-                    ForEach(1...max(totalSteps, 1), id: \.self) { index in
-                        Capsule()
-                            .fill(index <= step ? Color.interactive : Color.track)
-                            .frame(width: 32, height: 6)
-                    }
-                }
-                .animation(motion.animation(MotionTokens.progress), value: step)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("Step \(step) of \(totalSteps)"))
-            }
-        }
-    }
-}
-
 /// Stands in for the system back button on screens without a navigation bar:
 /// a Liquid Glass circle on iOS 26+, a bare black chevron (no text) before that.
 struct BackButtonLabel: View {
@@ -88,6 +54,57 @@ struct BackButtonLabel: View {
                 .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget, alignment: .leading)
                 .contentShape(Rectangle())
         }
+    }
+}
+
+/// Rows in one card with a divider between them, for single-choice lists (language, level, collection).
+struct ChoiceCard<Item: Identifiable, Row: View>: View {
+    let items: [Item]
+    @ViewBuilder let row: (Item) -> Row
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                if index > 0 { CardDivider() }
+                row(item)
+            }
+        }
+        .cardSurface()
+    }
+}
+
+/// One choice in a `ChoiceCard`: Blue 50 fill and a filled `SelectionMark` when selected.
+struct ChoiceRow<Content: View>: View {
+    let isSelected: Bool
+    var alignment: VerticalAlignment = .center
+    var markLeading = false
+    let action: () -> Void
+    @ViewBuilder let content: Content
+    @Environment(\.motion) private var motion
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: alignment, spacing: Spacing.s) {
+                if markLeading { mark }
+                content
+                Spacer(minLength: 0)
+                if !markLeading { mark }
+            }
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
+            .frame(maxWidth: .infinity, minHeight: Spacing.rowMinHeight, alignment: .leading)
+            .background(isSelected ? Color.selectedSurface : Color.surface)
+            .contentShape(Rectangle())
+            .animation(motion.animation(MotionTokens.press), value: isSelected)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+    }
+
+    private var mark: some View {
+        SelectionMark(isOn: isSelected)
+            .padding(.top, alignment == .top ? 2 : 0)
     }
 }
 

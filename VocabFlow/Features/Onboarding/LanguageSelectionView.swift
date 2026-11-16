@@ -10,28 +10,38 @@ struct LanguageSelectionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                BrandBar()
-
-                PunctuatedTitle(text: "Choose your language")
+                // The artboard leaves room around him; at this frame his body is about 64 pt wide.
+                SyllieView(mood: .idle)
+                    .frame(width: 107, height: 88)
+                    .padding(.leading, -21)
+                    .padding(.vertical, -Spacing.s)
+                    .accessibilityHidden(true)
                     .padding(.top, Spacing.xl)
 
-                Text("You can change this anytime in Settings.")
-                    .font(Typography.body.weight(.medium))
-                    .foregroundStyle(Color.mutedInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Spacing.s)
+                OnboardingTitle(
+                    title: "Choose a language",
+                    subtitle: "For the app and for word meanings. You can change it in Settings."
+                )
 
-                VStack(spacing: Spacing.s) {
-                    ForEach(AppLanguage.allCases) { language in
-                        LanguageRow(language: language, isSelected: language == selection) {
-                            motion.perform(MotionTokens.press) { selection = language }
+                ChoiceCard(items: AppLanguage.allCases) { language in
+                    ChoiceRow(isSelected: language == selection, markLeading: true) {
+                        guard language != selection else { return }
+                        motion.perform(MotionTokens.press) { selection = language }
+                        settings.feedback.selectionChanged()
+                    } content: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: language.nativeName)
+                                .font(Typography.emphasis)
+                                .foregroundStyle(language == selection ? Color.selectedInk : Color.ink)
+                            Text(verbatim: language.otherLanguageName)
+                                .font(Typography.micro)
+                                .foregroundStyle(Color.mutedInk)
                         }
                     }
                 }
-                .padding(.top, Spacing.l)
+                .padding(.top, Spacing.l + 4)
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.s)
             .padding(.bottom, Spacing.l)
         }
         .safeAreaInset(edge: .bottom) {
@@ -42,6 +52,17 @@ struct LanguageSelectionView: View {
             }
         }
         .environment(\.locale, selection.locale)
+    }
+}
+
+extension AppLanguage {
+    /// The language's name in the other app language ("Vietnamese", "Tiếng Anh"),
+    /// so either reader recognises both rows.
+    var otherLanguageName: String {
+        switch self {
+        case .vietnamese: "Vietnamese"
+        case .english: "Tiếng Anh"
+        }
     }
 }
 

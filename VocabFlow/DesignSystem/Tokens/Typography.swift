@@ -10,6 +10,8 @@ enum Typography {
     static var sheetTitle: Font { scaled(26, .heavy, relativeTo: .title1) }
     /// Section headers inside a screen ("Đang học", "Luyện tập"): 19 bold.
     static var sectionTitle: Font { scaled(19, .bold, relativeTo: .title3) }
+    /// Onboarding step questions: 28 extrabold, tracking `sheetTracking`.
+    static let stepTitle = Font.system(.title, weight: .heavy)
     /// Practice question line and feedback titles: 22 bold.
     static let screenTitle = Font.system(.title2, weight: .bold)
     static let headerTitle = Font.system(.title2, weight: .bold)

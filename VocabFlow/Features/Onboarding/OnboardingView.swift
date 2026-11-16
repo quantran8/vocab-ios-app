@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Welcome → Level (optionally through the placement test) → Collection → Topics → Routine → Ready.
-/// Welcome and the test are whole screens; every other step shares `SetupFlowView`'s frame.
+/// Welcome → Level (optionally through the placement test) → Collection → Topics → Routine → Ready
+/// (docs/app-redesign-v1.html, flow 0b). Welcome, the test and Ready are whole screens;
+/// the four questions share `SetupFlowView`'s frame.
 struct OnboardingView: View {
     private enum Screen {
-        case welcome, setup, placement
+        case welcome, setup, placement, ready
     }
 
     @Environment(OnboardingStore.self) private var store
@@ -14,6 +15,7 @@ struct OnboardingView: View {
         switch store.step {
         case .welcome: .welcome
         case .placement: .placement
+        case .ready: .ready
         default: .setup
         }
     }
@@ -35,6 +37,7 @@ struct OnboardingView: View {
         case .welcome: WelcomeScreen()
         case .setup: SetupFlowView()
         case .placement: PlacementScreen()
+        case .ready: ReadyScreen()
         }
     }
 }
@@ -47,24 +50,30 @@ private struct WelcomeScreen: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                BrandBar()
+            VStack(spacing: 0) {
+                // At this frame his body is about 160 pt wide.
+                SyllieView(mood: .happy)
+                    .frame(width: 267, height: 220)
+                    .padding(.vertical, -Spacing.l)
+                    .accessibilityHidden(true)
 
-                PunctuatedTitle(text: "Make words\nstick", font: .system(size: 46, weight: .heavy))
-                    .padding(.top, Spacing.xl * 2)
+                ScreenTitle("Hi, I’m Syllie")
+                    .multilineTextAlignment(.center)
+                    .padding(.top, Spacing.xl)
 
-                Text("A little, every day.")
-                    .font(Typography.body.weight(.medium))
-                    .foregroundStyle(Color.mutedInk)
+                Text("Answer four quick questions and I’ll put together a daily lesson that suits you.")
+                    .font(Typography.body)
+                    .foregroundStyle(Color.bodyInk)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, Spacing.s)
-
-                FlowHero()
-                    .padding(.top, Spacing.l)
             }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.s)
-            .padding(.bottom, Spacing.l)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Spacing.xl)
+            .padding(.vertical, Spacing.l)
         }
+        .defaultScrollAnchor(.center)
+        .scrollBounceBehavior(.basedOnSize)
         .safeAreaInset(edge: .bottom) {
             PinnedActionBar {
                 PrimaryButton(title: "Get started") {
@@ -75,72 +84,37 @@ private struct WelcomeScreen: View {
     }
 }
 
-/// F·L·O·W tiles dropping onto a soft disc. Decorative only.
-private struct FlowHero: View {
-    @Environment(\.motion) private var motion
-    @State private var hasAppeared = false
-
-    private let letters = ["F", "L", "O", "W"]
+/// A step's question (28 pt extrabold) and an optional line under it.
+struct OnboardingTitle: View {
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.neutralSurface)
-                .frame(width: 235, height: 235)
-                .overlay(Circle().strokeBorder(Color.stroke, lineWidth: 1).padding(14))
-            RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
-                .fill(Color.selectedSurface)
-                .frame(width: 53, height: 53)
-                .rotationEffect(.degrees(21))
-                .offset(x: 128, y: -62)
-            Capsule()
-                .fill(Color.interactive)
-                .frame(width: 42, height: 10)
-                .rotationEffect(.degrees(-30))
-                .offset(x: -124, y: 66)
-
-            HStack(spacing: Spacing.xxs + 1) {
-                ForEach(Array(letters.enumerated()), id: \.offset) { index, letter in
-                    heroTile(letter, isAccent: index == 2)
-                        .opacity(hasAppeared ? 1 : 0)
-                        .offset(y: hasAppeared ? 0 : 27)
-                        .rotationEffect(.degrees(hasAppeared ? 0 : -5))
-                        .animation(
-                            motion.travel(MotionTokens.entrance.delay(Double(index) * 0.09)),
-                            value: hasAppeared
-                        )
-                }
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text(title)
+                .font(Typography.stepTitle)
+                .tracking(Typography.sheetTracking)
+                .foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            if let subtitle {
+                Text(subtitle)
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.bodyInk)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .rotationEffect(.degrees(-4))
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 280)
-        .accessibilityHidden(true)
-        .onAppear { hasAppeared = true }
-    }
-
-    private func heroTile(_ letter: String, isAccent: Bool) -> some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile + 1, style: .continuous)
-        let edge = isAccent ? Color.interactiveDepth : Color.ink
-        return Text(verbatim: letter)
-            .font(.system(size: 42, weight: .heavy))
-            .foregroundStyle(isAccent ? Color.white : Color.ink)
-            .frame(width: 66, height: 78)
-            .background(isAccent ? Color.interactive : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(edge, lineWidth: 2))
-            .background(shape.fill(edge).offset(y: 5))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, Spacing.l)
     }
 }
 
 // MARK: - Setup flow
 
-/// Steps counted by the header indicator: Level, Collection, Topics, Routine.
+/// Steps counted by the header: Level, Collection, Topics, Routine.
 private let setupStepCount = 4
 
-/// Question-style step titles run longer than the one-word ones, so they sit a size down.
-private let questionFont = Font.system(.title, weight: .heavy)
-
-/// One persistent frame for Level → Ready. The header and pinned action stay mounted;
+/// One persistent frame for the four questions. The header and pinned action stay mounted;
 /// only the step's content slides, forward on next and backward on back.
 private struct SetupFlowView: View {
     @Environment(OnboardingStore.self) private var store
@@ -148,11 +122,7 @@ private struct SetupFlowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            StepHeader(step: stepNumber, totalSteps: setupStepCount, backLabel: backLabel) {
-                store.back()
-            }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.xs)
+            SetupHeader(step: stepNumber) { store.back() }
 
             ZStack(alignment: .top) {
                 content
@@ -163,15 +133,7 @@ private struct SetupFlowView: View {
             .clipped()
 
             PinnedActionBar {
-                VStack(spacing: Spacing.s) {
-                    if store.step == .topics, store.canContinueFromTopics {
-                        Text("\(store.draft.topicIDs.count) topics selected")
-                            .font(Typography.micro.weight(.semibold))
-                            .foregroundStyle(Color.mutedInk)
-                            .contentTransition(.numericText())
-                    }
-                    PrimaryButton(title: actionTitle, requirement: requirement, isEnabled: canAct, action: act)
-                }
+                PrimaryButton(title: actionTitle, isEnabled: canAct, action: act)
             }
         }
     }
@@ -179,11 +141,10 @@ private struct SetupFlowView: View {
     @ViewBuilder
     private var content: some View {
         switch store.step {
-        case .level: LevelStep()
         case .collection: CollectionStep()
         case .topics: TopicsStep()
         case .routine: RoutineStep()
-        default: ReadyStep()
+        default: LevelStep()
         }
     }
 
@@ -191,36 +152,13 @@ private struct SetupFlowView: View {
         switch store.step {
         case .collection: 2
         case .topics: 3
-        case .routine, .ready: 4
+        case .routine: 4
         default: 1
         }
     }
 
-    private var backLabel: LocalizedStringKey {
-        switch store.step {
-        case .collection: "Back to level"
-        case .topics: "Back to collections"
-        case .routine: "Back to topics"
-        case .ready: "Back to routine"
-        default: "Back to welcome"
-        }
-    }
-
     private var actionTitle: LocalizedStringKey {
-        switch store.step {
-        case .routine: "Create my flow"
-        case .ready: "Start learning"
-        default: "Continue"
-        }
-    }
-
-    private var requirement: LocalizedStringKey? {
-        switch store.step {
-        case .collection: "Choose a collection"
-        case .topics: "Choose at least one topic"
-        case .routine: "Choose at least one learning day"
-        default: nil
-        }
+        store.step == .routine ? "Create my study plan" : "Continue"
     }
 
     private var canAct: Bool {
@@ -229,7 +167,7 @@ private struct SetupFlowView: View {
         case .collection: store.canContinueFromCollection
         case .topics: store.canContinueFromTopics
         case .routine: store.draft.isComplete && !store.isSaving
-        default: true
+        default: false
         }
     }
 
@@ -239,8 +177,37 @@ private struct SetupFlowView: View {
         case .collection: store.continueToTopics()
         case .topics: store.continueToRoutine()
         case .routine: Task { await store.createFlow() }
-        default: store.finish()
+        default: break
         }
+    }
+}
+
+/// Round back button and one segment per question; the bar says which step this is, so there's no "Step 2 of 4".
+private struct SetupHeader: View {
+    let step: Int
+    let onBack: () -> Void
+    @Environment(\.motion) private var motion
+
+    var body: some View {
+        HStack(spacing: Spacing.s) {
+            IconButton(systemImage: "chevron.left", label: "Back", action: onBack)
+
+            HStack(spacing: Spacing.xs - 2) {
+                ForEach(1...setupStepCount, id: \.self) { index in
+                    Capsule()
+                        .fill(index <= step ? Color.interactive : Color.track)
+                        .frame(height: 6)
+                }
+            }
+            .animation(motion.animation(MotionTokens.progress), value: step)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Step \(step) of \(setupStepCount)"))
+
+            // Balances the back button so the bar stays centred.
+            Color.clear.frame(width: Spacing.minTouchTarget, height: 1)
+        }
+        .padding(.horizontal, Spacing.screenGutter - (Spacing.minTouchTarget - Spacing.iconButton) / 2)
+        .padding(.top, Spacing.xs)
     }
 }
 
@@ -254,8 +221,26 @@ private struct StepPage<Content: View>: View {
                 content
             }
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.l + 6)
             .padding(.bottom, Spacing.l)
+        }
+    }
+}
+
+private struct SaveErrorText: View {
+    let message: String?
+
+    var body: some View {
+        if let message {
+            Label {
+                Text(verbatim: message)
+            } icon: {
+                Image(systemName: "exclamationmark.circle.fill")
+            }
+            .font(Typography.secondary.weight(.medium))
+            .foregroundStyle(Color.destructiveInk)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, Spacing.m)
         }
     }
 }
@@ -269,52 +254,53 @@ private struct LevelStep: View {
 
     var body: some View {
         StepPage {
-            PunctuatedTitle(text: "What’s your English level", mark: "?")
-                .padding(.bottom, Spacing.l)
+            OnboardingTitle(title: "What’s your English level?")
 
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible())], spacing: Spacing.s) {
-                ForEach(CEFRLevel.allCases) { level in
-                    LevelTile(level: level, isSelected: store.level == level) {
-                        motion.perform(MotionTokens.snap) { store.selectLevel(level) }
-                    }
-                }
+            placementCard
+                .padding(.top, Spacing.l)
+
+            Eyebrow(text: "Or choose it yourself")
+                .padding(.top, Spacing.l)
+                .padding(.bottom, Spacing.s - 2)
+
+            LevelList(selected: store.level) { level in
+                motion.perform(MotionTokens.snap) { store.selectLevel(level) }
             }
-
-            placementButton
-                .padding(.top, Spacing.m)
 
             SaveErrorText(message: store.errorMessage)
         }
     }
 
-    private var placementButton: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card - 2, style: .continuous)
-        return Button {
+    /// First, so someone unsure sees it before guessing on the list.
+    private var placementCard: some View {
+        Button {
             placement.start()
             store.openPlacementTest()
         } label: {
             HStack(spacing: Spacing.s) {
-                Image(systemName: "list.bullet")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.interactive)
-                    .frame(width: 38, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-                            .strokeBorder(Color.stroke, lineWidth: 1)
-                    )
+                IconBadge(systemImage: "scope", tone: .accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Not sure? Take the test")
+                        .font(Typography.emphasis)
+                        .foregroundStyle(Color.ink)
+                    Text("Syll scores it and picks your level")
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                }
+                .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.ink400)
                     .accessibilityHidden(true)
-                Text("Not sure? Take a short test")
-                    .font(Typography.secondary.weight(.semibold))
-                    .foregroundStyle(Color.ink)
-                    .multilineTextAlignment(.leading)
             }
-            .frame(maxWidth: .infinity, minHeight: 74)
-            .padding(.horizontal, Spacing.s)
-            .background(Color.surface, in: shape)
-            .overlay(shape.strokeBorder(Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
+            .padding(Spacing.m)
+            .cardSurface()
+            .contentShape(RoundedRectangle(cornerRadius: Radii.card, style: .continuous))
         }
         .buttonStyle(PressScaleButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -323,7 +309,7 @@ private struct PlacementScreen: View {
 
     var body: some View {
         PlacementTestView(
-            doneTitle: "Continue",
+            doneTitle: "Use this level",
             isDoneEnabled: !store.isSaving,
             doneError: store.errorMessage,
             onDone: { result in
@@ -339,20 +325,6 @@ private struct PlacementScreen: View {
     }
 }
 
-private struct SaveErrorText: View {
-    let message: String?
-
-    var body: some View {
-        if let message {
-            Text(verbatim: message)
-                .font(Typography.secondary)
-                .foregroundStyle(Color.errorInk)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, Spacing.m)
-        }
-    }
-}
-
 // MARK: - Collection
 
 private struct CollectionStep: View {
@@ -361,12 +333,15 @@ private struct CollectionStep: View {
 
     var body: some View {
         StepPage {
-            PunctuatedTitle(text: "What kind of vocabulary would you like to learn", mark: "?", font: questionFont)
-                .padding(.bottom, Spacing.l)
+            OnboardingTitle(
+                title: "Which collection do you want to learn?",
+                subtitle: "Pick one. You can change it any time."
+            )
 
-            CollectionPicker(selectedID: store.draft.collectionID) { id in
+            CollectionList(selectedID: store.draft.collectionID) { id in
                 motion.perform(MotionTokens.snap) { store.selectCollection(id) }
             }
+            .padding(.top, Spacing.l)
         }
     }
 }
@@ -378,16 +353,21 @@ private struct TopicsStep: View {
 
     var body: some View {
         StepPage {
-            PunctuatedTitle(text: "What topics are you interested in", mark: "?", font: questionFont)
-                .padding(.bottom, Spacing.l)
+            OnboardingTitle(
+                title: "Which topics interest you?",
+                subtitle: "New words come from the topics you choose."
+            )
 
             if let collection = store.draft.collection {
                 TopicPicker(
                     collection: collection,
                     selectedIDs: store.draft.topicIDs,
                     onToggleTopic: { store.toggleTopic($0) },
-                    onToggleAll: { store.toggleAllTopics() }
+                    onToggleAll: { store.toggleAllTopics() },
+                    countsSelection: true,
+                    showsProgress: false
                 )
+                .padding(.top, Spacing.l)
             }
         }
     }
@@ -402,11 +382,10 @@ private struct RoutineStep: View {
         @Bindable var store = store
 
         StepPage {
-            PunctuatedTitle(text: "Your routine")
-                .padding(.bottom, Spacing.xl + 2)
+            OnboardingTitle(title: "Your routine")
 
-            VStack(alignment: .leading, spacing: Spacing.xl - 1) {
-                VStack(alignment: .leading, spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                VStack(alignment: .leading, spacing: Spacing.s - 2) {
                     PlanSectionTitle(text: "New words / day")
                     WordsPerDayStepper(value: store.draft.wordsPerDay) { store.adjustWordsPerDay(by: $0) }
                 }
@@ -417,6 +396,7 @@ private struct RoutineStep: View {
                 )
                 ReminderPicker(preferences: $store.draft)
             }
+            .padding(.top, Spacing.l + 4)
 
             SaveErrorText(message: store.errorMessage)
         }
@@ -425,83 +405,101 @@ private struct RoutineStep: View {
 
 // MARK: - Ready
 
-private struct ReadyStep: View {
+/// The plan in one card, and the first lesson one tap away.
+private struct ReadyScreen: View {
     @Environment(OnboardingStore.self) private var store
+    @Environment(PracticeSessionStore.self) private var practice
     @Environment(\.motion) private var motion
-    @State private var hasAppeared = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                mark
-                    .scaleEffect(hasAppeared ? 1 : 0.6)
-                    .opacity(hasAppeared ? 1 : 0)
-                    .padding(.bottom, Spacing.xl - 2)
+                // At this frame his body is about 112 pt wide.
+                SyllieView(mood: .proud)
+                    .frame(width: 187, height: 154)
+                    .padding(.vertical, -Spacing.m)
+                    .accessibilityHidden(true)
 
-                PunctuatedTitle(text: "You’re all set")
+                ScreenTitle("Your plan is ready")
                     .multilineTextAlignment(.center)
+                    .padding(.top, Spacing.l)
 
-                Text("Your flow is ready.")
-                    .font(Typography.secondary.weight(.semibold))
+                Text("Your first lesson has \(store.draft.wordsPerDay) new words.")
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.bodyInk)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, Spacing.xs)
+
+                summary
+                    .padding(.top, Spacing.xl)
+
+                Text("You can change this in Profile.")
+                    .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
-                    .padding(.top, Spacing.s - 2)
-                    .padding(.bottom, Spacing.l - 2)
-
-                FlowLayout(spacing: Spacing.xs - 1, lineSpacing: Spacing.xs - 1) {
-                    if let collection = store.draft.collection {
-                        summaryTag(Text(verbatim: collection.name), highlighted: true)
-                    }
-                    summaryTag(Text("\(store.draft.topicIDs.count) topics"))
-                    summaryTag(Text("\(store.draft.wordsPerDay) words/day"))
-                    summaryTag(Text("\(store.draft.learningDays.count) days/week"))
-                    summaryTag(reminderText)
-                }
-                .frame(maxWidth: 300)
+                    .padding(.top, Spacing.s)
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, Spacing.screenGutter)
-            .padding(.vertical, Spacing.xl)
+            .padding(.top, Spacing.xl + Spacing.xs)
+            .padding(.bottom, Spacing.l)
         }
-        .defaultScrollAnchor(.center)
-        .onAppear {
-            withAnimation(motion.travel(MotionTokens.entrance.delay(0.1))) { hasAppeared = true }
+        .scrollBounceBehavior(.basedOnSize)
+        .safeAreaInset(edge: .bottom) {
+            PinnedActionBar {
+                PrimaryButton(title: "Start my first lesson", kind: .practice, action: startFirstLesson)
+            }
         }
     }
 
-    private var mark: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(Color.selectedSurface)
-            .frame(width: 98, height: 98)
-            .overlay(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(Color.interactive)
-                    .frame(width: 24, height: 24)
-                    .rotationEffect(.degrees(28))
-                    .offset(x: 11, y: -11)
+    private var summary: some View {
+        VStack(spacing: 0) {
+            if let level = store.level {
+                row("Level") { Text(verbatim: level.rawValue) }
+                CardDivider()
             }
-            .overlay(
-                Image(systemName: "sparkles")
-                    .font(.system(size: 40, weight: .semibold))
-                    .foregroundStyle(Color.interactive)
-                    .rotationEffect(.degrees(9))
-            )
-            .rotationEffect(.degrees(-9))
-            .accessibilityHidden(true)
+            if let collection = store.draft.collection {
+                row("Collection") {
+                    HStack(spacing: Spacing.xs) {
+                        CollectionMarkDot(color: CollectionMarkColor.color(for: collection))
+                        Text("\(collection.name) · \(store.draft.topicIDs.count) topics")
+                    }
+                }
+                CardDivider()
+            }
+            row("Each day") { Text("\(store.draft.wordsPerDay) new words") }
+            CardDivider()
+            row("Learning days") { LearningDaysSummary.text(store.draft.learningDays) }
+            CardDivider()
+            row("Reminder") { reminderText }
+        }
+        .cardSurface()
+    }
+
+    private func row<Value: View>(_ label: LocalizedStringKey, @ViewBuilder value: () -> Value) -> some View {
+        CardRow {
+            Text(label)
+                .foregroundStyle(Color.bodyInk)
+            Spacer(minLength: Spacing.s)
+            value()
+                .font(Typography.emphasis)
+                .multilineTextAlignment(.trailing)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var reminderText: Text {
-        guard store.draft.reminderEnabled else { return Text("Reminders off") }
-        return Text("Reminder \(store.draft.reminderDate.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: AppLanguage.active.locale)))")
+        guard store.draft.reminderEnabled else { return Text("Off") }
+        return Text(verbatim: store.draft.reminderDate.formatted(
+            Date.FormatStyle(date: .omitted, time: .shortened, locale: AppLanguage.active.locale)
+        ))
     }
 
-    private func summaryTag(_ text: Text, highlighted: Bool = false) -> some View {
-        text
-            .font(Typography.micro.weight(.bold))
-            .foregroundStyle(highlighted ? Color.selectedInk : Color.ink)
-            .padding(.horizontal, Spacing.s)
-            .padding(.vertical, Spacing.xs)
-            .background(highlighted ? Color.selectedSurface : Color.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(highlighted ? Color.interactive : Color.stroke, lineWidth: 1))
+    /// Both in one main-actor turn: the route leaves onboarding straight for the session, never showing Home.
+    private func startFirstLesson() {
+        Task {
+            store.finish()
+            await practice.start(.daily)
+        }
     }
 }
 
@@ -512,4 +510,11 @@ private struct ReadyStep: View {
             haptics: NoOpFeedback()
         ))
         .environment(PlacementTestStore(api: OfflineVocabAPI(), haptics: NoOpFeedback()))
+        .environment(PracticeSessionStore(
+            api: OfflineVocabAPI(),
+            audio: SilentAudioClips(),
+            recorder: NoVoiceRecorder(),
+            haptics: NoOpFeedback(),
+            transcriber: NoSpeechTranscriber()
+        ))
 }

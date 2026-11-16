@@ -2,14 +2,9 @@ import SwiftUI
 
 /// Learning-plan inputs shared by onboarding and the Profile plan editor.
 
-/// One CEFR level with a short plain-language name, for the level grids.
-struct LevelTile: View {
-    let level: CEFRLevel
-    let isSelected: Bool
-    let action: () -> Void
-
-    private var summary: LocalizedStringKey {
-        switch level {
+extension CEFRLevel {
+    var title: LocalizedStringKey {
+        switch self {
         case .a1: "Beginner"
         case .a2: "Elementary"
         case .b1: "Intermediate"
@@ -19,6 +14,106 @@ struct LevelTile: View {
         }
     }
 
+    /// What a learner at this level can do, so choosing by hand has something to go on.
+    var example: LocalizedStringKey {
+        switch self {
+        case .a1: "Greetings, introducing yourself"
+        case .a2: "Shopping, asking the way, daily errands"
+        case .b1: "Telling stories, talking about work"
+        case .b2: "Reading the news, meetings, debates"
+        case .c1: "Reading specialist texts"
+        case .c2: "Close to a native speaker"
+        }
+    }
+}
+
+/// The six levels as rows in one card: code, name and an example of what it covers.
+struct LevelList: View {
+    let selected: CEFRLevel?
+    let onSelect: (CEFRLevel) -> Void
+
+    var body: some View {
+        ChoiceCard(items: CEFRLevel.allCases) { level in
+            let isSelected = level == selected
+            ChoiceRow(isSelected: isSelected) {
+                onSelect(level)
+            } content: {
+                Text(verbatim: level.rawValue)
+                    .font(Typography.secondary.weight(.heavy))
+                    .foregroundStyle(isSelected ? Color.white : Color.ink700)
+                    .frame(width: 44, height: 36)
+                    .background(
+                        isSelected ? Color.interactive : Color.neutralSurface,
+                        in: RoundedRectangle(cornerRadius: Radii.badge, style: .continuous)
+                    )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(level.title)
+                        .font(Typography.secondary.weight(.bold))
+                        .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
+                    Text(level.example)
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+}
+
+/// One row per collection in a card: mark dot, name, summary and topic count. Exactly one is selected.
+struct CollectionList: View {
+    let selectedID: String
+    let onSelect: (String) -> Void
+
+    var body: some View {
+        ChoiceCard(items: TopicCatalog.collections) { collection in
+            let isSelected = collection.id == selectedID
+            ChoiceRow(isSelected: isSelected, alignment: .top) {
+                onSelect(collection.id)
+            } content: {
+                CollectionMarkDot(color: CollectionMarkColor.color(for: collection))
+                    .padding(.top, 6)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: collection.name)
+                        .font(Typography.emphasis)
+                        .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
+                    if !collection.summary.isEmpty {
+                        Text(verbatim: collection.summary)
+                            .font(Typography.micro)
+                            .foregroundStyle(Color.mutedInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("\(collection.topics.count) topics")
+                        .font(Typography.caption.weight(.semibold))
+                        .foregroundStyle(Color.mutedInk)
+                        .padding(.top, 2)
+                }
+                .multilineTextAlignment(.leading)
+            }
+        }
+    }
+}
+
+/// "Every day", a run such as "T2 – T6", or the days listed.
+enum LearningDaysSummary {
+    static func text(_ days: Set<Int>) -> Text {
+        if days == LearningPreferences.allWeekdays { return Text("Every day") }
+        let ordered = Weekday.ordered
+        let picked = ordered.enumerated().filter { days.contains($0.element.id) }
+        guard let first = picked.first, let last = picked.last else { return Text(verbatim: "–") }
+        if picked.count >= 3, last.offset - first.offset == picked.count - 1 {
+            return Text(verbatim: "\(first.element.short) – \(last.element.short)")
+        }
+        return Text(verbatim: picked.map(\.element.short).joined(separator: ", "))
+    }
+}
+
+/// One CEFR level with a short plain-language name, for the level grids.
+struct LevelTile: View {
+    let level: CEFRLevel
+    let isSelected: Bool
+    let action: () -> Void
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
         Button(action: action) {
@@ -26,7 +121,7 @@ struct LevelTile: View {
                 Text(verbatim: level.rawValue)
                     .font(Typography.tileLarge.weight(.bold))
                     .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
-                Text(summary)
+                Text(level.title)
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
                     .multilineTextAlignment(.center)
@@ -44,81 +139,26 @@ struct LevelTile: View {
     }
 }
 
-/// One card per collection; exactly one is selected.
-struct CollectionPicker: View {
-    let selectedID: String
-    let onSelect: (String) -> Void
-
-    var body: some View {
-        VStack(spacing: Spacing.s - 2) {
-            ForEach(TopicCatalog.collections) { collection in
-                CollectionCard(collection: collection, isSelected: collection.id == selectedID) {
-                    onSelect(collection.id)
-                }
-            }
-        }
-    }
-}
-
-private struct CollectionCard: View {
-    let collection: VocabCollection
-    let isSelected: Bool
-    let action: () -> Void
-    @Environment(\.motion) private var motion
-
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.tile, style: .continuous)
-        Button(action: action) {
-            HStack(spacing: Spacing.s) {
-                Image(systemName: collection.systemImage)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.white : Color.ink)
-                    .frame(width: 48, height: 48)
-                    .background(
-                        isSelected ? Color.interactive : Color.neutralSurface,
-                        in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous)
-                    )
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Spacing.xxs - 2) {
-                    Text(verbatim: collection.name)
-                        .font(Typography.emphasis)
-                        .foregroundStyle(isSelected ? Color.selectedInk : Color.ink)
-                    Text(verbatim: collection.summary)
-                        .font(Typography.micro)
-                        .foregroundStyle(Color.mutedInk)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-                Text("\(collection.topics.count) topics")
-                    .font(Typography.micro.weight(.bold).monospacedDigit())
-                    .foregroundStyle(isSelected ? Color.selectedInk : Color.mutedInk)
-            }
-            .padding(Spacing.s)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
-            .animation(motion.animation(MotionTokens.press), value: isSelected)
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-}
-
 /// The topics of one collection, with a "Select all / Clear all" shortcut.
 struct TopicPicker: View {
     let collection: VocabCollection
     let selectedIDs: Set<String>
     let onToggleTopic: (String) -> Void
     let onToggleAll: () -> Void
+    /// "Everyday · 3/12 topics" in the eyebrow instead of the name alone.
+    var countsSelection = false
+    /// Learned/total on each chip; off for a new account, where every topic reads 0.
+    var showsProgress = true
 
     var body: some View {
         let hasAll = selectedIDs == collection.topicIDs
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(alignment: .firstTextBaseline) {
-                Eyebrow(text: LocalizedStringKey(collection.name))
+                if countsSelection {
+                    Eyebrow(text: "\(collection.name) · \(selectedIDs.intersection(collection.topicIDs).count)/\(collection.topics.count) topics")
+                } else {
+                    Eyebrow(text: LocalizedStringKey(collection.name))
+                }
                 Spacer()
                 TextLink(title: hasAll ? "Clear all" : "Select all", action: onToggleAll)
                     .padding(.vertical, -Spacing.s)
@@ -131,8 +171,8 @@ struct TopicPicker: View {
                         title: topic.name,
                         systemImage: topic.systemImage,
                         isSelected: selectedIDs.contains(topic.id),
-                        progress: topic.total.map { (learned: topic.learned ?? 0, total: $0) },
-                        isFinished: topic.isFinished
+                        progress: showsProgress ? topic.total.map { (learned: topic.learned ?? 0, total: $0) } : nil,
+                        isFinished: showsProgress && topic.isFinished
                     ) {
                         onToggleTopic(topic.id)
                     }

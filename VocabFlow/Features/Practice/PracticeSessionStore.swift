@@ -282,6 +282,8 @@ final class PracticeSessionStore {
         attempts = Dictionary(uniqueKeysWithValues: tasks.map { ($0.id, TaskAttempt(task: $0, phase: .randomPractice)) })
         resetStepState()
         stage = .running
+        let steps = steps
+        Task { await preloadAudio(for: steps) }
     }
 
     /// Nothing is written: words stay unlearned until a session commits.
@@ -532,6 +534,31 @@ final class PracticeSessionStore {
 
     // MARK: Private
 
+    /// The longest a session waits for its audio before showing the first step; clips still loading keep going.
+    private static let audioPreloadLimit: Duration = .seconds(6)
+
+    /// Every clip the plan can play (new words' Learn cards and audio prompts), fetched before the session starts.
+    private func preloadAudio(for steps: [PlanStep]) async {
+        let urls = steps.compactMap { step -> URL? in
+            switch step {
+            case .learn(_, let card):
+                return card.audio?.url
+            case .practice(_, let task):
+                guard case .audio(let clip)? = task.prompt else { return nil }
+                return clip.url
+            }
+        }
+        guard !urls.isEmpty else { return }
+        let audio = audio
+        let download = Task { await audio.preload(urls) }
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await download.value }
+            group.addTask { try? await Task.sleep(for: Self.audioPreloadLimit) }
+            await group.next()
+            group.cancelAll()
+        }
+    }
+
     private func plan(_ request: Request) async {
         stage = .planning
         scopeEvents = nil
@@ -544,7 +571,9 @@ final class PracticeSessionStore {
                 stage = .empty
                 return
             }
+            async let preloaded: Void = preloadAudio(for: plan.steps)
             let reviewWords = await loadReviewWords(for: plan)
+            await preloaded
             guard stage == .planning else { return }
             load(plan, id: id)
             stage = reviewWords.isEmpty ? .running : .reviewPreview(reviewWords)
@@ -686,6 +715,8 @@ final class PracticeSessionStore {
               let id = plan.sessionID, plan.steps.first?.isDueReview == false,
               stage == .committing
         else { return false }
+        await preloadAudio(for: plan.steps)
+        guard stage == .committing else { return false }
         newWords = plan.newWords
         load(plan, id: id)
         stage = .reviewFinished

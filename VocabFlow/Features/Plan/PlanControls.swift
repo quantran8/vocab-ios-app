@@ -326,7 +326,7 @@ struct ReviewsPerSessionPicker: View {
             }
             Group {
                 if preferences.reviewsPerSession == nil {
-                    Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionRange.lowerBound).")
+                    Text("Follows your new words, at least \(LearningPreferences.reviewsPerSessionFollowMin).")
                 } else {
                     Text("Words due for review wait for the next session.")
                 }

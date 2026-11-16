@@ -29,6 +29,80 @@ tailwind.config = {
 .playing .w2 { animation: wave2 .84s infinite; }
 .playing .w3 { animation: wave3 .84s infinite; }
 @media (prefers-reduced-motion: reduce) { .playing .w2, .playing .w3 { animation: none; } }
+/* Session celebration (1.12, 1.12a, V1–V5): CSS stand-ins for the Rive variants in "Syllie ăn mừng".
+   The celebration is about finishing the session, so it never depends on the words or the answers. */
+@keyframes celIn { 0% { transform: translateY(120px) scale(.5); opacity: 0; } 60% { transform: translateY(0) scale(1.18, .8); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes celSway { 0%, 100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-4deg) translateY(-6px); } 75% { transform: rotate(4deg) translateY(-6px); } }
+/* V1 Phồng bay: lands, inhales and puffs up round, floats up like a balloon, then lets the air out,
+   zig-zags back down and lands (~2.8 s). */
+@keyframes celPuff {
+  0% { transform: translateY(120px) scale(.5); opacity: 0; } 15% { transform: translateY(0) scale(1.15, .85); opacity: 1; } 22% { transform: none; }
+  32% { transform: scale(1.3); } 42% { transform: translateY(-65px) scale(1.3) rotate(-4deg); } 52% { transform: translateY(-90px) scale(1.28) rotate(4deg); }
+  60% { transform: translateY(-95px) scale(1.3) rotate(-3deg); } 63% { transform: translateY(-95px) scale(1.06, .94); }
+  69% { transform: translate(-55px, -60px) scale(1) rotate(-25deg); } 75% { transform: translate(45px, -80px) rotate(20deg); }
+  81% { transform: translate(-20px, -40px) rotate(-15deg); } 88% { transform: translate(0, 0) scale(1.2, .8) rotate(0); }
+  94% { transform: scale(.95, 1.05); } 100% { transform: none; opacity: 1; }
+}
+/* V2 Pháo hoa: crouches and shoots off the top; fireworks burst behind on the empty stage; he crosses
+   small (far away) from left to right, then drops back in and lands (~3 s). */
+@keyframes celFirework {
+  0% { transform: translateY(120px) scale(.5); opacity: 0; } 12% { transform: translateY(0) scale(1.15, .85); opacity: 1; }
+  18% { transform: translateY(8px) scale(1.2, .78); } 26% { transform: translateY(-420px) scale(.8, 1.3); opacity: 1; } 27% { opacity: 0; }
+  40% { transform: translate(-260px, -110px) scale(.45) rotate(15deg); opacity: 0; } 44% { transform: translate(-200px, -115px) scale(.45) rotate(15deg); opacity: 1; }
+  62% { transform: translate(200px, -150px) scale(.45) rotate(15deg); opacity: 1; } 63% { opacity: 0; }
+  70% { transform: translate(0, -420px) scale(.9, 1.15); opacity: 0; } 72% { transform: translate(0, -400px) scale(.9, 1.15); opacity: 1; }
+  88% { transform: translate(0, 0) scale(1.2, .8); } 94% { transform: scale(.95, 1.05); } 100% { transform: none; opacity: 1; }
+}
+@keyframes celTrophy { 0% { transform: translate(-50%, -220px); opacity: 0; } 50% { transform: translate(-50%, 0); opacity: 1; } 65% { transform: translate(-50%, 10px); } 100% { transform: translate(-50%, -14px); opacity: 1; } }
+@keyframes celBurst {
+  0% { transform: translate(0, 0) scale(0); opacity: 0; } 15% { transform: translate(0, 0) scale(1); opacity: 1; }
+  55% { transform: translate(var(--x), var(--y)) scale(1); opacity: 1; } 100% { transform: translate(var(--x), calc(var(--y) + 40px)) scale(.6); opacity: 0; }
+}
+/* V3 Lộn nhào: jump, backflip at the peak, land; then confetti falls. */
+@keyframes celFlip {
+  0% { transform: translateY(120px) scale(.5); opacity: 0; } 25% { transform: translateY(0) scale(1.18, .8); opacity: 1; } 32% { transform: none; }
+  40% { transform: translateY(10px) scale(1.2, .78); } 52% { transform: translateY(-100px) scale(.85, 1.2) rotate(0); }
+  68% { transform: translateY(-120px) scale(1) rotate(-360deg); } 82% { transform: translateY(0) scale(1.2, .8) rotate(-360deg); } 100% { transform: rotate(-360deg); opacity: 1; }
+}
+@keyframes celRain { 0% { transform: translateY(0) rotate(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(560px) rotate(240deg); opacity: 0; } }
+/* V4 Bay vòng: flies in from the left, loops above the stage leaving a sparkle trail, lands. */
+@keyframes celLoop {
+  0% { transform: translate(-260px, -40px) rotate(20deg); opacity: 0; } 8% { opacity: 1; }
+  22% { transform: translate(-90px, -70px) rotate(-10deg); } 38% { transform: translate(0, -150px) rotate(-25deg) scale(.9, 1.1); }
+  54% { transform: translate(90px, -70px) rotate(-40deg); } 68% { transform: translate(0, 10px) rotate(-10deg); }
+  80% { transform: translate(-50px, -50px) rotate(10deg); } 90% { transform: translate(0, -30px) rotate(0) scale(.9, 1.1); }
+  95% { transform: translate(0, 0) scale(1.18, .82); } 100% { transform: none; opacity: 1; }
+}
+/* V5 Nảy bóng: three bounces, each higher and each landing deeper; the last one spins once in the air. */
+@keyframes celBounce {
+  0% { transform: translateY(120px) scale(.5); opacity: 0; } 12% { transform: translateY(0) scale(1.14, .86); opacity: 1; }
+  19% { transform: translateY(-40px) scale(.93, 1.08); } 26% { transform: translateY(0) scale(1.2, .8); }
+  36% { transform: translateY(-85px) scale(.9, 1.12); } 46% { transform: translateY(0) scale(1.27, .73); }
+  60% { transform: translateY(-135px) scale(.88, 1.15) rotate(0); } 72% { transform: translateY(-145px) scale(1) rotate(-360deg); }
+  86% { transform: translateY(0) scale(1.22, .78) rotate(-360deg); } 93% { transform: scale(.95, 1.05) rotate(-360deg); } 100% { transform: rotate(-360deg); opacity: 1; }
+}
+@keyframes celDot { 0% { transform: scale(0); opacity: 0; } 15% { transform: scale(1.2); opacity: 1; } 60% { transform: scale(1); opacity: 1; } 100% { transform: translateY(30px) scale(.5); opacity: 0; } }
+@keyframes celPop { 0% { transform: translateY(14px) scale(.85); opacity: 0; } 70% { transform: translateY(-2px) scale(1.04); opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes celCrown { 0% { transform: translate(-50%, -40px) scale(.3) rotate(-30deg); opacity: 0; } 70% { transform: translate(-50%, 4px) scale(1.1) rotate(6deg); opacity: 1; } 100% { transform: translate(-50%, 0) scale(1) rotate(-8deg); opacity: 1; } }
+@keyframes celSpin { to { transform: rotate(360deg); } }
+.cel-v1 { animation: celPuff 3.2s ease-in-out both, celSway 1.8s ease-in-out 3.4s infinite; }
+.cel-v2 { animation: celFirework 3.4s ease-in-out both, celSway 1.8s ease-in-out 3.6s infinite; }
+.cel-v3 { animation: celFlip 2.6s cubic-bezier(.3,.7,.4,1) both, celSway 1.8s ease-in-out 3s infinite; }
+.cel-v4 { animation: celLoop 2.6s cubic-bezier(.4,.1,.3,1) both, celSway 1.8s ease-in-out 3s infinite; }
+.cel-v5 { animation: celBounce 2.8s ease-in-out both, celSway 1.8s ease-in-out 3.2s infinite; }
+.cel-fx { position: absolute; left: 50%; top: 50%; margin: -6px; border-radius: 9999px; }
+.cel-burst { animation: celBurst 1.2s ease-out both; }
+.cel-trophy { position: absolute; left: 50%; top: -48px; transform: translate(-50%, -14px); animation: celTrophy .9s cubic-bezier(.3,.7,.4,1) both; }
+.cel-rain { position: absolute; top: -40px; border-radius: 9999px; animation: celRain 1.8s cubic-bezier(.4,0,.8,.6) both; }
+.cel-dot { position: absolute; border-radius: 9999px; animation: celDot 1.1s ease-out both; }
+.cel-crown { position: absolute; left: 50%; top: -6px; transform: translate(-50%, 0) rotate(-8deg); animation: celCrown .5s cubic-bezier(.3,.7,.4,1) both; }
+.cel-pop { animation: celPop .42s cubic-bezier(.3,.7,.4,1) both; }
+.cel-rays { animation: celSpin 14s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cel-v1, .cel-v2, .cel-v3, .cel-v4, .cel-v5, .cel-pop, .cel-rays, .cel-crown, .cel-trophy { animation: none; }
+  .cel-v3, .cel-v5 { transform: none; }
+  .cel-fx, .cel-rain, .cel-dot { display: none; }
+}
 @layer components {
   /* Frames */
   .frame { @apply relative w-[390px] h-[844px] bg-white overflow-hidden flex flex-col text-ink-950 shrink-0; }
@@ -104,6 +178,7 @@ tailwind.config = {
     <a href="#flow-auth" class="px-3 py-1.5 rounded-md hover:bg-ink-800">0 · Đăng nhập</a>
     <a href="#flow-onboarding" class="px-3 py-1.5 rounded-md hover:bg-ink-800">0b · Onboarding</a>
     <a href="#flow-daily" class="px-3 py-1.5 rounded-md hover:bg-ink-800">1 · Bài học</a>
+    <a href="#flow-celebrate" class="px-3 py-1.5 rounded-md hover:bg-ink-800">Syllie ăn mừng</a>
     <a href="#flow-templates" class="px-3 py-1.5 rounded-md hover:bg-ink-800">Dạng bài</a>
     <a href="#flow-words" class="px-3 py-1.5 rounded-md hover:bg-ink-800">2 · Từ của tôi</a>
     <a href="#flow-addword" class="px-3 py-1.5 rounded-md hover:bg-ink-800">3 · Thêm từ</a>
@@ -465,6 +540,73 @@ function reviewFinished() {
   <div class="px-6 pt-3 pb-10"><button class="btn btn-ink">Học từ mới</button></div>`;
 }
 
+/* ---------- celebration (beat 1 of the end of a session) ---------- */
+I.crown = '<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8Z"/>';
+/* Replays the CSS stand-in for the Rive timeline inside the frame the button belongs to. */
+function replayCel(btn) {
+  const f = btn.closest('.shrink-0').querySelector('.frame');
+  f.querySelectorAll('[class*="cel-"]').forEach(n => { n.style.animationName = 'none'; void n.offsetWidth; n.style.animationName = ''; });
+}
+const replay = '<button onclick="replayCel(this)" class="mt-1 inline-flex items-center gap-1 h-7 px-3 rounded-full bg-ink-950 text-white text-[12px] font-bold">▶ Phát lại chuyển động</button>';
+const INKS = ['bg-blue-500', 'bg-sun-500', 'bg-green-500', 'bg-coral-500', 'bg-blue-400', 'bg-sun-400'];
+const pop = (ms, html, cls = '') => `<div class="cel-pop ${cls}" style="animation-delay:${ms}ms">${html}</div>`;
+const lpPill = lp => `<span class="inline-flex items-center gap-1.5 h-11 px-4 rounded-full bg-sun-50 text-sun-800 text-[22px] font-extrabold tracking-tight tabular-nums">${ic('zap', 'w-6 h-6 text-sun-500', true)}+${lp} LP</span>`;
+
+/* Effects drawn around the stage centre (= Syllie's centre), per variant. `copy` = when the title pops (his landing). */
+const VARIANTS = {
+  // Air puffs (light rings) left behind while he lets the air out.
+  v1: { copy: 2800, fx: () => [[-10, -45, 2000], [-50, -25, 2150], [35, -45, 2300], [-20, -10, 2450]].map(([x, y, t]) =>
+      `<i class="cel-dot border-2 border-ink-200 bg-white" style="width:14px;height:14px;left:calc(50% + ${x}px - 7px);top:calc(50% + ${y}px - 7px);animation-delay:${t}ms"></i>`).join('') },
+  // Four fireworks behind the empty stage; rings alternate dots and four-point stars.
+  v2: { copy: 3000, fx: () => [[-70, -110, 1000], [60, -150, 1300], [-10, -50, 1650], [80, -70, 1950]].map(([bx, by, t], j) =>
+      Array.from({ length: 8 }, (_, k) => {
+        const a = k * Math.PI / 4, x = Math.round(Math.cos(a) * 48), y = Math.round(Math.sin(a) * 48);
+        const at = `--x:${x}px;--y:${y}px;left:calc(50% + ${bx}px);top:calc(50% + ${by}px);animation-delay:${t}ms`;
+        return k % 2
+          ? `<span class="cel-fx cel-burst ${SPARK_TEXT[(j + k) % 4]}" style="${at};width:14px;height:14px">${ic('spark4', 'w-3.5 h-3.5', true)}</span>`
+          : `<i class="cel-fx cel-burst ${INKS[(j + k) % 4]}" style="${at};width:9px;height:9px"></i>`;
+      }).join('')).join('') },
+  v3: { copy: 2300, fx: () => '' },
+  // Sparkle trail: dots and four-point stars alternate along the loop.
+  v4: { copy: 2600, fx: () => [[-90, -70, 570], [-50, -125, 780], [0, -150, 990], [50, -125, 1200], [90, -70, 1400], [50, -20, 1600], [0, 10, 1770], [-50, -50, 2080]].map(([x, y, t], k) => k % 2
+      ? `<span class="cel-dot ${SPARK_TEXT[k % 4]}" style="width:16px;height:16px;left:calc(50% + ${x}px - 8px);top:calc(50% + ${y}px - 8px);animation-delay:${t}ms">${ic('spark4', 'w-4 h-4', true)}</span>`
+      : `<i class="cel-dot ${INKS[k % 4]}" style="width:10px;height:10px;left:calc(50% + ${x}px - 5px);top:calc(50% + ${y}px - 5px);animation-delay:${t}ms"></i>`).join('') },
+  // A small ring of dots at his feet on the final landing.
+  v5: { copy: 2800, fx: () => [[-50, -8], [-34, -26], [0, -34], [34, -26], [50, -8]].map(([x, y], k) =>
+      `<i class="cel-fx cel-burst ${INKS[k % 4]}" style="--x:${x}px;--y:${y}px;width:8px;height:8px;top:calc(50% + 70px);animation-delay:2400ms"></i>`).join('') },
+};
+I.spark4 = '<path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2Z"/>';
+const SPARK_TEXT = ['text-blue-500', 'text-sun-500', 'text-green-500', 'text-coral-500'];
+/* V3's confetti (dots and short strips) falls over the whole screen, so it lives in the content box, not the stage. */
+const rain = () => Array.from({ length: 16 }, (_, k) => {
+  const s = 8 + (k * 5) % 6, strip = k % 2;
+  return `<i class="cel-rain ${INKS[k % INKS.length]}" style="left:${12 + ((k * 53) % 360)}px;width:${strip ? Math.round(s * .7) : s}px;height:${strip ? s * 2 : s}px;border-radius:${strip ? '3px' : '9999px'};animation-delay:${2050 + ((k * 137) % 700)}ms"></i>`;
+}).join('');
+
+/* variant: v1 Phồng bay · v2 Pháo hoa · v3 Lộn nhào · v4 Bay vòng · v5 Nảy bóng.
+   kind: 'learn' (daily with new words), 'review' (review only, Random, Weak), 'collection'. perfect: no wrong answer. */
+function celebrate({ variant = 'v1', kind = 'learn', perfect = false } = {}) {
+  const v = VARIANTS[variant], c = v.copy, collection = kind === 'collection';
+  const raysBg = collection ? pop(c - 200, `<div class="cel-rays w-full h-full rounded-full" style="background:repeating-conic-gradient(#FFF4C5 0 12deg, transparent 12deg 30deg);-webkit-mask:radial-gradient(circle, #000 30%, transparent 70%);mask:radial-gradient(circle, #000 30%, transparent 70%)"></div>`, 'absolute inset-[-30px]') : '';
+  // Collection: the trophy drops in, he catches it and lifts it over his head.
+  const trophy = collection ? `<span class="cel-trophy w-[52px] h-[52px] rounded-full bg-sun-500 text-white grid place-items-center" style="animation-delay:${c - 400}ms">${ic('trophy', 'w-7 h-7')}</span>` : '';
+  const crown = perfect && !collection ? `<span class="cel-crown text-ink-950" style="animation-delay:${c - 300}ms">${ic('crown', 'w-10 h-10', true)}</span>` : '';
+  const stage = `<div class="relative mx-auto mt-14 w-[240px] h-[220px] grid place-items-center">
+      ${raysBg}${v.fx()}
+      <div class="relative"><img src="${SYLLIE}" alt="" class="cel-${variant} w-[150px]">${crown}${trophy}</div>
+    </div>`;
+  const title = collection ? 'Bạn đã học hết Everyday' : perfect ? 'Buổi học hoàn hảo' : kind === 'review' ? 'Đã ôn xong' : 'Làm tốt lắm';
+  const sub = collection ? 'Cả 600 từ đã ở trong Từ của tôi.' : kind === 'review' ? 'Bạn đã ôn 9 từ.' : 'Bạn đã học 4 từ mới và ôn 9 từ.';
+  const bar = collection ? pop(c + 300, `<div class="mx-auto w-[260px] h-2.5 rounded-full overflow-hidden bg-ink-100"><div class="h-full rounded-full" style="background:${MARK.everyday};width:100%"></div></div>`, 'mt-6') : '';
+  return `${status()}
+  <div class="relative flex-1 overflow-hidden px-6 text-center">${variant === 'v3' ? rain() : ''}${stage}
+    ${pop(c, `<h1 class="h-display">${title}</h1>`, 'mt-6')}
+    ${pop(c + 150, `<p class="text-[17px] text-ink-600">${sub}</p>`, 'mt-2')}
+    ${bar}${pop(c + (collection ? 450 : 300), lpPill(kind === 'review' ? 30 : 45), 'mt-7')}
+  </div>
+  ${pop(c + 600, '<button class="btn btn-ink">Tiếp tục</button>', 'px-6 pt-3 pb-10')}`;
+}
+
 /* ---------- results + detail sheet ---------- */
 /* collectionDone: this session used up the collection. The completion card sits under the LP card and its
    actions replace "Xong", so the screen keeps one main action. */
@@ -476,16 +618,14 @@ function results(collectionDone = false) {
     <div class="mt-4 pt-3 border-t-[1.5px] border-ink-100 flex items-center gap-1 text-[14px] font-semibold text-blue-600">Xem chi tiết${ic('chev', 'w-4 h-4')}</div></div>`;
   return `${status()}
   <div class="flex-1 overflow-hidden px-6">
-    <div class="text-center ${collectionDone ? 'pt-2' : 'pt-6'}"><img src="${SYLLIE}" alt="" class="${collectionDone ? 'w-20' : 'w-28'} mx-auto">
-      <span class="${collectionDone ? 'mt-3' : 'mt-4'} pill h-7 px-3 text-[13px] bg-sun-100 text-sun-800">Hoàn thành buổi học</span>
-      <div class="mt-2 h-display">Làm tốt lắm</div></div>
-    <div class="${collectionDone ? 'mt-5' : 'mt-7'} flex gap-3">${tile('Ôn tập', '7/9', 'nhớ chắc')}${tile('Từ mới', '2/4', 'nắm ngay')}</div>
+    <h1 class="h-display pt-6">Tổng kết</h1>
+    <div class="mt-6 flex gap-3">${tile('Ôn tập', '7/9', 'nhớ chắc')}${tile('Từ mới', '2/4', 'nắm ngay')}</div>
     <div class="mt-3 card p-4">
       <div class="flex items-center gap-2"><span class="text-sun-500">${ic('zap', 'w-6 h-6', true)}</span><span class="text-[24px] font-extrabold tracking-tight flex-1">+45 LP</span><span class="text-[13px] text-ink-500">Tổng 1.285 LP</span></div>
       <div class="mt-3 flex gap-2"><span class="pill bg-ink-100 text-ink-700">Từ mới +30</span><span class="pill bg-ink-100 text-ink-700">Ôn tập +15</span></div>
     </div>
     ${collectionDone ? `<div class="mt-3 card p-4 flex items-start gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy', 'w-5 h-5')}</span>
-      <div class="flex-1"><div class="text-[17px] font-bold leading-snug">Bạn đã học hết mọi từ trong Everyday</div>
+      <div class="flex-1"><div class="text-[17px] font-bold leading-snug">Tiếp theo với Everyday</div>
         <p class="mt-1 text-[14px] text-ink-600 leading-snug">Từ đã học vẫn được ôn đều. Chọn bộ từ khác để học thêm từ mới.</p></div></div>` : ''}
   </div>
   <div class="px-6 pt-3 pb-10 ${collectionDone ? 'space-y-3' : ''}">${collectionDone ? '<button class="btn btn-ink">Chọn bộ từ khác</button><button class="btn btn-line3d">Để sau</button>' : '<button class="btn btn-ink">Xong</button>'}</div>`;
@@ -592,6 +732,9 @@ function recordingTask() {
 /* ===================== PRODUCT SCREENS (inspired by Brilliant) ===================== */
 /* done: every new word of the collection is learned (scope exhausted, all topics chosen, no added words left). */
 function home(done = false) {
+  // No wordmark, no greeting: Syllie is the warmth, LP is the only number up top.
+  const top = `<div class="flex items-center justify-between pt-2"><img src="${SYLLIE}" alt="" class="w-[104px]">
+      <span class="pill h-8 px-3 text-[14px] bg-sun-50 text-sun-800">${ic('zap', 'w-4 h-4 text-sun-500', true)}1.240</span></div>`;
   const topics = done ? [['bubble', 'Daily conversation', 40, 40], ['cart', 'Shopping', 30, 30], ['plane', 'Travel', 30, 30]] : [['bubble', 'Daily conversation', 24, 40], ['cart', 'Shopping', 12, 30], ['plane', 'Travel', 5, 30]];
   const daily = done ? `<div class="mt-7 card p-5">
       <div class="eyebrow">Bài học hôm nay</div>
@@ -611,14 +754,7 @@ function home(done = false) {
     </div>`;
   return `${status()}
   <div class="flex-1 overflow-hidden px-5">
-    <div class="flex items-center justify-between pt-2">
-      <span class="text-[22px] font-black tracking-tight">Syll</span>
-      <span class="pill h-8 px-3 text-[14px] bg-sun-50 text-sun-800">${ic('zap', 'w-4 h-4 text-sun-500', true)}1.240</span>
-    </div>
-    <div class="mt-8 flex items-end justify-between gap-3">
-      <div class="min-w-0 flex-1"><div class="text-[17px] font-semibold text-ink-500">Chào buổi sáng</div>
-        <h1 class="mt-0.5 text-[26px] font-extrabold tracking-[-0.8px] leading-tight truncate">mellow_puffin_5001</h1></div>
-      <img src="${SYLLIE}" alt="" class="w-[88px] mb-1 shrink-0"></div>
+    ${top}
     ${daily}
     <div class="mt-10">${sectionTitle('Đang học', '<span class="link">Đổi</span>')}
       <div class="card">
@@ -1277,7 +1413,9 @@ document.getElementById('flows').innerHTML = [
       'Dòng này chỉ hiện khi số từ chờ ôn vượt ngưỡng (> 10, <code>ReviewLoad.statusThreshold</code>). Chạm: bắt đầu buổi chỉ ôn (<code>reviewOnly</code>).',
       'Thêm khối "Đang học": tiến độ Collection và các Topic đang học, mọi thanh tiến độ dùng màu dấu của Collection (Everyday = xanh trời).',
       'Dòng tên Collection chỉ có chấm màu và tên, chiếm trọn chiều ngang; tên dài thu nhỏ tới 80% rồi cắt "…". Số từ "128 / 600 từ" nằm dưới thanh tiến độ.',
-      'Lời chào tách hai dòng: "Chào buổi sáng" nhỏ, tên một dòng; tên dài tự thu nhỏ tới 80% rồi cắt "…" ở cuối (ảnh chụp app: tên mellow_puffin_5001 làm lời chào vỡ thành 4 dòng).',
+      'Bỏ chữ "Syll" ở góc trái: người dùng đã ở trong app, tab bar đã báo Trang chủ.',
+      'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
+      'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
     ], 1120),
     go('Chạm Bắt đầu'),
@@ -1329,23 +1467,40 @@ document.getElementById('flows').innerHTML = [
       'Sửa bản dịch "Rời khỏi flow này?" thành "Rời buổi học?".',
     ]),
     go('Hết bài'),
-    frame('1.12', 'Kết quả', results(), [
+    frame('1.12', 'Ăn mừng', celebrate(), [
+      replay,
+      'Kết thúc buổi học chia hai nhịp: <b>ăn mừng trước, số liệu sau</b> (Tổng kết 1.12b giữ nguyên).',
+      'Syllie ăn mừng việc <b>hoàn thành buổi học</b>, không phụ thuộc vào từ hay đúng sai: một animation chung cho buổi có từ mới, buổi chỉ ôn, Luyện tập ngẫu nhiên và Từ còn yếu. Trả lời sai vài từ không đổi gì ở màn này.',
+      'Mỗi lần chọn ngẫu nhiên một trong năm biến thể (V1–V5, section "Syllie ăn mừng"), không lặp lại biến thể của lần trước. Đây là V1 Phồng bay.',
+      'Dòng phụ chỉ nêu số lượng, từ mới và từ ôn ngang nhau: "Bạn đã học 4 từ mới và ôn 9 từ." / buổi chỉ ôn "Bạn đã ôn 9 từ." (tiêu đề "Đã ôn xong"). Không có câu nào về nhớ chắc hay sai.',
+      'Tiêu đề, dòng phụ, LP và nút hiện khi Syllie đáp (sự kiện Rive <code>land</code>). Chạm vào màn trước lúc đó thì tua nhanh tới tư thế cuối.',
+      'Giọng văn bình tĩnh ("Làm tốt lắm", không "!"): phần ăn mừng nằm ở chuyển động, âm thanh và rung.',
+    ]),
+    go('Chạm Tiếp tục'),
+    frame('1.12b', 'Tổng kết', results(), [
+      'Số liệu chuyển sang màn thứ hai, tiêu đề "Tổng kết"; Syllie và chip "Hoàn thành buổi học" bỏ khỏi đây vì 1.12 đã nói điều đó.',
       'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn.',
       'Bỏ các dòng nhóm yếu hơn ("1 chưa chắc", "+1 đã biết"…) khỏi tile: thay bằng một link "Xem chi tiết ›" mở sheet chi tiết, nơi các nhóm đã được liệt kê đủ.',
       'Card LP có chip chia theo nguồn. Chuỗi "Xem chi tiết" là chuỗi mới, cần thêm bản vi/en.',
-      'Đổi chip "Hoàn thành flow" thành "Hoàn thành buổi học".',
     ]),
     go('Chạm Xem chi tiết'),
     frame('1.13', 'Chi tiết buổi học (sheet)', resultDetail(), [
       'Mỗi khối có thanh tỷ lệ 3 mức (Blue 600 / Blue 300 / sọc) và các nhóm có ô màu tương ứng.',
       'Nhóm mạnh (Nhớ chắc, Nắm ngay) thu gọn sẵn; mỗi từ có nguyên nhân (Blue 700) và kỹ năng/ngày học.',
     ]),
-    go('Từ 1.12: buổi học dùng hết từ mới của Collection'),
-    frame('1.12a', 'Kết quả · học hết Collection', results(true), [
-      'Syllie nhỏ lại (80pt) để card hoàn thành không bị hai nút che.',
-      'Card hoàn thành dưới card LP: icon cúp nền Sun 50 (thành tựu), "Bạn đã học hết mọi từ trong Everyday" và một dòng nói rõ điều gì tiếp theo.',
+    go('Hết bài, buổi học dùng hết từ mới của Collection'),
+    frame('1.12a', 'Ăn mừng · học hết Collection', celebrate({ kind: 'collection' }), [
+      replay,
+      'Biến thể ngẫu nhiên như 1.12 (đây là V1), rồi lúc đáp <b>chiếc cúp</b> Sun rơi xuống, Syllie đỡ lấy và nâng lên cao; vầng tia sun-100 xoay chậm phía sau. Cúp thay vương miện Hoàn hảo nếu buổi cũng không sai câu nào.',
+      'Tiêu đề nói thẳng thành tựu: "Bạn đã học hết Everyday". Thanh tiến độ đầy màu dấu Collection thay cho con số "600 / 600".',
+      'Chỉ hết các Topic đang chọn: tiêu đề "Bạn đã học hết Daily conversation, Shopping", có cúp nhưng không có vầng tia (mốc nhỏ hơn).',
+      'Một nút "Tiếp tục" như 1.12; các lựa chọn tiếp theo nằm ở Tổng kết.',
+    ]),
+    go('Chạm Tiếp tục'),
+    frame('1.12c', 'Tổng kết · học hết Collection', results(true), [
+      'Tổng kết như 1.12b, thêm card "Tiếp theo với Everyday" dưới card LP: một dòng nói rõ điều gì xảy ra tiếp.',
       'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở Nguồn từ (2.4) trên tab Hồ sơ; "Để sau" (viền) về Trang chủ.',
-      'Chỉ hết các Topic đang chọn (Collection còn Topic chưa chọn): tiêu đề "Bạn đã học hết mọi từ trong Daily conversation, Shopping", nút chính "Chọn thêm chủ đề".',
+      'Chỉ hết các Topic đang chọn: nút chính "Chọn thêm chủ đề".',
     ]),
     go('Để sau'),
     frame('1.1a', 'Trang chủ · đã học hết Collection', home(true), [
@@ -1355,6 +1510,46 @@ document.getElementById('flows').innerHTML = [
       'Còn từ người dùng tự thêm chưa học: không phải trạng thái này; card vẫn là buổi học bình thường với số từ mới còn lại.',
       'Chỉ hết các Topic đang chọn: "Bạn đã học hết các chủ đề đang chọn", nút viền "Chọn thêm chủ đề" thay "Chọn bộ từ khác".',
     ], 1120),
+  ]),
+  flow('flow-celebrate', 'Syllie ăn mừng · biến thể', 'Bản Rive hiện tại chỉ bay vào, đáp và lắc lư: quá nhẹ, và lần nào cũng giống nhau. Năm biến thể dưới đây chọn ngẫu nhiên mỗi buổi (không lặp lại lần trước), cộng một nhịp thêm khi buổi học hoàn hảo. Bản HTML dùng ảnh tĩnh kéo giãn/xoay để gợi chuyển động; tư thế thật (mắt, thùy, mặt) vẽ trong Rive.', [
+    frame('V1', 'Phồng bay', celebrate({ variant: 'v1' }), [
+      replay,
+      'Bay lên từ đáy, đáp lún → <b>hít một hơi phồng tròn</b> (~130%) → bay bổng lên như bóng bay, lơ lửng và xoay nhẹ, mắt lim dim thích thú.',
+      '"Xì" hơi: xẹp dần về cỡ thường trong khi bay vòng vèo xuống, để lại vài vòng hơi nhạt; đáp lún, nảy, chớp mắt.',
+      'Rive: một state machine, input enum <code>variant</code> (v1–v5), bool <code>perfect</code>, enum <code>kind</code> (session, collection); gửi sự kiện <code>land</code> để app hiện chữ. Mỗi biến thể bắt đầu và kết thúc ở tư thế nghỉ đầy đủ.',
+      '~2.8s tới lúc đáp. Âm thanh: tiếng hít hơi, tiếng "xì" kéo dài khi bay vòng vèo.',
+    ]),
+    frame('V2', 'Pháo hoa', celebrate({ variant: 'v2' }), [
+      replay,
+      'Lấy đà rồi <b>bay vút ra khỏi màn</b> phía trên. Màn trống, bốn tràng pháo hoa nổ phía sau, lệch vị trí và lệch nhịp nhau ~0.3s; mỗi tràng là vòng chấm và sao bốn cánh Blue/Sun/Green/Coral.',
+      'Giữa các tràng pháo, Syllie <b>bay ngang qua</b> từ trái sang phải, nhỏ như đang ở xa, nghiêng theo hướng bay.',
+      'Rồi bay chúc xuống, đáp vào giữa màn: lún, nảy, lắc lư. ~3s tới lúc đáp, dài nhất trong năm biến thể vì có đoạn rời màn.',
+      'Âm thanh: tiếng "vút" khi bay ra, tiếng pháo nổ nhỏ theo từng tràng.',
+    ]),
+    frame('V3', 'Lộn nhào', celebrate({ variant: 'v3' }), [
+      replay,
+      'Lấy đà, bật cao, <b>lộn ngược một vòng</b> ở đỉnh (các thùy đi trễ theo vòng xoay), đáp lún mạnh.',
+      'Ngay khi đáp, hạt màu (chấm tròn và mảnh dài Blue/Sun/Green/Coral) rơi khắp màn, xoay khi rơi; thay pháo giấy Lottie.',
+      'Kết: hơi chóng mặt, lắc đầu rồi cười. ~2.3s tới lúc đáp.',
+    ]),
+    frame('V4', 'Bay vòng', celebrate({ variant: 'v4' }), [
+      replay,
+      'Bay vào từ mép trái, lượn một vòng lớn phía trên sân khấu, nghiêng người theo hướng bay; phía sau là vệt chấm và sao bốn cánh lấp lánh rồi tắt dần.',
+      'Hạ cánh giữa sân khấu, lún, nháy một mắt. ~2.6s.',
+      'Khác các biến thể khác ở chỗ Syllie không xuất hiện từ đáy: giữ cảm giác bất ngờ.',
+    ]),
+    frame('V5', 'Nảy bóng', celebrate({ variant: 'v5' }), [
+      replay,
+      'Nảy ba lần, lần sau cao hơn lần trước và mỗi lần đáp lún sâu hơn: khai thác cơ thể mềm của Syllie.',
+      'Lần nảy cuối cao nhất, <b>xoay một vòng</b> giữa không trung rồi đáp; một vòng chấm màu nhỏ bung ra dưới chân. ~2.8s tới lúc đáp.',
+      'Âm thanh: tiếng "boing" cao dần theo từng lần nảy. Rung nhẹ mỗi lần đáp, rung "đúng" ở lần cuối.',
+    ]),
+    frame('V+', 'Hoàn hảo', celebrate({ variant: 'v3', perfect: true }), [
+      replay,
+      '<b>Nhịp thêm</b> chồng lên sau mọi biến thể khi buổi không sai câu nào và không xem đáp án: một vương miện nhỏ rơi từ trên xuống, đậu lệch trên đầu Syllie; Syllie liếc lên nhìn rồi cười. Thêm ~0.6s.',
+      'Tiêu đề đổi thành "Buổi học hoàn hảo". Dòng phụ và LP như thường.',
+      'Vương miện màu Ink, không Sun: Sun để dành cho cúp khi học hết Collection (1.12a). Hai mốc không hiện cùng lúc; cúp thắng.',
+    ]),
   ]),
   flow('flow-templates', 'Các dạng bài tập', 'Bảy template của backend dùng chung khung: câu hỏi, phần đề (chữ ở giữa hoặc một nút loa), nội dung, panel đáy có Syllie. Chọn nghĩa (select) xem ở Luồng 1.', [
     frame('T2', 'Điền vào chỗ trống (cloze)', clozeTask(), ['Từ đã chọn bay vào ô trống (viền Blue); chỗ cũ trong ngân hàng từ để lại ô xám giữ chỗ.']),

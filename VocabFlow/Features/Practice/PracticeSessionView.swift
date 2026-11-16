@@ -655,10 +655,22 @@ private struct LearnCardStep: View {
             }
         }
         .task(id: card.wordId) { await loadOtherMeanings() }
+        .task(id: card) { await autoplay() }
         .sheet(isPresented: $isShowingOtherMeanings) {
             OtherMeaningsSheet(lemma: card.word, meanings: otherMeanings)
         }
     }
+
+    /// A new word is heard once as its card appears, after the step transition so the sound lands on the card.
+    /// Leaving the step cancels it; the store stops any sound on advance.
+    private func autoplay() async {
+        guard let clip = card.audio else { return }
+        try? await Task.sleep(for: Self.autoplayDelay)
+        guard !Task.isCancelled else { return }
+        store.playClip(clip)
+    }
+
+    private static let autoplayDelay: Duration = .milliseconds(350)
 
     /// Reference only, so a failed load just leaves the link out.
     private func loadOtherMeanings() async {

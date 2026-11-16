@@ -218,27 +218,37 @@ struct HomeView: View {
             }
 
             VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: Spacing.s) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Dot and name take the whole line; a long name shrinks to 80% and then truncates.
                     HStack(spacing: Spacing.xs) {
                         CollectionMarkDot(color: mark)
                         Text(verbatim: collection.name)
                             .font(Typography.wordClass.weight(.bold))
                             .foregroundStyle(Color.ink)
-                        if let total = collection.total, total > 0, (collection.learned ?? 0) >= total {
-                            StatusPill("Complete", tone: .success, systemImage: "checkmark")
-                        }
-                        Spacer(minLength: Spacing.xs)
-                        if let total = collection.total {
-                            Text("\(collection.learned ?? 0) / \(total) words")
-                                .font(Typography.secondary.monospacedDigit())
-                                .foregroundStyle(Color.mutedInk)
-                        }
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .accessibilityElement(children: .combine)
                     if let total = collection.total, total > 0 {
-                        ProgressBar(fraction: CGFloat(collection.learned ?? 0) / CGFloat(total), color: mark, height: 10)
+                        let learned = collection.learned ?? 0
+                        ProgressBar(fraction: CGFloat(learned) / CGFloat(total), color: mark, height: 10)
+                            .padding(.top, Spacing.s)
+                        // Under the bar: "128 / 600 words", or once finished the pill and the total (no "600 / 600").
+                        HStack(spacing: Spacing.xs) {
+                            if learned >= total {
+                                StatusPill("Complete", tone: .success, systemImage: "checkmark")
+                                Text("\(total) words")
+                            } else {
+                                Text("\(learned) / \(total) words")
+                            }
+                        }
+                        .font(Typography.secondary.monospacedDigit())
+                        .foregroundStyle(Color.mutedInk)
+                        .padding(.top, Spacing.xs)
                     }
                 }
+                .accessibilityElement(children: .combine)
                 .padding(Spacing.m)
 
                 ForEach(topics) { topic in

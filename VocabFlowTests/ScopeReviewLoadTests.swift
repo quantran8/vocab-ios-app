@@ -107,9 +107,11 @@ final class ScopeReviewLoadTests: XCTestCase {
         XCTAssertEqual(preferences.effectiveReviewsPerSession, 12)
         preferences.adjustReviewsPerSession(by: -1)
         XCTAssertEqual(preferences.reviewsPerSession, 11)
-        preferences.reviewsPerSession = 5
+        preferences.reviewsPerSession = 2
         preferences.adjustReviewsPerSession(by: -1)
-        XCTAssertEqual(preferences.reviewsPerSession, 5)
+        XCTAssertEqual(preferences.reviewsPerSession, 1)
+        preferences.adjustReviewsPerSession(by: -1)
+        XCTAssertEqual(preferences.reviewsPerSession, 1, "Never below 1")
     }
 
     func testResettingReviewsPerSessionSendsNull() throws {

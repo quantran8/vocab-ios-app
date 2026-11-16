@@ -20,7 +20,7 @@ Syll là app cao cấp cho người học trưởng thành, nhưng vẫn có c�
 **Lấy cảm hứng, không sao chép.** Mượn nguyên tắc tổ chức (dải màu nhiều bậc, ít màu lõi, cạnh dày, phản hồi rõ ràng), không mượn giao diện. Không dùng lại màu, logo, minh họa, âm thanh hay chi tiết đặc trưng của hai app này, ví dụ thanh tiến độ dày có vệt sáng hay nút loa vuông nổi khối.
 
 **Bản sắc riêng của Syll:**
-- **Syllie:** đám mây mực màu đen. Là lớp cảm xúc của app, không bao giờ thay đổi kết quả học.
+- **Syllie:** mascot dáng đám mây, màu đen. Là lớp cảm xúc của app, không bao giờ thay đổi kết quả học.
 - **Ink:** màu chữ và màu nút chính.
 - **Blue trầm:** màu nhấn duy nhất của thương hiệu.
 

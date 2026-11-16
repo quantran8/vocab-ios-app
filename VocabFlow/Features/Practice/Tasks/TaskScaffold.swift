@@ -155,8 +155,16 @@ struct TaskPromptView: View {
                 }
             }
             .frame(maxWidth: .infinity)
+            // Heard once as the task appears, after the step transition; leaving the task cancels it.
+            .task(id: attempt.task.id) {
+                try? await Task.sleep(for: Self.autoplayDelay)
+                guard !Task.isCancelled else { return }
+                await store.playPromptAudio()
+            }
         }
     }
+
+    private static let autoplayDelay: Duration = .milliseconds(350)
 
     /// The word or meaning stands alone: 36 pt for a word, 30 pt for a meaning to type or spell.
     private var promptFont: Font {

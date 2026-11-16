@@ -5,7 +5,9 @@ struct LearningPreferences: Codable, Equatable {
     /// Matches the backend's `dailyNewWordGoal` limits.
     static let wordsPerDayRange = 1...30
     /// Matches the backend's `reviewsPerSession` limits.
-    static let reviewsPerSessionRange = 5...50
+    static let reviewsPerSessionRange = 1...50
+    /// Floor for the unset value, which follows `wordsPerDay` (backend `followMin`).
+    static let reviewsPerSessionFollowMin = 5
     static let allWeekdays: Set<Int> = Set(1...7)
 
     /// One collection at a time; `topicIDs` always belong to it.
@@ -51,7 +53,7 @@ struct LearningPreferences: Codable, Equatable {
 
     /// The backend's rule: the chosen number, else the new-word goal but never below the minimum.
     var effectiveReviewsPerSession: Int {
-        reviewsPerSession ?? max(wordsPerDay, Self.reviewsPerSessionRange.lowerBound)
+        reviewsPerSession ?? max(wordsPerDay, Self.reviewsPerSessionFollowMin)
     }
 
     mutating func adjustReviewsPerSession(by amount: Int) {

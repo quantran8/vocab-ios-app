@@ -92,6 +92,12 @@ protocol AudioClipPlaying: AnyObject {
     /// Returns true only if sound really started, which is what `deliveryMode: audio` claims.
     func play(_ url: URL) async -> Bool
     func stop()
+    /// Downloads clips ahead of time so their first play starts at once. Failures are left for `play` to report.
+    func preload(_ urls: [URL]) async
+}
+
+extension AudioClipPlaying {
+    func preload(_ urls: [URL]) async {}
 }
 
 /// Plays prompt audio. Clips are downloaded first, so a failed load is known rather than assumed.
@@ -102,6 +108,7 @@ final class AudioClipPlayer: NSObject, AudioClipPlaying {
 
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var cache: [URL: Data] = [:]
+    @ObservationIgnored private var downloads: [URL: Task<Data, Error>] = [:]
     /// Bumped by `stop()`, so a play still waiting on its clip or the session can tell it was called off.
     @ObservationIgnored private var playRequest = 0
 
@@ -136,12 +143,28 @@ final class AudioClipPlayer: NSObject, AudioClipPlaying {
         isPlaying = false
     }
 
+    func preload(_ urls: [URL]) async {
+        await withTaskGroup(of: Void.self) { group in
+            for url in Set(urls) where cache[url] == nil {
+                group.addTask { @MainActor in _ = try? await self.clip(url) }
+            }
+        }
+    }
+
+    /// A play and a preload of the same clip share one download.
     private func clip(_ url: URL) async throws -> Data {
         if let cached = cache[url] { return cached }
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? false else {
-            throw URLError(.badServerResponse)
+        if let pending = downloads[url] { return try await pending.value }
+        let download = Task<Data, Error> {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? false else {
+                throw URLError(.badServerResponse)
+            }
+            return data
         }
+        downloads[url] = download
+        defer { downloads[url] = nil }
+        let data = try await download.value
         cache[url] = data
         return data
     }

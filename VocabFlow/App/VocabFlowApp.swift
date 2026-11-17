@@ -17,6 +17,7 @@ struct VocabFlowApp: App {
     @State private var challengeMap: ChallengeMapStore
     @State private var challengeRun: ChallengeRunStore
     @State private var ranking: RankingStore
+    private let sounds: SoundEffects
 
     init() {
         SystemBackButton.configureAppearance()
@@ -65,6 +66,7 @@ struct VocabFlowApp: App {
             progress.recordFinishedRun(words: content.words, result: store.result)
         }
 
+        self.sounds = sounds
         _settings = State(initialValue: settings)
         _speech = State(initialValue: speech)
         _plan = State(initialValue: plan)
@@ -104,6 +106,7 @@ struct VocabFlowApp: App {
                 .environment(challengeMap)
                 .environment(challengeRun)
                 .environment(ranking)
+                .environment(\.soundEffects, sounds)
         }
     }
 }

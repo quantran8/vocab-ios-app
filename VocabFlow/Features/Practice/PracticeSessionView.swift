@@ -39,15 +39,7 @@ struct PracticeSessionView: View {
         case .running:
             PracticeFlowView()
         case .finished(let summary):
-            PracticeResultsView(
-                result: store.result(for: summary),
-                effort: store.effort,
-                scopeEvents: store.scopeEvents,
-                onChooseTopics: { motion.perform(MotionTokens.transition) { store.close(followUp: .chooseTopics) } },
-                firstTryCount: store.firstTryCount,
-                onPracticeAgain: store.canPracticeAgain ? { Task { await store.practiceAgain() } } : nil,
-                onDone: { motion.perform(MotionTokens.transition) { store.close() } }
-            )
+            SessionFinishView(summary: summary)
         case .failed(.planning(let message)):
             StatusScreen(title: "Couldn’t start the session", message: Text(verbatim: message)) {
                 retryButton("Try again")
@@ -705,6 +697,50 @@ private struct OtherMeaningsLink: View {
         .accessibilityLabel(Text("Other meanings, \(count)"))
         .accessibilityHint(Text("For reference only. Not part of this lesson."))
         .padding(.top, Spacing.xs)
+    }
+}
+
+/// The end of a session in two beats (docs/app-redesign-v1.html, 1.12): the celebration first, then the numbers.
+private struct SessionFinishView: View {
+    let summary: CommitSummary
+    @Environment(PracticeSessionStore.self) private var store
+    @Environment(LearningPlanStore.self) private var plan
+    @Environment(\.motion) private var motion
+    @State private var showsSummary = false
+
+    var body: some View {
+        let result = store.result(for: summary)
+        ZStack {
+            if showsSummary {
+                PracticeResultsView(
+                    result: result,
+                    effort: store.effort,
+                    scopeEvents: store.scopeEvents,
+                    onChooseTopics: { motion.perform(MotionTokens.transition) { store.close(followUp: .chooseTopics) } },
+                    firstTryCount: store.firstTryCount,
+                    onPracticeAgain: store.canPracticeAgain ? { Task { await store.practiceAgain() } } : nil,
+                    onDone: { motion.perform(MotionTokens.transition) { store.close() } }
+                )
+                .transition(motion.stepTransition)
+            } else {
+                SessionCelebrationView(
+                    celebration: SessionCelebration(result: result, effort: store.effort, scopeEvents: store.scopeEvents,
+                                                    finishedScopeName: finishedScopeName),
+                    onContinue: { motion.perform(MotionTokens.transition) { showsSummary = true } }
+                )
+                .transition(motion.stepTransition)
+            }
+        }
+    }
+
+    /// The collection, or the topics, this session used up.
+    private var finishedScopeName: String? {
+        guard let events = store.scopeEvents, !events.isEmpty else { return nil }
+        if events.collectionCompleted, let collection = plan.current.collection {
+            return collection.name
+        }
+        let names = TopicCatalog.topics(ids: Set(events.completedTopicIds)).map(\.name)
+        return names.isEmpty ? nil : names.formatted(.list(type: .and).locale(AppLanguage.active.locale))
     }
 }
 

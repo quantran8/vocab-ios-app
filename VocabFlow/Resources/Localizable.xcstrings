@@ -2590,6 +2590,16 @@
         }
       }
     },
+    "Collection finished" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Học hết Collection"
+          }
+        }
+      }
+    },
     "Collections you learn from will show up here." : {
       "localizations" : {
         "vi" : {
@@ -3913,6 +3923,7 @@
       }
     },
     "Good afternoon" : {
+      "extractionState" : "stale",
       "localizations" : {
         "vi" : {
           "stringUnit" : {
@@ -3923,6 +3934,7 @@
       }
     },
     "Good evening" : {
+      "extractionState" : "stale",
       "localizations" : {
         "vi" : {
           "stringUnit" : {
@@ -3933,6 +3945,7 @@
       }
     },
     "Good morning" : {
+      "extractionState" : "stale",
       "localizations" : {
         "vi" : {
           "stringUnit" : {
@@ -6590,6 +6603,16 @@
         }
       }
     },
+    "Perfect session" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buổi học hoàn hảo"
+          }
+        }
+      }
+    },
     "phrasal verb" : {
       "localizations" : {
         "vi" : {
@@ -6759,6 +6782,7 @@
       }
     },
     "Practice complete" : {
+      "extractionState" : "stale",
       "localizations" : {
         "vi" : {
           "stringUnit" : {
@@ -7522,6 +7546,16 @@
         }
       }
     },
+    "Results" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kết quả"
+          }
+        }
+      }
+    },
     "Results screens" : {
       "localizations" : {
         "vi" : {
@@ -8113,6 +8147,7 @@
       }
     },
     "Session complete" : {
+      "extractionState" : "stale",
       "localizations" : {
         "vi" : {
           "stringUnit" : {
@@ -8727,6 +8762,16 @@
         }
       }
     },
+    "Summary" : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tổng kết"
+          }
+        }
+      }
+    },
     "Suspicious activity" : {
       "localizations" : {
         "vi" : {
@@ -8820,6 +8865,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chạm một từ rồi chạm nghĩa của nó, theo thứ tự nào cũng được. Ghép sai chỉ làm mất chuỗi combo."
+          }
+        }
+      }
+    },
+    "Tap Replay to play it full screen, as after a session." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chạm Phát lại để xem toàn màn hình, như sau một buổi học."
           }
         }
       }
@@ -10296,12 +10351,42 @@
         }
       }
     },
+    "You learned %lld new words and reviewed %lld words." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn đã học %1$lld từ mới và ôn %2$lld từ."
+          }
+        }
+      }
+    },
+    "You learned %lld new words." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn đã học %lld từ mới."
+          }
+        }
+      }
+    },
     "You recalled every word on the first try without hints." : {
       "localizations" : {
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bạn đã nhớ mọi từ ngay lần đầu mà không cần gợi ý."
+          }
+        }
+      }
+    },
+    "You reviewed %lld words." : {
+      "localizations" : {
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn đã ôn %lld từ."
           }
         }
       }

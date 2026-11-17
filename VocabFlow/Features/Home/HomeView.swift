@@ -21,13 +21,9 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 header
-                    .padding(.top, Spacing.xs)
-
-                greeting
-                    .padding(.top, Spacing.xl)
 
                 dailyLesson(status, due: due)
-                    .padding(.top, Spacing.l + Spacing.xxs)
+                    .padding(.top, LessonMascot.bottomMargin)
 
                 if let collection = TopicCatalog.collection(id: plan.current.collectionID) {
                     learningSection(collection)
@@ -70,71 +66,41 @@ struct HomeView: View {
         return status.backlog > status.sessionReviews
     }
 
-    // MARK: Header and greeting
+    // MARK: Header
 
-    /// The wordmark and the learner's lifetime LP.
+    /// One row, no wordmark and no greeting (docs/app-redesign-v1.html, 1.1): Syllie on the left, the learner's lifetime LP
+    /// on the right, centred on his body. LP is the only number at the top; "Today’s lesson" is the screen's VoiceOver header.
     private var header: some View {
-        HStack {
-            Text(verbatim: "Syll")
-                .font(Typography.wordmark)
-                .tracking(Typography.tightTracking)
-                .foregroundStyle(Color.ink)
-                .accessibilityAddTraits(.isHeader)
+        HStack(alignment: .top) {
+            LessonMascot()
             Spacer(minLength: Spacing.s)
             if let lp = learner.profile?.tierSummary?.lifetimeLP {
-                HStack(spacing: Spacing.xxs) {
-                    Image(systemName: "bolt.fill")
-                        .font(Typography.micro.weight(.bold))
-                        .foregroundStyle(Color.reward)
-                        .accessibilityHidden(true)
-                    Text(lp, format: .number.locale(AppLanguage.active.locale))
-                        .font(Typography.secondary.weight(.bold).monospacedDigit())
-                        .contentTransition(.numericText(value: Double(lp)))
-                }
-                .foregroundStyle(Color.rewardInk)
-                .padding(.horizontal, Spacing.s)
-                .frame(height: Spacing.l + Spacing.xs)
-                .background(Color.rewardSurface, in: Capsule())
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(Text("\(lp) LP"))
+                lpPill(lp)
+                    .padding(.top, LessonMascot.bodyCenterY - Self.lpPillHeight / 2)
             }
         }
+        // The artboard keeps room above Syllie for his props; that room may run under the status bar.
+        .padding(.top, Spacing.xs - LessonMascot.topMargin)
     }
 
-    /// Two elements, as in the design: a 17 pt semibold Ink 500 salutation over the name in 26 pt extrabold;
-    /// a long handle shrinks to 80%, then truncates.
-    private var greeting: some View {
-        HStack(alignment: .bottom, spacing: Spacing.s) {
-            VStack(alignment: .leading, spacing: 2) {
-                salutation
-                    .font(Typography.wordClass)
-                    .foregroundStyle(Color.mutedInk)
-                    .lineLimit(1)
-                if let name = learner.profile?.username, !name.isEmpty {
-                    Text(verbatim: name)
-                        .font(Typography.sheetTitle)
-                        .tracking(Typography.sheetTracking)
-                        .foregroundStyle(Color.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .truncationMode(.tail)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isHeader)
-            LessonMascot()
-                .padding(.bottom, Spacing.xxs)
-        }
-    }
+    private static let lpPillHeight: CGFloat = Spacing.l + Spacing.xs
 
-    /// Follows the time of day.
-    private var salutation: Text {
-        switch Calendar.current.component(.hour, from: Date()) {
-        case 5..<12: Text("Good morning")
-        case 12..<18: Text("Good afternoon")
-        default: Text("Good evening")
+    private func lpPill(_ lp: Int) -> some View {
+        HStack(spacing: Spacing.xxs) {
+            Image(systemName: "bolt.fill")
+                .font(Typography.micro.weight(.bold))
+                .foregroundStyle(Color.reward)
+                .accessibilityHidden(true)
+            Text(lp, format: .number.locale(AppLanguage.active.locale))
+                .font(Typography.secondary.weight(.bold).monospacedDigit())
+                .contentTransition(.numericText(value: Double(lp)))
         }
+        .foregroundStyle(Color.rewardInk)
+        .padding(.horizontal, Spacing.s)
+        .frame(height: Self.lpPillHeight)
+        .background(Color.rewardSurface, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("\(lp) LP"))
     }
 
     // MARK: Daily lesson
@@ -196,7 +162,8 @@ struct HomeView: View {
                             Image(systemName: "chevron.right").foregroundStyle(Color.ink400)
                         }
                         .foregroundStyle(Color.ink)
-                        .padding(Spacing.m)
+                        .padding(.horizontal, Spacing.screenGutter)
+                        .padding(.vertical, Spacing.m)
                     }
                     .buttonStyle(.plain)
                 }
@@ -450,7 +417,7 @@ struct DailyLessonStatus: Equatable {
 
 // MARK: - Mascot
 
-/// Syllie beside the greeting (the `HomeSyllie` artboard). One cycle: he idles for
+/// Syllie at the top of Home (the `HomeSyllie` artboard). One cycle: he idles for
 /// `idleBeat`, plays one random scene (a letter to bounce or a paper plane to chase), then dozes off (snoring).
 /// A tap wakes him and the cycle starts again. With reduced motion he skips the play and just dozes off.
 /// Decorative except for that tap.
@@ -458,14 +425,20 @@ private struct LessonMascot: View {
     /// How long Syllie idles before he plays.
     private static let idleBeat: Duration = .seconds(4)
 
+    /// The 520×560 artboard at a size where his body is about 104 pt wide (w-[104px]): the body spans ~81% of the width.
+    static let size = CGSize(width: 128, height: 138)
+    /// Empty room above his body (for the letter and the plane), below it, and the height of his body's centre.
+    static let topMargin: CGFloat = 52
+    static let bottomMargin: CGFloat = 13
+    static let bodyCenterY: CGFloat = 87
+
     @Environment(\.motion) private var motion
     @State private var scene = HomeSyllieScene.idle
 
     var body: some View {
         // Accessibility comes from HomeSyllieView: hidden while awake, a "wake him up" button while asleep.
-        // At this frame his body is about 88 pt wide (w-[88px]); the artboard keeps room above for the props.
         HomeSyllieView(scene: scene) { scene = .idle }
-            .frame(width: 109, height: 118)
+            .frame(width: Self.size.width, height: Self.size.height)
         .task(id: scene) {
             switch scene {
             case .idle:

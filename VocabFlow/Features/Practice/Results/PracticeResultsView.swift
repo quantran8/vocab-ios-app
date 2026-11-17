@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The end of a session (docs/app-redesign-v1.html, 1.12): Syllie celebrating at the top, the "Session complete" pill and
-/// title, the result tiles that have something to show, the LP card, the scope card, and confetti.
+/// Beat 2 of the end of a session (docs/app-redesign-v1.html, 1.12b / 1.12c), after `SessionCelebrationView`:
+/// the "Summary" title, the result tiles that have something to show, the LP card and the scope card.
 /// Takes plain data so the Practice Lab can show it from fixtures.
 struct PracticeResultsView: View {
     let result: PracticeResult
@@ -18,38 +18,17 @@ struct PracticeResultsView: View {
 
     @Environment(\.motion) private var motion
     @State private var hasAppeared = false
-    @State private var showsConfetti = false
     @State private var sheetSection: ResultSection?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Without motion there is no animated Syllie, so the badge stands in for him.
-                if motion.reduceMotion {
-                    CelebrationBadge()
-                } else {
-                    // The `Syllie` artboard (520×430) has room around him for his gestures; at this frame his body
-                    // is about 112 pt wide, and the negative padding trims the empty margin above and below.
-                    SyllieArtboardView(artboard: "Syllie", stateMachine: "Celebrate")
-                        .frame(width: (hasCompletion ? 133 : Self.mascotWidth), height: (hasCompletion ? 133 : Self.mascotWidth) * 430 / 520)
-                        .padding(.vertical, -Spacing.m)
-                }
-
-                Text(chipText)
-                    .font(Typography.micro.weight(.bold))
-                    .foregroundStyle(Color.sun800)
-                    .padding(.horizontal, Spacing.s)
-                    .frame(minHeight: Self.chipHeight)
-                    .background(Color.sun100, in: Capsule())
-                    .padding(.top, Spacing.m)
-
-                Text("Nice work")
+                Text("Summary")
                     .font(Typography.display)
                     .tracking(Typography.displayTracking)
                     .foregroundStyle(Color.ink)
-                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Spacing.xs)
 
                 if let tiles = result.tiles {
                     if !tiles.isEmpty {
@@ -91,11 +70,6 @@ struct PracticeResultsView: View {
                 }
             }
         }
-        .overlay {
-            if showsConfetti {
-                ConfettiBurst()
-            }
-        }
         .sheet(item: $sheetSection) { section in
             SessionResultDetailSheet(result: result, focus: section)
         }
@@ -103,28 +77,7 @@ struct PracticeResultsView: View {
             // Numbers count up and bars grow once; with reduced motion they are simply there.
             motion.perform(MotionTokens.progress.delay(MotionTokens.celebrationStatsDelay)) { hasAppeared = true }
         }
-        .task {
-            // The confetti bursts once Syllie has started celebrating.
-            if !motion.reduceMotion {
-                try? await Task.sleep(for: SyllieCelebrationView.confettiCue)
-            }
-            showsConfetti = true
-        }
     }
-
-    private var chipText: LocalizedStringKey {
-        switch result.kind {
-        case .daily: "Session complete"
-        case .randomPractice, .weakPractice: "Practice complete"
-        case .checkpoint: "Review complete"
-        }
-    }
-
-    /// Frame of the `Syllie` artboard that shows his body about 112 pt wide (w-28).
-    private static let mascotWidth: CGFloat = 186
-
-    /// The "Session complete" pill (h-7).
-    private static let chipHeight: CGFloat = 28
 
     /// Tiles of equal height and width; a part with nothing to report has no tile.
     private func tileRow(_ tiles: [ResultTile]) -> some View {

@@ -1,6 +1,7 @@
 import AVFoundation
 import Observation
 import Speech
+import SwiftUI
 
 /// Activation blocks until the audio hardware answers, so it stays off the main thread.
 /// The async system API needs iOS 27. As an actor, requests also can't overlap and clobber each other's category.
@@ -191,6 +192,15 @@ protocol SoundEffectsPlaying: AnyObject {
     func playCorrect()
     func playWrong()
     func playClick()
+    /// Loads named one-shot cues (`Resources/Sounds/<name>.wav`) ahead of `playCue`, so they start on time.
+    func prepareCues(_ names: [String])
+    /// Plays a named cue; it may overlap other cues. A missing file is skipped.
+    func playCue(_ name: String)
+}
+
+extension EnvironmentValues {
+    /// For views that play cues themselves (the end-of-session celebration). Silent unless the app injects `SoundEffects`.
+    @Entry var soundEffects: SoundEffectsPlaying = SilentSoundEffects()
 }
 
 /// Short UI cues bundled in `Resources/Sounds`. Loaded once so they play without delay.
@@ -206,6 +216,8 @@ final class SoundEffects: SoundEffectsPlaying {
     func playCorrect() { Task { [player] in await player.playAnswer(.correct) } }
     func playWrong() { Task { [player] in await player.playAnswer(.wrong) } }
     func playClick() { Task { [player] in await player.playClick() } }
+    func prepareCues(_ names: [String]) { Task { [player] in await player.prepare(names) } }
+    func playCue(_ name: String) { Task { [player] in await player.playCue(name) } }
 }
 
 /// Owns the cue players off the main thread: `play()` activates the audio session when it isn't active,
@@ -216,6 +228,20 @@ private actor CuePlayer {
     private var correct: AVAudioPlayer?
     private var wrong: AVAudioPlayer?
     private var click: AVAudioPlayer?
+    private var cues: [String: AVAudioPlayer] = [:]
+
+    func prepare(_ names: [String]) {
+        for name in names where cues[name] == nil {
+            cues[name] = Self.load(name)
+        }
+    }
+
+    func playCue(_ name: String) {
+        prepare([name])
+        guard let player = cues[name] else { return }
+        player.currentTime = 0
+        player.play()
+    }
 
     func load() {
         correct = Self.load("vocab_correct")
@@ -253,6 +279,8 @@ final class SilentSoundEffects: SoundEffectsPlaying {
     func playCorrect() {}
     func playWrong() {}
     func playClick() {}
+    func prepareCues(_ names: [String]) {}
+    func playCue(_ name: String) {}
 }
 
 @MainActor

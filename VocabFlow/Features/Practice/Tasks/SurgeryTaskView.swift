@@ -42,7 +42,8 @@ struct SurgeryTaskView: View {
                                 onDelete: { pick("") }
                             )
                         }
-                        .padding(Spacing.s)
+                        .padding(.vertical, Spacing.s)
+                        .padding(.horizontal, Spacing.xs)
                         .cardSurface()
                         .transition(motion.reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                     }
@@ -242,7 +243,7 @@ private struct LetterKeyboard: View {
     ]
     private static let gap = Spacing.xxs
     private static let rowGap = Spacing.xxs + 2
-    private static let keyHeight: CGFloat = 36
+    private static let keyHeight: CGFloat = 46
     private static let keyRadius: CGFloat = 8
 
     var body: some View {
@@ -255,7 +256,7 @@ private struct LetterKeyboard: View {
                         ForEach(row, id: \.self) { letter in
                             key(width: keyWidth) {
                                 Text(verbatim: letter)
-                                    .font(Typography.secondary.weight(.semibold))
+                                    .font(Typography.tileLarge)
                                     .foregroundStyle(Color.ink)
                             } action: {
                                 onLetter(letter)
@@ -267,7 +268,7 @@ private struct LetterKeyboard: View {
                             // Two keys wide, the row centered under the others.
                             key(width: keyWidth * 2 + Self.gap, fill: .stroke) {
                                 Text("Remove")
-                                    .font(Typography.micro.weight(.semibold))
+                                    .font(Typography.secondary.weight(.semibold))
                                     .foregroundStyle(Color.ink)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)

@@ -251,7 +251,8 @@ struct RankingView: View {
                             }
                             CardDivider()
                         }
-                        LeaderboardRowView(row: row, onMore: reportAction(for: row))
+                        // ⋯ (report) hidden until reporting works; restore with `onMore: reportAction(for: row)`.
+                        LeaderboardRowView(row: row)
                     }
                 }
                 .cardSurface()

@@ -206,6 +206,31 @@ struct CustomWord: Decodable, Equatable, Identifiable {
     var isEditable: Bool { !translationPending && !recalled && meaningText != nil && definitionText != nil }
 }
 
+/// One list row: every added meaning of a word, in the order the server listed them.
+struct CustomWordGroup: Equatable, Identifiable {
+    let wordId: String
+    let lemma: String
+    let meanings: [CustomWord]
+
+    var id: String { wordId }
+    var meaningText: String? {
+        let texts = meanings.filter { !$0.recalled }.compactMap(\.meaningText)
+        return texts.isEmpty ? nil : texts.joined(separator: "; ")
+    }
+    var translationPending: Bool { meanings.contains(where: \.translationPending) }
+    var recalled: Bool { meanings.allSatisfy(\.recalled) }
+    var firstEditable: CustomWord? { meanings.first(where: \.isEditable) }
+
+    static func grouping(_ words: [CustomWord]) -> [CustomWordGroup] {
+        let byWord = Dictionary(grouping: words, by: \.wordId)
+        var seen = Set<String>()
+        return words.compactMap { word in
+            guard seen.insert(word.wordId).inserted, let meanings = byWord[word.wordId] else { return nil }
+            return CustomWordGroup(wordId: word.wordId, lemma: word.lemma, meanings: meanings)
+        }
+    }
+}
+
 // MARK: - Input rules
 
 /// Mirrors the backend's validation, so a bad word never costs a round trip.

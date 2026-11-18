@@ -98,7 +98,7 @@ struct OtherMeaningsSheet: View {
     let lemma: String
     let meanings: [WordDetail.Meaning]
     @Environment(\.motion) private var motion
-    @State private var expandedID: String?
+    @State private var expandedIDs: Set<String> = []
     @State private var playingMeaningID: String?
 
     var body: some View {
@@ -137,17 +137,21 @@ struct OtherMeaningsSheet: View {
             .padding(.top, Spacing.l)
             .padding(.bottom, Spacing.l)
         }
-        .onAppear { expandedID = meanings.first?.meaningId }
+        .onAppear { expandedIDs = Set(meanings.first.map { [$0.meaningId] } ?? []) }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.canvas)
     }
 
+    private func toggle(_ id: String, isExpanded: Bool) {
+        if isExpanded { expandedIDs.remove(id) } else { expandedIDs.insert(id) }
+    }
+
     private func row(_ item: WordDetail.Meaning, isLast: Bool) -> some View {
-        let isExpanded = expandedID == item.meaningId
+        let isExpanded = expandedIDs.contains(item.meaningId)
         return VStack(alignment: .leading, spacing: 0) {
             Button {
-                motion.perform(MotionTokens.snap) { expandedID = isExpanded ? nil : item.meaningId }
+                motion.perform(MotionTokens.snap) { toggle(item.meaningId, isExpanded: isExpanded) }
             } label: {
                 HStack(spacing: Spacing.s) {
                     Text(verbatim: item.meaning.text)
@@ -274,7 +278,9 @@ struct WordDetailSheet: View {
     @Environment(SpeechPlayer.self) private var speech
     @Environment(\.motion) private var motion
     @State private var load = Load.loading
-    @State private var expandedID: String?
+    @State private var expandedIDs: Set<String> = []
+    /// The meaning opened last; the header's audio follows it.
+    @State private var focusedID: String?
     @State private var playingMeaningID: String?
 
     var body: some View {
@@ -323,7 +329,7 @@ struct WordDetailSheet: View {
     /// The open meaning, else the first one; nil until the detail loads.
     private var loadedMeaning: WordDetail.Meaning? {
         guard case .loaded(let detail) = load else { return nil }
-        return detail.meanings.first { $0.meaningId == expandedID } ?? detail.meanings.first
+        return detail.meanings.first { $0.meaningId == focusedID } ?? detail.meanings.first
     }
 
     /// The server's recorded clip for the word. Nil (still loading, or no audio yet) leaves device speech.
@@ -373,10 +379,10 @@ struct WordDetailSheet: View {
     }
 
     private func card(_ item: WordDetail.Meaning, number: Int) -> some View {
-        let isExpanded = expandedID == item.meaningId
+        let isExpanded = expandedIDs.contains(item.meaningId)
         return VStack(alignment: .leading, spacing: 0) {
             Button {
-                motion.perform(MotionTokens.snap) { expandedID = isExpanded ? nil : item.meaningId }
+                motion.perform(MotionTokens.snap) { toggle(item.meaningId, isExpanded: isExpanded) }
             } label: {
                 HStack(spacing: Spacing.s) {
                     Text(verbatim: "\(number)")
@@ -487,15 +493,20 @@ struct WordDetailSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func toggle(_ id: String, isExpanded: Bool) {
+        if isExpanded { expandedIDs.remove(id) } else { expandedIDs.insert(id); focusedID = id }
+    }
+
     private func loadDetail() async {
         load = .loading
         do {
             let detail = try await learner.wordDetail(id: wordID)
-            if expandedID == nil {
+            if focusedID == nil {
                 let ids = detail.meanings.map(\.meaningId)
-                expandedID = focusMeaningID.flatMap { ids.contains($0) ? $0 : nil }
+                focusedID = focusMeaningID.flatMap { ids.contains($0) ? $0 : nil }
                     ?? detail.meanings.first { $0.learnedAt != nil }?.meaningId
                     ?? ids.first
+                expandedIDs = Set(focusedID.map { [$0] } ?? [])
             }
             load = .loaded(detail)
         } catch {

@@ -104,10 +104,10 @@ tailwind.config = {
 [data-i] svg { width: 100%; height: 100%; }
 </style>
 </head>
-<body class="bg-figma font-sans antialiased text-ink-950">
+<body class="bg-figma font-sans antialiased text-ink-950 overflow-hidden">
 
 <!-- Figma-like top bar -->
-<header class="sticky top-0 z-50 h-12 bg-ink-950 text-white flex items-center gap-4 px-4 text-[13px]">
+<header class="fixed inset-x-0 top-0 z-50 h-12 bg-ink-950 text-white flex items-center gap-4 px-4 text-[13px]">
   <span class="font-extrabold tracking-tight">Syll</span>
   <span class="text-ink-400">/</span><span>App redesign v1</span>
   <nav class="ml-auto flex gap-1 overflow-x-auto">
@@ -124,7 +124,10 @@ tailwind.config = {
   </nav>
 </header>
 
-<main class="px-10 py-12 space-y-24 min-w-max">
+<!-- Canvas: drag to pan, ⌘/Ctrl + wheel or pinch to zoom (script at the end). -->
+<div id="viewport" class="fixed inset-x-0 top-12 bottom-0 overflow-hidden">
+<main id="board" class="absolute left-0 top-0 px-10 py-12 space-y-24 w-max">
+
 
   <!-- Page intro -->
   <section class="max-w-[780px]">
@@ -170,7 +173,7 @@ tailwind.config = {
           <div class="flex items-center gap-4"><span class="switch on"></span><span class="switch"></span><span class="text-[13px] text-ink-500">Toggle (tint Blue 500)</span></div>
           <div class="seg"><span class="on">Tất cả</span><span>Quanh tôi</span></div>
           <div class="flex items-center gap-3"><span class="datepill">20:00</span><span class="text-[13px] text-ink-500">DatePicker compact</span></div>
-          <p class="text-[13px] text-ink-500 leading-relaxed">Cũng giữ bản iOS: tab bar, thanh điều hướng và nút quay lại, sheet, <code>.alert</code>, swipe action, context menu, Menu, pull-to-refresh. Chỉ được đặt tint theo bộ màu.</p>
+          <p class="text-[13px] text-ink-500 leading-relaxed">Cũng giữ bản iOS: tab bar, thanh điều hướng và nút quay lại, sheet, Menu, pull-to-refresh. Chỉ được đặt tint theo bộ màu.</p>
         </div>
         <div class="eyebrow mt-10 mb-4">Thành phần riêng của Syll</div>
         <div class="space-y-5 max-w-[340px]">
@@ -206,7 +209,7 @@ tailwind.config = {
       <div class="col-span-2 grid grid-cols-3 gap-8 pt-2">
         <div><div class="eyebrow mb-3">Card</div><p class="text-[14px] text-ink-600 leading-relaxed">Nền trắng, viền 2pt Ink 200, bo 20. Không shadow, không cạnh dày. Đường kẻ giữa các dòng 1.5pt Ink 100.</p></div>
         <div><div class="eyebrow mb-3">Header trang con</div><p class="text-[14px] text-ink-600 leading-relaxed">Thanh điều hướng của iOS chỉ có nút quay lại (iOS 26 vẽ thành nút tròn kính), không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.</p></div>
-        <div><div class="eyebrow mb-3">Hộp thoại</div><p class="text-[14px] text-ink-600 leading-relaxed">Nút mặc định đủ dùng: <code>.alert</code> gốc của iOS. Cần nội dung hoặc nút theo design system (Syllie, nút có cạnh dày): <code>.sheet</code> + detent chiều cao cố định. Không bao giờ tự vẽ popup giữa màn hình. Swipe action và context menu giữ bản iOS. Luôn có nút hủy và nút xác nhận.</p></div>
+        <div><div class="eyebrow mb-3">Hộp thoại</div><p class="text-[14px] text-ink-600 leading-relaxed">Xác nhận dùng ConfirmSheet: <code>.sheet</code> vừa chiều cao nội dung, thay <code>.alert</code>. Không bao giờ tự vẽ popup giữa màn hình. Không dùng swipe action hay context menu: thay bằng nút ⋯ mở sheet hành động. Luôn có nút hủy và nút xác nhận.</p></div>
       </div>
     </div>
   </section>
@@ -215,6 +218,16 @@ tailwind.config = {
   <div id="flows" class="space-y-24"></div>
 
 </main>
+</div>
+
+<!-- Zoom controls -->
+<div class="fixed right-4 bottom-4 z-50 flex items-center gap-1 h-10 px-1.5 rounded-xl bg-ink-950 text-white text-[13px] shadow-lg select-none">
+  <span class="hidden md:inline px-2 text-ink-400 text-[12px]">Kéo để di chuyển · ⌘/Ctrl + cuộn để zoom</span>
+  <button data-zoom="out" class="w-8 h-8 rounded-md hover:bg-ink-800" title="Thu nhỏ (⌘ −)">−</button>
+  <button data-zoom="reset" id="zoom-label" class="min-w-[56px] h-8 px-2 rounded-md hover:bg-ink-800 tabular-nums" title="100% (⇧0)">100%</button>
+  <button data-zoom="in" class="w-8 h-8 rounded-md hover:bg-ink-800" title="Phóng to (⌘ +)">+</button>
+  <button data-zoom="fit" class="h-8 px-2.5 rounded-md hover:bg-ink-800" title="Xem toàn bộ (⇧1)">Vừa màn</button>
+</div>
 
 <script>
 /* ---------- icons (Lucide-style strokes) ---------- */
@@ -278,12 +291,6 @@ const tabbar = on => `<nav class="tabbar">${[['home', 'Trang chủ'], ['book', '
   `<span class="tab ${t === on ? 'on' : ''}">${ic(i, 'w-[26px] h-[26px]', t === on)}${t}</span>`).join('')}</nav>`;
 /* Native navigation bar: system back chevron only (iOS 26 draws it as its Liquid Glass circle). */
 const backHeader = `<div class="h-11 px-2 flex items-center text-ink-950">${ic('back', 'w-7 h-7')}</div>`;
-/* Native UIAlertController (alert style). Buttons: [label, 'cancel'|'destructive'|''] */
-const iosAlert = (title, msg, buttons) => `<div class="absolute inset-0 bg-black/20 z-30"></div>
-  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[270px] rounded-[14px] bg-[#F2F2F2]/95 backdrop-blur text-center overflow-hidden">
-    <div class="px-4 pt-[19px] pb-[18px]"><div class="text-[17px] font-semibold leading-snug">${title}</div><div class="mt-1 text-[13px] leading-snug">${msg}</div></div>
-    <div class="grid grid-cols-${buttons.length} border-t-[0.5px] border-black/20">${buttons.map(([b, role], i) => `<span class="h-11 grid place-items-center text-[17px] ${i ? 'border-l-[0.5px] border-black/20' : ''} ${role === 'destructive' ? 'text-[#FF3B30]' : 'text-[#007AFF]'} ${role === 'cancel' ? 'font-semibold' : ''}">${b}</span>`).join('')}</div>
-  </div>`;
 const sectionTitle = (t, right = '') => `<div class="flex items-baseline justify-between mb-3"><h3 class="text-[19px] font-bold tracking-tight">${t}</h3>${right}</div>`;
 const bar = (pct, color = 'bg-blue-500', h = 'h-2') => `<div class="${h} rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full ${color}" style="width:${pct}%"></div></div>`;
 
@@ -347,7 +354,7 @@ function wordIntro(known) {
   </div>`;
 }
 
-/* Other meanings of the word being introduced: reference only, grouped by part of speech, one row open. */
+/* Other meanings of the word being introduced: reference only, grouped by part of speech; several rows can be open. */
 function otherMeaningsSheet() {
   /* Same meaning card as Chi tiết từ (3.x), without the learned pill and skills: these meanings aren't being learned. */
   const meaning = (m, open, def, ex, tr) => `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="font-bold text-[16px] flex-1">${m}</span>${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
@@ -657,9 +664,9 @@ function surgeryTask() {
   return taskScreen({
     question: 'Tìm và sửa lỗi chính tả.',
     content: `<div class="mt-10 flex gap-1.5 justify-center">${word.map((l, i) => `<span class="w-[38px] h-[50px] rounded-xl border-2 grid place-items-center font-mono text-[22px] font-bold ${i === 3 ? 'border-blue-500 bg-blue-50 text-blue-700 ring-4 ring-blue-100' : 'border-ink-200 bg-white'}">${l}</span>`).join('')}</div>
-      <div class="mt-6 card p-3">
+      <div class="mt-6 card py-3 px-2">
         <div class="eyebrow mb-2.5 px-1">Thay bằng</div>
-        <div class="space-y-1.5">${keys.map((r, ri) => `<div class="flex gap-1 justify-center">${r.split('').map(k => `<span class="w-[26px] h-9 rounded-lg bg-ink-100 grid place-items-center text-[15px] font-semibold">${k}</span>`).join('')}${ri === 2 ? `<span class="w-[60px] h-9 rounded-lg bg-ink-200 grid place-items-center text-[13px] font-semibold">Xoá</span>` : ''}</div>`).join('')}</div>
+        <div class="space-y-1.5">${keys.map((r, ri) => `<div class="flex gap-1 justify-center">${r.split('').map(k => `<span class="w-[30px] h-[46px] rounded-lg bg-ink-100 grid place-items-center text-[20px] font-semibold">${k}</span>`).join('')}${ri === 2 ? `<span class="w-[64px] h-[46px] rounded-lg bg-ink-200 grid place-items-center text-[15px] font-semibold">Xoá</span>` : ''}</div>`).join('')}</div>
       </div>`,
     panelHtml: panel('answer', { check: 'Kiểm tra bản sửa', enabled: false }),
   });
@@ -823,28 +830,46 @@ function wordSource() {
     <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Xong</button></div>`, 110);
 }
 
-function customWords(swiped, confirm) {
-  const rows = [['resilient', 'kiên cường', ''], ['quarantine', '', 'translating'], ['ubiquitous', 'có mặt khắp nơi', ''], ['fetch', '', 'gone'], ['serendipity', 'sự tình cờ may mắn', '']];
-  const actions = `<div class="absolute right-0 inset-y-0 flex text-white text-[12px] font-medium">
-    <span class="w-[74px] bg-ink-500 flex flex-col items-center justify-center gap-1">${ic('undo', 'w-5 h-5')}Khôi phục</span>
-    <span class="w-[74px] bg-blue-500 flex flex-col items-center justify-center gap-1">${ic('pencil', 'w-5 h-5')}Sửa</span>
-    <span class="w-[74px] bg-coral-600 flex flex-col items-center justify-center gap-1">${ic('trash', 'w-5 h-5')}Xóa</span></div>`;
-  const list = `
+/* The learner's added words: one row per word (its added meanings joined by "; "); ⋯ opens the actions sheet. */
+const CW_ROWS = [['resilient', 'kiên cường', ''], ['bank', 'ngân hàng; bờ sông', ''], ['quarantine', '', 'translating'], ['ubiquitous', 'có mặt khắp nơi', ''], ['fetch', '', 'gone'], ['serendipity', 'sự tình cờ may mắn', '']];
+const customWordList = () => `
     <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
-    <div class="flex-1 overflow-hidden">
-      <h2 class="h-sheet px-5">Từ bạn đã thêm</h2>
-      <div class="mt-5">${rows.map(([w, m, s], i) => `
-        <div class="relative overflow-hidden">
-          ${swiped && i === 0 ? actions : ''}
-          <div class="relative bg-white flex items-center gap-3 px-5 py-3.5 border-b-[1.5px] border-ink-100 ${swiped && i === 0 ? '-translate-x-[222px]' : ''}">
-            <div class="flex-1 min-w-0"><div class="text-[17px] font-bold ${s === 'gone' ? 'text-ink-400' : ''}">${w}</div>
-              <div class="text-[14px] mt-0.5 ${s === 'gone' ? 'text-coral-700' : 'text-ink-500'}">${s === 'translating' ? '<span class="pill bg-sun-50 text-sun-800">Đang dịch</span>' : s === 'gone' ? 'Không còn khả dụng' : m}</div></div>
-            ${ic('chev', 'w-4 h-4 text-ink-300')}
-          </div></div>`).join('')}</div>
+    <div class="flex-1 overflow-hidden px-5">
+      <h2 class="h-sheet">Từ bạn đã thêm</h2>
+      <div class="mt-5">${CW_ROWS.map(([w, m, s]) => `
+        <div class="flex items-center gap-3 py-3.5 border-b border-ink-100">
+          <div class="flex-1 min-w-0"><div class="text-[17px] font-bold ${s === 'gone' ? 'text-ink-400' : ''}">${w}</div>
+            <div class="text-[15px] mt-0.5 ${s === 'gone' ? 'text-coral-700' : 'text-ink-600'}">${s === 'translating' ? '<span class="pill bg-sun-50 text-sun-800">Đang dịch</span>' : s === 'gone' ? 'Không còn khả dụng' : m}</div></div>
+          <span class="w-11 h-11 -mr-2 grid place-items-center text-ink-600">${ic('more', 'w-5 h-5')}</span>
+        </div>`).join('')}</div>
     </div>`;
-  let out = sheetOver(blankUnder, list);
-  if (confirm) out += iosAlert('Xóa từ này?', 'Từ sẽ không được xếp lịch ôn và các chỉnh sửa của bạn sẽ bị xóa. Lịch sử học vẫn được giữ.', [['Hủy', 'cancel'], ['Xóa', 'destructive']]);
-  return out;
+/* ⋯ on a row: the word, then one card with a row per added meaning; each row's ⋯ is the native iOS Menu (shown open). */
+function customWordActions() {
+  const row = (m, edited, first) => `<div class="flex items-center gap-3 pl-4 pr-2 min-h-[56px] ${first ? '' : 'border-t-[1.5px] border-ink-100'}">
+      <span class="flex-1 text-[15px] text-ink-600">${m}</span>${edited ? '<span class="pill bg-ink-100 text-ink-700">Đã sửa</span>' : ''}
+      <span class="w-11 h-11 grid place-items-center text-ink-600">${ic('more', 'w-5 h-5')}</span></div>`;
+  const item = (label, icon, tone = '') => `<div class="flex items-center justify-between px-4 h-11 border-t-[0.5px] border-black/10 first:border-t-0 text-[17px] ${tone}">${label}${ic(icon, 'w-5 h-5')}</div>`;
+  const menu = `<div class="absolute right-7 top-[108px] z-30 w-[230px] rounded-[14px] bg-white/95 backdrop-blur shadow-[0_10px_40px_rgba(0,0,0,.18)] overflow-hidden">
+      ${item('Sửa', 'pencil')}${item('Khôi phục bản gốc', 'undo')}${item('Xóa', 'trash', 'text-[#FF3B30]')}</div>`;
+  return sheetOver(sheetOver(blankUnder, customWordList()), `
+    <div class="relative px-5 pt-6 pb-8">
+      <div class="text-[22px] font-extrabold tracking-tight">bank</div>
+      <div class="mt-4 card overflow-hidden">${row('ngân hàng', true, true)}${row('bờ sông', false)}</div>
+      ${menu}
+    </div>`, 560);
+}
+
+/* ConfirmSheet (.destructive): a fitted sheet with a coral icon, Cancel and the destructive action side by side. */
+const confirmSheet = (under, title, msg, confirm, top = 540) => sheetOver(under, `
+    <div class="px-6 pt-8 pb-8">
+      <span class="w-12 h-12 rounded-full bg-coral-50 text-coral-600 grid place-items-center">${ic('trash', 'w-[22px] h-[22px]')}</span>
+      <div class="mt-4 text-[22px] font-extrabold tracking-tight">${title}</div>
+      <p class="mt-2 text-[15px] text-ink-700 leading-snug">${msg}</p>
+      <div class="mt-6 flex gap-3"><button class="btn btn-line">Hủy</button><button class="btn bg-coral-600 text-white">${confirm}</button></div>
+    </div>`, top);
+
+function customWordRemove() {
+  return confirmSheet(sheetOver(blankUnder, customWordList()), 'Xóa nghĩa này?', 'Từ sẽ không được xếp lịch ôn và các chỉnh sửa của bạn sẽ bị xóa. Lịch sử học vẫn được giữ.', 'Xóa');
 }
 
 function profile() {
@@ -914,7 +939,7 @@ function settings() {
 }
 
 function deleteAccount() {
-  return settings() + iosAlert('Xóa tài khoản của bạn?', 'Tiến độ, từ vựng và cài đặt của bạn sẽ bị xóa vĩnh viễn. Không thể hoàn tác.', [['Hủy', 'cancel'], ['Xóa tài khoản', 'destructive']]);
+  return confirmSheet(settings(), 'Xóa tài khoản của bạn?', 'Tiến độ, từ vựng và cài đặt của bạn sẽ bị xóa vĩnh viễn. Không thể hoàn tác.', 'Xóa tài khoản');
 }
 
 function ranking() {
@@ -1402,7 +1427,7 @@ document.getElementById('flows').innerHTML = [
     frame('1.9a', 'Nghĩa khác (sheet)', otherMeaningsSheet(), [
       'Sheet <code>.medium</code>/<code>.large</code>, có grabber và nút ✕; phụ đề "Chỉ để tham khảo · Không thuộc bài học này".',
       'Tiêu đề Sheet Title 26 Heavy; phụ đề Secondary 15 ink-600.',
-      'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), chỉ mở một card một lúc. Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), không có pill Đã học hay Kỹ năng.',
+      'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), mở được nhiều card cùng lúc (mở sẵn nghĩa đầu tiên). Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), không có pill Đã học hay Kỹ năng.',
       'Không đổi tiến độ buổi học: đóng sheet là về lại 1.9, "Tiếp tục" vẫn như cũ.',
     ]),
     go('Đóng sheet · Tiếp tục'),
@@ -1503,18 +1528,18 @@ document.getElementById('flows').innerHTML = [
     frame('T3', 'Gõ từ (typing) · có gợi ý', typingTask(), ['Hàng gợi ý: "Hiện gợi ý 1/2" bên trái, "Xem đáp án" bên phải; gợi ý hiện thành chip "a _ _ _".']),
     frame('T4', 'Xếp chữ (reorder)', reorderTask(), ['Vùng trả lời là dòng kẻ; chữ đã dùng để lại ô xám để hàng chữ không nhảy.', 'Ô chữ 54×54; từ dài thì mọi ô thu hẹp đều để cả từ nằm trên một dòng.']),
     frame('T5', 'Nối cặp (match)', matchTask(), ['Không có nút Kiểm tra: cặp đúng khóa màu Green, đang chọn màu Blue; panel đếm số cặp đã ghép.']),
-    frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.']),
+    frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.', 'Phím cao 46pt, chữ 20pt (gần bàn phím iOS); card bàn phím đệm ngang 8pt để phím rộng nhất có thể.']),
     frame('T7', 'Đọc to (recording)', recordingTask(), ['Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
   ]),
   flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (cần chọn kỹ năng), từ còn yếu (bắt đầu ngay), quản lý từ đã thêm.', [
     frame('2.1', 'Từ của tôi', myWords(), [
       'Hai con số thống kê nằm chung một card để có điểm tựa; chỉ để xem, không chạm được.',
       'Luyện tập là hai dòng trong một card, không còn hai thẻ lệch nhau. Ngẫu nhiên có › vì cần thêm một bước; Từ còn yếu có nút "Luyện ngay".',
-      'IPA nằm dưới từ.',
+      'IPA nằm dưới từ, chỉ khi mọi nghĩa của từ (kể cả nghĩa chưa học) đọc giống nhau; đọc khác nhau thì dòng từ không có IPA.',
     ], 1130),
     go('Chạm một từ'),
     frame('2.2', 'Chi tiết từ (sheet)', wordDetail(), [
-      'Mỗi nghĩa là card mở/đóng: Định nghĩa, Ví dụ, Kỹ năng đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch, kỹ năng dạng lưới 2×2 có màu trạng thái, ngày học.',
+      'Mỗi nghĩa là card mở/đóng, mở được nhiều card cùng lúc (mở sẵn nghĩa đang xem hoặc nghĩa đã học đầu tiên; loa ở đầu trang theo card vừa mở gần nhất): Định nghĩa, Ví dụ, Kỹ năng đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch, kỹ năng dạng lưới 2×2 có màu trạng thái, ngày học.',
       'IPA và audio thuộc từng nghĩa. Mọi nghĩa đọc giống nhau thì IPA + loa nằm dưới từ (một lần), card không lặp lại.',
     ]),
     go('Từ có nhiều cách đọc'),
@@ -1532,9 +1557,23 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Nguồn từ'),
     frame('2.4', 'Nguồn từ (sheet)', wordSource(), ['Chọn một Collection thì Topic mở ra ngay dưới dòng đó, trong cùng card (nền Blue 50 nhạt): danh sách Collection dài bao nhiêu thì Topic vẫn nằm sát chỗ vừa chạm.', 'Nhãn "Chủ đề · 2/6" cho biết đang chọn bao nhiêu Topic; Collection khác thu gọn.']),
     go('Từ 2.1: Quản lý từ đã thêm'),
-    frame('2.5', 'Từ bạn đã thêm · vuốt dòng', customWords(true, false), ['Giữ swipe action của iOS (Khôi phục, Sửa, Xóa), chỉ đặt màu tint theo bộ màu.', 'Dòng có › vì chạm mở chi tiết từ.']),
+    frame('2.5', 'Từ bạn đã thêm', sheetOver(blankUnder, customWordList()), [
+      'Mỗi từ một dòng: từ đậm, các nghĩa đã thêm nối bằng "; " ở dòng dưới. Một từ thêm nhiều nghĩa vẫn là một dòng.',
+      'Nghĩa đang dịch: pill Sun "Đang dịch" dưới các nghĩa. Mọi nghĩa không còn khả dụng: từ ink-400, dòng "Không còn khả dụng" màu coral.',
+      'Chạm dòng mở Chi tiết từ (mọi nghĩa). Nút ⋯ (vùng chạm 44pt): từ một nghĩa mở thẳng Menu gốc của iOS (Sửa, Khôi phục bản gốc, Xóa); từ nhiều nghĩa mở sheet hành động 2.5a. Không dùng swipe action.',
+    ]),
+    go('Chạm ⋯ ở từ nhiều nghĩa'),
+    frame('2.5a', 'Hành động (sheet)', customWordActions(), [
+      'Chỉ cho từ có nhiều nghĩa đã thêm. Sheet vừa chiều cao nội dung: tên từ, rồi một card, mỗi nghĩa đã thêm là một dòng.',
+      'Nghĩa đã sửa có pill "Đã sửa"; nghĩa đang dịch hiện pill "Đang dịch", nghĩa không còn khả dụng hiện dòng coral.',
+      'Nút ⋯ cuối dòng (vùng chạm 44pt) là Menu gốc của iOS: Sửa, Khôi phục bản gốc (chỉ khi đã sửa), Xóa (destructive). Nghĩa đang dịch hoặc không còn khả dụng chỉ có Xóa.',
+      'Chọn một mục thì sheet đóng trước, rồi mới mở màn Sửa hoặc sheet xác nhận Xóa.',
+    ]),
     go('Chạm Xóa'),
-    frame('2.6', 'Xóa từ (alert iOS)', customWords(false, true), ['Xác nhận bằng <code>.alert</code> gốc của iOS: nút bấm mặc định đủ dùng, không cần tự vẽ.']),
+    frame('2.6', 'Xóa (sheet xác nhận)', customWordRemove(), [
+      'ConfirmSheet kiểu phá hủy: icon thùng rác nền coral-50, nút viền "Hủy" và nút Coral "Xóa" cạnh nhau.',
+      'Tiêu đề "Xóa từ này?" khi từ chỉ có một nghĩa đã thêm, "Xóa nghĩa này?" khi còn nghĩa khác.',
+    ]),
   ]),
   flow('flow-addword', 'Luồng 3 · Thêm từ', 'Mở từ nút "Thêm từ" ở Từ của tôi. Cả luồng nằm trong một sheet duy nhất, các bước chuyển bên trong sheet (nút quay lại tròn), thay vì chồng tới ba sheet như hiện tại.', [
     frame('3.1', 'Nhập từ', addEntry(), [
@@ -1560,6 +1599,7 @@ document.getElementById('flows').innerHTML = [
       'Loa là nút riêng (vùng chạm 44pt): chạm không chọn và không mở card. Bản nháp chưa có audio, nên loa đọc IPA bằng giọng máy cho tới khi thêm xong.',
       'Trên card đang chọn (nền Blue 50) loa đổi nền trắng để không chìm.',
       'Nghĩa thiếu IPA: dòng đó chỉ có loa.',
+      'Mở được nhiều card cùng lúc để so sánh các nghĩa; chạm lại card đang mở để thu gọn.',
     ], 1010),
     go('Chạm Thêm 2 nghĩa'),
     frame('3.4', 'Đã thêm', addDone(), ['Syllie + dấu tick xanh lá; liệt kê mọi nghĩa vừa thêm trong một card.']),
@@ -1590,10 +1630,10 @@ document.getElementById('flows').innerHTML = [
       'Bỏ dòng "Giao diện · Sáng"; Hoạt ảnh Syllie chuyển vào Practice Lab.',
     ]),
     go('Chạm Xóa tài khoản'),
-    frame('4.4', 'Xóa tài khoản (alert iOS)', deleteAccount(), ['<code>.alert</code> gốc của iOS, có Hủy và Xóa tài khoản (destructive).']),
+    frame('4.4', 'Xóa tài khoản (sheet xác nhận)', deleteAccount(), ['ConfirmSheet kiểu phá hủy, giống 2.6: nút viền "Hủy" và nút Coral "Xóa tài khoản".']),
   ]),
   flow('flow-ranking', 'Luồng 5 · Xếp hạng', 'Một màn chính; báo cáo người chơi chuyển từ nhấn giữ sang nút ⋯ (chưa vẽ).', [
-    frame('5.1', 'Xếp hạng tuần', ranking(), ['Segmented control gốc của iOS.', 'Top 1 số hạng màu Sun; dòng của bạn nền Blue 50.', 'Báo cáo giữ context menu (nhấn giữ) của iOS.']),
+    frame('5.1', 'Xếp hạng tuần', ranking(), ['Segmented control gốc của iOS.', 'Top 1 số hạng màu Sun; dòng của bạn nền Blue 50.', 'Chưa có báo cáo người chơi: dòng không có nút ⋯.']),
   ]),
 ].join('');
 
@@ -1621,6 +1661,144 @@ document.getElementById('sound-controls').innerHTML = (() => {
 })();
 hydrateIcons();
 mountCelebrations().catch(e => console.warn(e));
+</script>
+<script>
+/* ===================== CANVAS: pan & zoom like Figma ===================== */
+(() => {
+  const vp = document.getElementById('viewport'), board = document.getElementById('board'), label = document.getElementById('zoom-label');
+  const MIN = 0.05, MAX = 4, KEY = 'syll-redesign-view';
+  let x = 0, y = 0, s = 1, idle;
+  vp.style.touchAction = 'none';
+  board.style.transformOrigin = '0 0';
+
+  function apply(animate = false) {
+    board.style.transition = animate ? 'transform .35s cubic-bezier(.3,.7,.4,1)' : 'none';
+    // will-change only while moving: a permanently promoted layer keeps text blurry after zooming.
+    board.style.willChange = 'transform';
+    board.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+    const g = 24 * s;
+    vp.style.backgroundImage = s > 0.3 ? 'radial-gradient(circle, rgba(19,18,23,.12) 1px, transparent 1.2px)' : 'none';
+    vp.style.backgroundSize = `${g}px ${g}px`;
+    vp.style.backgroundPosition = `${x}px ${y}px`;
+    label.textContent = Math.round(s * 100) + '%';
+    clearTimeout(idle);
+    idle = setTimeout(() => { board.style.willChange = 'auto'; try { localStorage.setItem(KEY, JSON.stringify({ x, y, s })); } catch {} }, 200);
+  }
+  const clamp = v => Math.min(MAX, Math.max(MIN, v));
+  function zoomAt(cx, cy, next, animate) {
+    next = clamp(next);
+    const r = vp.getBoundingClientRect(), px = cx - r.left, py = cy - r.top;
+    x = px - (px - x) * (next / s); y = py - (py - y) * (next / s); s = next;
+    apply(animate);
+  }
+  const center = () => { const r = vp.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+
+  // Fit a box (board coordinates) into the view; wide flows keep a readable scale and align left.
+  function show(bx, by, bw, bh, { maxScale = 1, minScale = 0.05, pad = 48 } = {}, animate = true) {
+    const vw = vp.clientWidth, vh = vp.clientHeight;
+    s = Math.max(minScale, Math.min(maxScale, (vw - pad * 2) / bw, (vh - pad * 2) / bh));
+    x = bw * s <= vw - pad * 2 ? (vw - bw * s) / 2 - bx * s : pad - bx * s;
+    y = bh * s <= vh - pad * 2 ? (vh - bh * s) / 2 - by * s : pad - by * s;
+    apply(animate);
+  }
+  const fitAll = () => show(0, 0, board.offsetWidth, board.offsetHeight);
+  function showElement(el) {
+    // Offsets, not client rects: those would be read mid-animation.
+    let bx = 0, by = 0;
+    for (let n = el; n && n !== board; n = n.offsetParent) { bx += n.offsetLeft; by += n.offsetTop; }
+    // A section spans the whole board; measure what it actually holds (its children and theirs).
+    let w = 0;
+    for (const c of el.children) { w = Math.max(w, c.offsetLeft - el.offsetLeft + c.offsetWidth);
+      for (const g of c.children) if (g.offsetParent === c.offsetParent) w = Math.max(w, g.offsetLeft - el.offsetLeft + g.offsetWidth); }
+    show(bx, by, Math.min(w || el.offsetWidth, el.offsetWidth), el.offsetHeight, { minScale: 0.45 });
+  }
+
+  /* Wheel: trackpad scroll pans, ⌘/Ctrl + wheel and trackpad pinch (Chrome/Firefox send ctrlKey) zoom. */
+  vp.addEventListener('wheel', e => {
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1;
+    if (e.ctrlKey || e.metaKey) {
+      const d = Math.max(-60, Math.min(60, e.deltaY * unit));
+      zoomAt(e.clientX, e.clientY, s * Math.exp(-d * 0.01));
+    } else {
+      const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX, dy = e.shiftKey && !e.deltaX ? 0 : e.deltaY;
+      x -= dx * unit; y -= dy * unit; apply();
+    }
+  }, { passive: false });
+
+  /* Safari trackpad pinch. */
+  let gStart = 1;
+  vp.addEventListener('gesturestart', e => { e.preventDefault(); gStart = s; });
+  vp.addEventListener('gesturechange', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, gStart * e.scale); });
+
+  /* Drag anywhere to pan; two fingers pinch. A real drag swallows the click that follows it. */
+  const pts = new Map(); let drag = null, moved = false, pinch = null;
+  vp.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.button !== 1) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+      drag = null; return;
+    }
+    drag = { sx: e.clientX, sy: e.clientY, ox: x, oy: y, id: e.pointerId }; moved = false;
+    if (e.button === 1) e.preventDefault();
+  });
+  window.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pts.size >= 2) {
+      const [a, b] = [...pts.values()];
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      x += mx - pinch.mx; y += my - pinch.my; pinch.mx = mx; pinch.my = my;
+      zoomAt(mx, my, pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d); moved = true; return;
+    }
+    if (!drag || drag.id !== e.pointerId) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!moved && Math.hypot(dx, dy) < 4) return;
+    if (!moved) { moved = true; vp.setPointerCapture(e.pointerId); document.body.style.userSelect = 'none'; vp.style.cursor = 'grabbing'; }
+    x = drag.ox + dx; y = drag.oy + dy; apply();
+  });
+  const end = e => {
+    pts.delete(e.pointerId);
+    if (pts.size < 2) pinch = null;
+    if (drag && drag.id === e.pointerId) { drag = null; document.body.style.userSelect = ''; vp.style.cursor = space ? 'grab' : ''; }
+  };
+  window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  vp.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  vp.addEventListener('dragstart', e => e.preventDefault());
+
+  /* Keyboard: Space shows the hand, ⇧0 = 100%, ⇧1 = fit all, ⌘/Ctrl +/−/0 zoom the canvas instead of the page. */
+  let space = false;
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !e.repeat) { space = true; vp.style.cursor = 'grab'; e.preventDefault(); }
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomAt(...center(), s * 1.25, true); }
+    else if (mod && e.key === '-') { e.preventDefault(); zoomAt(...center(), s / 1.25, true); }
+    else if ((mod && e.key === '0') || (e.shiftKey && e.code === 'Digit0')) { e.preventDefault(); zoomAt(...center(), 1, true); }
+    else if (e.shiftKey && e.code === 'Digit1') { e.preventDefault(); fitAll(); }
+  });
+  window.addEventListener('keyup', e => { if (e.code === 'Space') { space = false; if (!drag) vp.style.cursor = ''; } });
+
+  document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.zoom;
+    if (k === 'fit') fitAll();
+    else zoomAt(...center(), k === 'in' ? s * 1.25 : k === 'out' ? s / 1.25 : 1, true);
+  }));
+
+  /* Top bar links fly to their section instead of scrolling. */
+  document.querySelectorAll('header a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const el = document.querySelector(a.getAttribute('href')); if (!el) return;
+    e.preventDefault(); history.replaceState(null, '', a.getAttribute('href')); showElement(el);
+  }));
+
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch {}
+  const target = location.hash && document.querySelector(location.hash);
+  if (target) requestAnimationFrame(() => showElement(target));
+  else if (saved && isFinite(saved.s)) { x = saved.x; y = saved.y; s = clamp(saved.s); apply(); }
+  else apply();
+})();
 </script>
 </body>
 </html>

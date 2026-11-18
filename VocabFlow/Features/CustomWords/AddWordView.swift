@@ -446,6 +446,7 @@ private struct WordReview: View {
     @State private var step: Step?
     @State private var isMovingBack = false
     @State private var selectedID: String?
+    @State private var openIDs: Set<String>
     @State private var selectedIDs: Set<String>
     @State private var editedIDs: Set<String> = []
     /// One editable copy per meaning, so switching between them keeps the changes.
@@ -457,7 +458,9 @@ private struct WordReview: View {
         self.closed = closed
         self.search = search
         // Opens on a meaning that can still be added, when there is one.
-        _selectedID = State(initialValue: (senses.first { $0.addition != nil } ?? senses.first)?.id)
+        let first = (senses.first { $0.addition != nil } ?? senses.first)?.id
+        _selectedID = State(initialValue: first)
+        _openIDs = State(initialValue: Set(first.map { [$0] } ?? []))
         _selectedIDs = State(initialValue: Set(senses.first(where: { $0.addition != nil }).map { [$0.id] } ?? []))
         _drafts = State(initialValue: Dictionary(uniqueKeysWithValues: senses.map { ($0.id, $0.draft) }))
     }
@@ -549,7 +552,7 @@ private struct WordReview: View {
         let added = store.addedSenseIDs.contains(sense.id)
         let canSelect = sense.addition != nil && !added
         let chosen = canSelect && selectedIDs.contains(sense.id)
-        let open = selectedID == sense.id
+        let open = openIDs.contains(sense.id)
         let shape = RoundedRectangle(cornerRadius: Radii.card)
         return VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.s) {
@@ -567,7 +570,7 @@ private struct WordReview: View {
                     .accessibilityAddTraits(chosen ? .isSelected : [])
                 }
                 Button {
-                    motion.perform(MotionTokens.snap) { selectedID = open ? nil : sense.id }
+                    motion.perform(MotionTokens.snap) { if open { openIDs.remove(sense.id) } else { openIDs.insert(sense.id) } }
                 } label: {
                     HStack {
                         Text(verbatim: draft.meaningText).font(Typography.emphasis).multilineTextAlignment(.leading)

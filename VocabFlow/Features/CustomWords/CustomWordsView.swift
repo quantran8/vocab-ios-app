@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Sheet listing the words the learner added: tap for details; each row's ⋯ opens a sheet to edit,
-/// restore the original, or remove (which asks first).
+/// Sheet listing the words the learner added, one row per word: tap for details. The row's ⋯ is a menu
+/// (edit, restore the original, remove — which asks first); a word with several meanings opens a sheet of them first.
 struct CustomWordsView: View {
-    /// What the ⋯ sheet asked for. It runs once that sheet is gone, so the next sheet can present.
+    /// What a ⋯ menu asked for; from the meanings sheet it runs once that sheet is gone.
     private enum RowAction {
         case edit, restore, remove
     }
@@ -11,7 +11,7 @@ struct CustomWordsView: View {
     @Environment(CustomWordStore.self) private var store
     @State private var selected: CustomWord?
     @State private var editing: CustomWord?
-    @State private var acting: CustomWord?
+    @State private var acting: CustomWordGroup?
     @State private var pendingAction: (word: CustomWord, action: RowAction)?
     @State private var removing: CustomWord?
 
@@ -50,13 +50,13 @@ struct CustomWordsView: View {
                 Task { await store.saveOverride(edits, for: word) }
             }
         }
-        .sheet(item: $acting, onDismiss: runPendingAction) { word in
-            actionSheet(word)
+        .sheet(item: $acting, onDismiss: runPendingAction) { group in
+            actionSheet(group)
         }
         .sheet(item: $removing) { word in
             ConfirmSheet(
                 style: .destructive(systemImage: "trash"),
-                title: "Remove this word?",
+                title: isOnlyMeaning(word) ? "Remove this word?" : "Remove this meaning?",
                 message: "It won’t be scheduled for review and your edits will be deleted. Your learning history stays.",
                 cancelTitle: "Cancel",
                 confirmTitle: "Remove"
@@ -92,14 +92,14 @@ struct CustomWordsView: View {
                     errorText(error)
                         .padding(.bottom, Spacing.s)
                 }
-                if store.words.isEmpty {
+                if groups.isEmpty {
                     Text("Words you add will collect here.")
                         .font(Typography.secondary)
                         .foregroundStyle(Color.mutedInk)
                 } else {
                     LazyVStack(spacing: 0) {
-                        ForEach(store.words) { word in
-                            row(word)
+                        ForEach(groups) { group in
+                            row(group)
                         }
                     }
                 }
@@ -114,17 +114,24 @@ struct CustomWordsView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func row(_ word: CustomWord) -> some View {
-        let isBusy = store.busyMeaningIDs.contains(word.meaningId)
+    private var groups: [CustomWordGroup] { CustomWordGroup.grouping(store.words) }
+
+    private func isOnlyMeaning(_ word: CustomWord) -> Bool {
+        store.words.filter { $0.wordId == word.wordId }.count <= 1
+    }
+
+    private func row(_ group: CustomWordGroup) -> some View {
+        let isBusy = group.meanings.contains { store.busyMeaningIDs.contains($0.meaningId) }
+        let editable = group.firstEditable
         return HStack(spacing: Spacing.s) {
             Button {
-                if word.isEditable { selected = word }
+                if let editable { selected = editable }
             } label: {
                 VStack(alignment: .leading, spacing: Spacing.xxs / 2) {
-                    Text(verbatim: word.lemma)
+                    Text(verbatim: group.lemma)
                         .font(Typography.wordClass.weight(.bold))
-                        .foregroundStyle(word.recalled ? Color.disabledInk : Color.ink)
-                    status(word)
+                        .foregroundStyle(group.recalled ? Color.disabledInk : Color.ink)
+                    status(meaningText: group.meaningText, pending: group.translationPending, recalled: group.recalled)
                 }
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,18 +139,25 @@ struct CustomWordsView: View {
             }
             .buttonStyle(PressScaleButtonStyle())
             .accessibilityElement(children: .combine)
-            .accessibilityHint(word.isEditable ? Text("Shows every meaning of the word") : Text(verbatim: ""))
+            .accessibilityHint(editable != nil ? Text("Shows every meaning of the word") : Text(verbatim: ""))
 
-            Button {
-                acting = word
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.body.weight(.bold))
-                    .foregroundStyle(Color.mutedInk)
-                    .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
-                    .contentShape(Rectangle())
+            // One meaning: its menu straight away. Several: a sheet listing them, each with its own menu.
+            Group {
+                if let word = group.meanings.first, group.meanings.count == 1 {
+                    Menu {
+                        actionMenu(word) { perform($0, on: word) }
+                    } label: {
+                        moreIcon
+                    }
+                } else {
+                    Button {
+                        acting = group
+                    } label: {
+                        moreIcon
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
+                }
             }
-            .buttonStyle(PressScaleButtonStyle())
             .padding(.trailing, -Spacing.xs)
             .accessibilityLabel(Text("More actions"))
         }
@@ -155,51 +169,48 @@ struct CustomWordsView: View {
         .disabled(isBusy)
     }
 
+    /// A word row shows its meanings and, below them, the pill while any meaning still translates.
     @ViewBuilder
-    private func status(_ word: CustomWord) -> some View {
-        if word.recalled {
+    private func status(meaningText: String?, pending: Bool, recalled: Bool) -> some View {
+        if recalled {
             Text("No longer available")
                 .font(Typography.secondary)
                 .foregroundStyle(Color.destructiveInk)
-        } else if word.translationPending {
-            StatusPill("Translating", tone: .reward)
-                .padding(.top, Spacing.xxs / 2)
-                .accessibilityHint(Text("It joins your sessions once the translation is ready."))
-        } else if let meaning = word.meaningText {
-            Text(verbatim: meaning)
-                .font(Typography.secondary)
-                .foregroundStyle(Color.mutedInk)
-                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            if let meaningText {
+                Text(verbatim: meaningText)
+                    .font(Typography.secondary)
+                    .foregroundStyle(Color.mutedInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if pending {
+                StatusPill("Translating", tone: .reward)
+                    .padding(.top, Spacing.xxs / 2)
+                    .accessibilityHint(Text("It joins your sessions once the translation is ready."))
+            }
         }
+    }
+
+    private func status(_ word: CustomWord) -> some View {
+        status(meaningText: word.meaningText, pending: word.translationPending, recalled: word.recalled)
     }
 
     // MARK: Actions
 
-    /// The ⋯ sheet: the word and its meaning, then Edit / Restore original / Remove in one card.
-    private func actionSheet(_ word: CustomWord) -> some View {
+    /// The ⋯ sheet: the word, then one card with a row per added meaning; each row's ⋯ is a menu of its actions.
+    private func actionSheet(_ group: CustomWordGroup) -> some View {
         FittedSheet {
             VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: word.lemma)
+                Text(verbatim: group.lemma)
                     .font(Typography.screenTitle.weight(.heavy))
                     .tracking(Typography.tightTracking)
                     .foregroundStyle(Color.ink)
                     .accessibilityAddTraits(.isHeader)
-                if let meaning = word.meaningText {
-                    Text(verbatim: meaning)
-                        .font(Typography.secondary)
-                        .foregroundStyle(Color.mutedInk)
-                }
-
                 VStack(spacing: 0) {
-                    if word.isEditable {
-                        actionRow("Edit", systemImage: "pencil") { choose(.edit, for: word) }
-                        if word.overridden {
-                            CardDivider()
-                            actionRow("Restore original", systemImage: "arrow.uturn.backward") { choose(.restore, for: word) }
-                        }
-                        CardDivider()
+                    ForEach(Array(group.meanings.enumerated()), id: \.element.id) { index, word in
+                        if index > 0 { CardDivider() }
+                        meaningRow(word)
                     }
-                    actionRow("Remove", systemImage: "trash", color: .destructiveInk) { choose(.remove, for: word) }
                 }
                 .cardSurface()
                 .padding(.top, Spacing.m)
@@ -210,29 +221,51 @@ struct CustomWordsView: View {
         }
     }
 
-    private func actionRow(
-        _ title: LocalizedStringKey,
-        systemImage: String,
-        color: Color = .ink,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            CardRow {
-                Image(systemName: systemImage)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(color == .ink ? Color.ink700 : color)
-                    .frame(width: Spacing.l)
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(Typography.body.weight(.semibold))
-                    .foregroundStyle(color)
-                Spacer(minLength: 0)
+    private func meaningRow(_ word: CustomWord) -> some View {
+        HStack(spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: 0) {
+                status(word)
             }
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if word.overridden, word.isEditable {
+                StatusPill("Edited")
+            }
+            Menu {
+                actionMenu(word) { choose($0, for: word) }
+            } label: {
+                moreIcon
+            }
+            .padding(.trailing, -Spacing.xs)
+            .accessibilityLabel(Text("More actions"))
         }
-        .buttonStyle(PressScaleButtonStyle())
+        .padding(.leading, Spacing.m)
+        .padding(.trailing, Spacing.xs)
+        .padding(.vertical, Spacing.xxs)
+        .frame(minHeight: Spacing.rowMinHeight)
+        .opacity(store.busyMeaningIDs.contains(word.meaningId) ? 0.5 : 1)
+        .disabled(store.busyMeaningIDs.contains(word.meaningId))
     }
 
+    private var moreIcon: some View {
+        Image(systemName: "ellipsis")
+            .font(.body.weight(.bold))
+            .foregroundStyle(Color.mutedInk)
+            .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
+            .contentShape(Rectangle())
+    }
+
+    @ViewBuilder
+    private func actionMenu(_ word: CustomWord, run: @escaping (RowAction) -> Void) -> some View {
+        if word.isEditable {
+            Button("Edit", systemImage: "pencil") { run(.edit) }
+            if word.overridden {
+                Button("Restore original", systemImage: "arrow.uturn.backward") { run(.restore) }
+            }
+        }
+        Button("Remove", systemImage: "trash", role: .destructive) { run(.remove) }
+    }
+
+    /// From the sheet: the action waits until the sheet is gone, so the next sheet can present.
     private func choose(_ action: RowAction, for word: CustomWord) {
         pendingAction = (word, action)
         acting = nil
@@ -241,10 +274,14 @@ struct CustomWordsView: View {
     private func runPendingAction() {
         guard let pending = pendingAction else { return }
         pendingAction = nil
-        switch pending.action {
-        case .edit: editing = pending.word
-        case .restore: Task { await store.restoreOriginal(pending.word) }
-        case .remove: removing = pending.word
+        perform(pending.action, on: pending.word)
+    }
+
+    private func perform(_ action: RowAction, on word: CustomWord) {
+        switch action {
+        case .edit: editing = word
+        case .restore: Task { await store.restoreOriginal(word) }
+        case .remove: removing = word
         }
     }
 }

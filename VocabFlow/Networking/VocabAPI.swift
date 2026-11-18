@@ -333,10 +333,18 @@ struct WordProgress: Decodable, Equatable, Identifiable {
     /// Learned meanings only; `meaningCount` counts every meaning the word has. Absent from older servers.
     let meanings: [WordMeaning]
     var meaningCount: Int? = nil
+    /// Across every meaning, learned or not. Absent from older servers.
+    var ipaVaries: Bool? = nil
 
     var id: String { wordId }
     var meaningText: String { meanings.map(\.meaning.text).joined(separator: "; ") }
-    var ipa: String? { meanings.lazy.compactMap(\.meaning.ipa).first }
+    /// Nil when the meanings are pronounced differently (e.g. "read" /riːd/ vs /rɛd/).
+    var ipa: String? {
+        guard ipaVaries != true else { return nil }
+        let pronunciations = Set(meanings.map { $0.meaning.ipa ?? "" })
+        guard pronunciations.count == 1, let only = pronunciations.first, !only.isEmpty else { return nil }
+        return only
+    }
 }
 
 /// Library-wide figures, independent of paging and search.

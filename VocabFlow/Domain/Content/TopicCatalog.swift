@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UIKit
 
 struct Topic: Identifiable, Hashable {
     let id: String
@@ -24,6 +25,8 @@ struct VocabCollection: Identifiable, Hashable {
     var total: Int? = nil
     /// The backend's slug ("business-work"); nil for the bundled catalog, whose ids are the slugs.
     var slug: String? = nil
+    /// The backend's mark colour as `0xRRGGBB`; nil means `CollectionMarkColor` falls back to the slug.
+    var markHex: UInt32? = nil
 
     var topicIDs: Set<String> { Set(topics.map(\.id)) }
     var isFinished: Bool { (total ?? 0) > 0 && learned == total }
@@ -55,17 +58,30 @@ enum TopicCatalog {
                 summary: collection.description ?? "",
                 systemImage: icon(slug: collection.slug, fallback: "square.stack"),
                 topics: collection.topics.map { topic in
-                    Topic(id: topic.id, name: topic.title, systemImage: icon(slug: topic.slug, fallback: "tag"),
+                    Topic(id: topic.id, name: topic.title,
+                          systemImage: symbol(topic.iosIcon) ?? icon(slug: topic.slug, fallback: "tag"),
                           learned: topic.learnedMeanings, total: topic.totalMeanings)
                 },
                 learned: collection.learnedMeanings,
                 total: collection.totalMeanings,
-                slug: collection.slug
+                slug: collection.slug,
+                markHex: hex(collection.color)
             )
         }
     }
 
-    /// The backend has no icons, so slugs matching a bundled entry reuse its symbol.
+    /// An admin-set symbol this iOS version lacks would render blank, so it is dropped.
+    private static func symbol(_ name: String?) -> String? {
+        guard let name, UIImage(systemName: name) != nil else { return nil }
+        return name
+    }
+
+    private static func hex(_ value: String?) -> UInt32? {
+        guard let value, value.count == 7, value.hasPrefix("#") else { return nil }
+        return UInt32(value.dropFirst(), radix: 16)
+    }
+
+    /// Without a backend icon (collections, or a topic with none), a slug matching a bundled entry reuses its symbol.
     private static func icon(slug: String, fallback: String) -> String {
         bundled.first { $0.id == slug }?.systemImage
             ?? bundled.lazy.flatMap(\.topics).first { $0.id == slug }?.systemImage

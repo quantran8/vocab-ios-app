@@ -139,6 +139,8 @@ struct CatalogTopic: Decodable, Equatable {
     let description: String?
     var learnedMeanings: Int? = nil
     var totalMeanings: Int? = nil
+    /// SF Symbol name set by an admin; nil when unset or from an older backend.
+    var iosIcon: String? = nil
 }
 
 struct CatalogCollection: Decodable, Equatable {
@@ -149,6 +151,8 @@ struct CatalogCollection: Decodable, Equatable {
     let topics: [CatalogTopic]
     var learnedMeanings: Int? = nil
     var totalMeanings: Int? = nil
+    /// `#RRGGBB` set by an admin; nil when unset or from an older backend.
+    var color: String? = nil
 }
 
 // MARK: - Home and words

@@ -3,13 +3,14 @@ import SwiftUI
 // Pieces shared by Home and My Words (docs/app-redesign-v1.html, frames 1.1 and 2.x).
 
 /// Each collection's mark colour (the HTML's `MARK`): its dot and every progress bar of it.
-/// The backend has no colours, so a collection is recognised by its slug (or id/name), then by its icon.
+/// The backend's colour wins; without one a collection is recognised by its slug (or id/name), then by its icon.
 /// Words the learner added use Sun 500.
 enum CollectionMarkColor {
     /// The learner's own words.
     static let custom = Color.markCustom
 
     static func color(for collection: VocabCollection) -> Color {
+        if let hex = collection.markHex { return Color(hex: hex) }
         // By slug first: backend slugs ("business-work") needn't match the bundled ids that give the icon.
         let key = [collection.slug, collection.id, collection.name].compactMap { $0 }.joined(separator: " ").lowercased()
         if key.contains("everyday") { return .markEveryday }

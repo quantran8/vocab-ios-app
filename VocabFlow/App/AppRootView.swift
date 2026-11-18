@@ -31,6 +31,7 @@ struct AppRootView: View {
         }
         .environment(\.motion, motion)
         .environment(\.locale, settings.language?.locale ?? .autoupdatingCurrent)
+        .environment(\.layoutDirection, settings.language?.layoutDirection ?? .leftToRight)
         .scrollBounceBehavior(.basedOnSize)
         .preferredColorScheme(.light)
         .task { await auth.restore() }

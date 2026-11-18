@@ -16,6 +16,60 @@
             "state" : "translated",
             "value" : "Syll"
           }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
         }
       }
     },
@@ -31,7 +85,61 @@
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Syll"
           }
         }
@@ -45,6 +153,66 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Syll connects to your development server on the local network."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll kết nối tới máy chủ phát triển của bạn trên mạng cục bộ."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll स्थानीय नेटवर्क पर आपके डेवलपमेंट सर्वर से कनेक्ट होता है।"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll se conecta a tu servidor de desarrollo en la red local."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll はローカルネットワーク上の開発サーバーに接続します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Syll se conecta ao seu servidor de desenvolvimento na rede local."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll은 로컬 네트워크의 개발 서버에 연결합니다."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll 會連線到區域網路上的開發伺服器。"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll เชื่อมต่อกับเซิร์ฟเวอร์สำหรับพัฒนาของคุณในเครือข่ายภายใน"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتصل Syll بخادم التطوير الخاص بك على الشبكة المحلية."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll terhubung ke server pengembangan kamu di jaringan lokal."
           }
         }
       }
@@ -64,6 +232,60 @@
             "state" : "translated",
             "value" : "Syll ghi âm khi bạn đọc to một từ để chấm điểm phát âm. Âm thanh không được lưu lại."
           }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll आपके उच्चारण का स्कोर देने के लिए आपको कोई शब्द ज़ोर से पढ़ते हुए रिकॉर्ड करता है। ऑडियो सहेजा नहीं जाता।"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll te graba leyendo una palabra en voz alta para puntuar tu pronunciación. El audio no se guarda."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll は発音を採点するために、単語を音読するあなたの声を録音します。音声は保存されません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Syll grava você lendo uma palavra em voz alta para avaliar sua pronúncia. O áudio não é armazenado."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll은 발음을 평가하기 위해 단어를 소리 내어 읽는 목소리를 녹음합니다. 오디오는 저장되지 않습니다."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll 會錄下你朗讀單字的聲音來評分發音，音訊不會被儲存。"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll บันทึกเสียงเมื่อคุณอ่านออกเสียงคำศัพท์เพื่อให้คะแนนการออกเสียง ระบบจะไม่เก็บเสียงไว้"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يسجّل Syll صوتك أثناء قراءة كلمة بصوت عالٍ لتقييم نطقك. لا يتم حفظ الصوت."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll merekam suaramu saat membaca sebuah kata dengan lantang untuk menilai pelafalanmu. Audio tidak disimpan."
+          }
         }
       }
     },
@@ -81,6 +303,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Syll chuyển giọng đọc của bạn thành văn bản ngay trên thiết bị để kiểm tra bạn đã nói gì."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll आपके पढ़ने को इसी डिवाइस पर टेक्स्ट में बदलता है ताकि जांच सके कि आपने क्या कहा।"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll convierte tu lectura en texto en este dispositivo para comprobar lo que dijiste."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll はこのデバイス上で音読をテキストに変換し、あなたが言った内容を確認します。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Syll converte sua leitura em texto neste dispositivo para verificar o que você disse."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll은 이 기기에서 읽은 내용을 텍스트로 변환해 말한 내용을 확인합니다."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll 會在這部裝置上將你的朗讀轉成文字，以確認你說了什麼。"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll แปลงเสียงอ่านของคุณเป็นข้อความบนอุปกรณ์เครื่องนี้ เพื่อตรวจสอบว่าคุณพูดอะไร"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحوّل Syll قراءتك إلى نص على هذا الجهاز للتحقق مما قلته."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll mengubah bacaanmu menjadi teks di perangkat ini untuk memeriksa apa yang kamu ucapkan."
           }
         }
       }

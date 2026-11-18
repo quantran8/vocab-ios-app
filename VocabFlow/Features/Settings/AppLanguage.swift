@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import os
 
 /// The languages the app's interface is translated into. Learning content is not affected:
@@ -6,16 +7,36 @@ import os
 enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case vietnamese = "vi"
     case english = "en"
+    case hindi = "hi"
+    case spanish = "es"
+    case japanese = "ja"
+    case portugueseBrazil = "pt-BR"
+    case korean = "ko"
+    case chineseTraditional = "zh-Hant"
+    case thai = "th"
+    case arabic = "ar"
+    case indonesian = "id"
 
     var id: String { rawValue }
 
     var locale: Locale { Locale(identifier: rawValue) }
+
+    var layoutDirection: LayoutDirection { self == .arabic ? .rightToLeft : .leftToRight }
 
     /// The value `PUT /me/settings` accepts. The backend localizes the catalog with it.
     var uiLocale: String {
         switch self {
         case .vietnamese: "vi-VN"
         case .english: "en-US"
+        case .hindi: "hi-IN"
+        case .spanish: "es-MX"
+        case .japanese: "ja-JP"
+        case .portugueseBrazil: "pt-BR"
+        case .korean: "ko-KR"
+        case .chineseTraditional: "zh-TW"
+        case .thai: "th-TH"
+        case .arabic: "ar-SA"
+        case .indonesian: "id-ID"
         }
     }
 
@@ -24,13 +45,40 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .vietnamese: "Tiếng Việt"
         case .english: "English"
+        case .hindi: "हिन्दी"
+        case .spanish: "Español"
+        case .japanese: "日本語"
+        case .portugueseBrazil: "Português (Brasil)"
+        case .korean: "한국어"
+        case .chineseTraditional: "繁體中文"
+        case .thai: "ไทย"
+        case .arabic: "العربية"
+        case .indonesian: "Bahasa Indonesia"
         }
     }
 
-    /// Accepts region-qualified tags such as `vi-VN`.
+    /// This language's name written in `language`, so a reader can recognise every row.
+    func name(in language: AppLanguage) -> String {
+        language.locale.localizedString(forIdentifier: rawValue)?.capitalized(with: language.locale) ?? nativeName
+    }
+
+    /// Accepts region-qualified tags such as `vi-VN`. Portuguese maps to the Brazilian
+    /// translation and Chinese only matches the traditional script or its regions.
     init?(languageTag: String) {
-        guard let code = Locale(identifier: languageTag).language.languageCode?.identifier else { return nil }
-        self.init(rawValue: code)
+        let locale = Locale(identifier: languageTag)
+        guard let code = locale.language.languageCode?.identifier else { return nil }
+        switch code {
+        case "pt":
+            self = .portugueseBrazil
+        case "zh":
+            let traditionalRegions = ["TW", "HK", "MO"]
+            let isTraditional = locale.language.script?.identifier == "Hant"
+                || locale.region.map { traditionalRegions.contains($0.identifier) } == true
+            guard isTraditional else { return nil }
+            self = .chineseTraditional
+        default:
+            self.init(rawValue: code)
+        }
     }
 
     /// What iOS picked from the device's languages; the fallback before a choice is made.

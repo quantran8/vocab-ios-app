@@ -150,6 +150,15 @@
 			knownRegions = (
 				en,
 				vi,
+				hi,
+				es,
+				ja,
+				"pt-BR",
+				ko,
+				"zh-Hant",
+				th,
+				ar,
+				id,
 				Base,
 			);
 			mainGroup = A10000000000000000000002;

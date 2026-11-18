@@ -15,6 +15,8 @@ private actor AudioSessionActivator {
     ) throws {
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(category, mode: mode, options: options)
+        // Otherwise `playAndRecord` silences every haptic while it is the active category.
+        try? session.setAllowHapticsAndSystemSoundsDuringRecording(true)
         try session.setActive(true)
     }
 

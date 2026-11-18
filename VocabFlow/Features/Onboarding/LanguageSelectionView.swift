@@ -33,9 +33,11 @@ struct LanguageSelectionView: View {
                             Text(verbatim: language.nativeName)
                                 .font(Typography.emphasis)
                                 .foregroundStyle(language == selection ? Color.selectedInk : Color.ink)
-                            Text(verbatim: language.otherLanguageName)
-                                .font(Typography.micro)
-                                .foregroundStyle(Color.mutedInk)
+                            if language != selection {
+                                Text(verbatim: language.name(in: selection))
+                                    .font(Typography.micro)
+                                    .foregroundStyle(Color.mutedInk)
+                            }
                         }
                     }
                 }
@@ -52,17 +54,7 @@ struct LanguageSelectionView: View {
             }
         }
         .environment(\.locale, selection.locale)
-    }
-}
-
-extension AppLanguage {
-    /// The language's name in the other app language ("Vietnamese", "Tiếng Anh"),
-    /// so either reader recognises both rows.
-    var otherLanguageName: String {
-        switch self {
-        case .vietnamese: "Vietnamese"
-        case .english: "Tiếng Anh"
-        }
+        .environment(\.layoutDirection, selection.layoutDirection)
     }
 }
 

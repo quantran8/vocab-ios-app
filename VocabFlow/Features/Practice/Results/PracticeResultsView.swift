@@ -9,7 +9,8 @@ struct PracticeResultsView: View {
     var scopeEvents: ScopeEvents?
     var onChooseTopics: (() -> Void)?
 
-    private var hasCompletion: Bool { scopeEvents.map { !$0.isEmpty } ?? false }
+    /// Only a finished collection gets the card; a finished topic is not called out.
+    private var hasCompletion: Bool { scopeEvents?.collectionCompleted == true }
     /// Only for the fallback grid of a session saved before the result groups existed.
     var firstTryCount = 0
     /// Random and Weak: plan the same practice again.
@@ -45,7 +46,7 @@ struct PracticeResultsView: View {
                         .padding(.top, Spacing.s)
                 }
 
-                if let scopeEvents, !scopeEvents.isEmpty {
+                if hasCompletion, let scopeEvents {
                     ScopeCompletionCard(events: scopeEvents)
                         .padding(.top, Spacing.s)
                 }
@@ -59,8 +60,8 @@ struct PracticeResultsView: View {
             PracticeActionBar {
                 VStack(spacing: Spacing.s) {
                     if hasCompletion, let onChooseTopics {
-                        PrimaryButton(title: scopeEvents?.collectionCompleted == true ? "Choose another collection" : "Choose more topics", action: onChooseTopics)
-                        SecondaryButton(title: "Later", action: onDone)
+                        PrimaryButton(title: "Choose another collection", action: onChooseTopics)
+                        SecondaryButton(title: "Later", kind: .outline, action: onDone)
                     } else {
                         PrimaryButton(title: "Done", action: onDone)
                     }

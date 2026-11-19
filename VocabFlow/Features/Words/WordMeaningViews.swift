@@ -158,7 +158,12 @@ struct OtherMeaningsSheet: View {
                         .font(Typography.tile)
                         .foregroundStyle(Color.ink)
                         .multilineTextAlignment(.leading)
-                    Spacer(minLength: 0)
+                    Spacer(minLength: Spacing.xs)
+                    if item.learnedAt != nil {
+                        StatusPill("Learned", tone: .success, systemImage: "checkmark")
+                    } else {
+                        StatusPill("Not learned")
+                    }
                     ExpandChevron(isExpanded: isExpanded)
                 }
                 .frame(minHeight: Spacing.minTouchTarget + Spacing.xs)

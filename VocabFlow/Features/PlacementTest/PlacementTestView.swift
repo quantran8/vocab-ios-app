@@ -184,7 +184,7 @@ private struct PlacementQuestionScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: Spacing.s) {
                         // A third of the row: Next is the action this screen wants.
-                        SecondaryButton(title: "Skip", action: skip)
+                        SecondaryButton(title: "Skip", kind: .outline, action: skip)
                             .containerRelativeFrame(.horizontal) { width, _ in
                                 (width - Spacing.screenGutter * 2 - Spacing.s) / 3
                             }

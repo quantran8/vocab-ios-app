@@ -138,7 +138,7 @@ struct SessionCelebration {
         self.earnedLP = earnedLP
     }
 
-    /// - Parameter finishedScopeName: the collection, or the topics, this session used up; nil when it used up nothing.
+    /// - Parameter finishedScopeName: the collection this session finished; nil otherwise.
     init(result: PracticeResult, effort: SessionEffort?, scopeEvents: ScopeEvents?, finishedScopeName: String?) {
         let counts = CelebrationCounts(summary: result.summary)
         let finishedCollection = scopeEvents?.collectionCompleted == true
@@ -146,7 +146,7 @@ struct SessionCelebration {
         perfect = counts.perfect
         earnedLP = effort?.earned
 
-        if let finishedScopeName, !(scopeEvents?.isEmpty ?? true) {
+        if let finishedScopeName, finishedCollection {
             title = "You’ve learned every word in \(finishedScopeName)"
         } else if counts.perfect {
             title = "Perfect session"

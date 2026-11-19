@@ -106,9 +106,12 @@ struct SmallButton: View {
             }
             .font(Typography.actionSmall)
             .lineLimit(1)
+            .fixedSize()
             .padding(.horizontal, Spacing.m)
             .frame(height: Spacing.buttonSmallHeight)
         }
+        // Never squeezed into "…" by a row: the row's text wraps instead.
+        .layoutPriority(1)
         .buttonStyle(ActionButtonStyle(kind: kind, size: .small))
     }
 }
@@ -155,6 +158,8 @@ struct ActionButtonStyle: ButtonStyle {
         case outline
         /// Coral 600, white text, flat.
         case danger
+        /// Ink text only: no fill, border or edge.
+        case plain
     }
 
     enum Size { case regular, small }
@@ -196,7 +201,7 @@ struct ActionButtonStyle: ButtonStyle {
         switch kind {
         case .practice, .success, .retry, .app: Spacing.buttonDepth
         case .outline3D: Spacing.tileDepth
-        case .outline, .danger: 0
+        case .outline, .danger, .plain: 0
         }
     }
 
@@ -205,11 +210,12 @@ struct ActionButtonStyle: ButtonStyle {
         if let foregroundOverride { return foregroundOverride }
         switch kind {
         case .practice, .success, .retry, .app, .danger: return .white
-        case .outline, .outline3D: return .ink
+        case .outline, .outline3D, .plain: return .ink
         }
     }
 
     private var face: Color {
+        if kind == .plain { return .clear }
         guard isEnabled else { return .disabledSurface }
         switch kind {
         case .practice: return .blue500
@@ -217,6 +223,7 @@ struct ActionButtonStyle: ButtonStyle {
         case .retry, .danger: return .coral600
         case .app: return .primaryAction
         case .outline, .outline3D: return .surface
+        case .plain: return .clear
         }
     }
 
@@ -227,7 +234,7 @@ struct ActionButtonStyle: ButtonStyle {
         case .retry: return .errorActionDepth
         case .app: return .primaryDepth
         case .outline3D: return .tileDepth
-        case .outline, .danger: return .clear
+        case .outline, .danger, .plain: return .clear
         }
     }
 }

@@ -235,7 +235,7 @@ Mặt nút Ink dùng ink-800 trên cạnh ink-950 (đổi từ ink-700 ngày 14/
 - **Trang con (push):** thanh điều hướng của iOS chỉ có nút quay lại; iOS 26 vẽ nút này thành vòng tròn kính, dưới iOS 26 giữ mũi tên của hệ thống. Nút ✕ và nút quay lại tự vẽ (màn không có thanh điều hướng) thì dưới iOS 26 là vòng tròn ink-100 36pt. Không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.
 - **Sheet:** grabber của hệ thống, nút đóng ✕ ở góc phải (bước trong sheet có thêm ‹ ở góc trái), vẽ như nút trên thanh điều hướng: vòng tròn kính trên iOS 26, icon ink trơn trước đó (`SystemBarButtonLabel`, giống nút bánh răng ở Hồ sơ). Một luồng nhiều bước (ví dụ Thêm từ) nằm trong **một sheet**, chuyển bước bên trong sheet. Không chồng nhiều sheet lên nhau.
 - **Tab bar:** tab bar của iOS, bốn mục Trang chủ, Từ của tôi, Xếp hạng, Hồ sơ. Tint blue-500.
-- **Buổi học:** nút ✕ (cùng kiểu nút hệ thống như sheet) và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng.
+- **Buổi học:** nút ✕ trơn (icon ink-400, không vòng tròn, vùng chạm 44pt; `FlowHeader`) và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng.
 
 ### 5.4 Điều khiển
 
@@ -314,7 +314,7 @@ Icon loa có 3 vạch sóng. Gợn sóng quanh nút chỉ dành cho ghi âm, vì
 | Hết lượt                  | blue-50 (không đỏ), "Đáp án đúng" + đáp án        | Nút Ink "Tiếp tục"; thẻ sai vẫn giữ màu Coral                                                        |
 | Nối cặp                   | Nền trắng                                         | Không có nút Kiểm tra; link "Xem đáp án" và dòng "Đã ghép N cặp"                                     |
 
-Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luyện tập" và nút viền chữ coral "Rời đi không lưu".
+Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luyện tập" và nút viền phẳng (không cạnh dày) chữ coral "Rời đi không lưu".
 
 ### 6.4 Giới thiệu từ
 

@@ -634,7 +634,7 @@ private struct LearnCardStep: View {
                         PrimaryButton(title: "Continue") {
                             motion.perform(MotionTokens.transition) { store.declineKnownCheck() }
                         }
-                        SecondaryButton(title: "I know this word", kind: .outline) {
+                        SecondaryButton(title: "I know this word", kind: .plain) {
                             motion.perform(MotionTokens.transition) { store.markKnown() }
                         }
                         .accessibilityHint(Text("Skips learning this word"))
@@ -733,18 +733,14 @@ private struct SessionFinishView: View {
         }
     }
 
-    /// The collection, or the topics, this session used up.
+    /// The collection this session finished; a finished topic alone is not called out.
     private var finishedScopeName: String? {
-        guard let events = store.scopeEvents, !events.isEmpty else { return nil }
-        if events.collectionCompleted, let collection = plan.current.collection {
-            return collection.name
-        }
-        let names = TopicCatalog.topics(ids: Set(events.completedTopicIds)).map(\.name)
-        return names.isEmpty ? nil : names.formatted(.list(type: .and).locale(AppLanguage.active.locale))
+        guard store.scopeEvents?.collectionCompleted == true else { return nil }
+        return plan.current.collection?.name
     }
 }
 
-/// Shown under the results when this session used up a topic or the whole collection.
+/// Shown under the results when this session finished the whole collection.
 struct ScopeCompletionCard: View {
     let events: ScopeEvents
     @Environment(PracticeSessionStore.self) private var store
@@ -775,11 +771,6 @@ struct ScopeCompletionCard: View {
     }
 
     private var title: Text {
-        if events.collectionCompleted, let collection = plan.current.collection {
-            return Text("You’ve learned every word in \(collection.name)!")
-        }
-        let names = TopicCatalog.topics(ids: Set(events.completedTopicIds)).map(\.name)
-            .formatted(.list(type: .and).locale(AppLanguage.active.locale))
-        return Text("You’ve learned every word in \(names)")
+        Text("You’ve learned every word in \(plan.current.collection?.name ?? "")!")
     }
 }

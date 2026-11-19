@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// ✕ plus progress. `.segmented` shows one segment per step and a "1 / 5" count (word intro);
+/// A bare ✕ (no circle) plus progress. `.segmented` shows one segment per step and a "1 / 5" count (word intro);
 /// `.continuous` is a single bar (exercises).
 struct FlowHeader: View {
     enum Style { case segmented, continuous }
@@ -19,7 +19,11 @@ struct FlowHeader: View {
     var body: some View {
         HStack(spacing: Spacing.m) {
             Button(action: onClose) {
-                SystemBarButtonLabel(systemImage: "xmark")
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Color.ink400)
+                    .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget, alignment: .leading)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(PressScaleButtonStyle())
             .accessibilityLabel(Text(closeLabel))

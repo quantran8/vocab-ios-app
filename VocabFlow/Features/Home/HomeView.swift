@@ -13,6 +13,7 @@ struct HomeView: View {
     var onOpenRandomPractice: () -> Void = {}
     @State private var isChoosingReviewLoad = false
     @State private var isShowingLessonInfo = false
+    @State private var showsAllTopics = false
 
     var body: some View {
         let due = learner.home?.dueCount ?? 0
@@ -175,7 +176,8 @@ struct HomeView: View {
 
     // MARK: Learning now
 
-    /// The collection being learned and its chosen topics, every bar in the collection's mark colour.
+    /// The collection being learned and its chosen topics (the first five until expanded); bars use the collection's
+    /// mark colour, a finished collection's or topic's bar is green.
     private func learningSection(_ collection: VocabCollection) -> some View {
         let mark = CollectionMarkColor.color(for: collection)
         let topics = TopicCatalog.topics(ids: plan.current.topicIDs)
@@ -199,7 +201,7 @@ struct HomeView: View {
                     }
                     if let total = collection.total, total > 0 {
                         let learned = collection.learned ?? 0
-                        ProgressBar(fraction: CGFloat(learned) / CGFloat(total), color: mark, height: 10)
+                        ProgressBar(fraction: CGFloat(learned) / CGFloat(total), color: learned >= total ? Color.success : mark, height: 10)
                             .padding(.top, Spacing.s)
                         // Under the bar: "128 / 600 words", or once finished the pill and the total (no "600 / 600").
                         HStack(spacing: Spacing.xs) {
@@ -218,14 +220,34 @@ struct HomeView: View {
                 .accessibilityElement(children: .combine)
                 .padding(Spacing.m)
 
-                ForEach(topics) { topic in
+                let visible = showsAllTopics ? topics : Array(topics.prefix(Self.collapsedTopicLimit))
+                ForEach(visible) { topic in
                     CardDivider()
                     topicRow(topic, mark: mark)
+                }
+                if topics.count > Self.collapsedTopicLimit {
+                    CardDivider()
+                    Button {
+                        motion.perform(MotionTokens.transition) { showsAllTopics.toggle() }
+                    } label: {
+                        HStack(spacing: Spacing.xxs) {
+                            Text(showsAllTopics ? "Show less" : "Show all (\(topics.count))")
+                            Image(systemName: showsAllTopics ? "chevron.up" : "chevron.down")
+                                .font(Typography.micro.weight(.bold))
+                        }
+                        .font(Typography.secondary.weight(.semibold))
+                        .foregroundStyle(Color.link)
+                        .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .cardSurface()
         }
     }
+
+    private static let collapsedTopicLimit = 5
 
     private func topicRow(_ topic: Topic, mark: Color) -> some View {
         HStack(spacing: Spacing.s) {
@@ -234,9 +256,10 @@ struct HomeView: View {
                 Text(verbatim: topic.name)
                     .font(Typography.secondary.weight(.semibold))
                     .foregroundStyle(Color.ink)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let total = topic.total, total > 0 {
-                    ProgressBar(fraction: CGFloat(topic.learned ?? 0) / CGFloat(total), color: mark, height: 6)
+                    ProgressBar(fraction: CGFloat(topic.learned ?? 0) / CGFloat(total),
+                                color: topic.isFinished ? Color.success : mark, height: 6)
                 }
             }
             if let total = topic.total {
@@ -417,13 +440,15 @@ struct DailyLessonStatus: Equatable {
 
 // MARK: - Mascot
 
-/// Syllie at the top of Home (the `HomeSyllie` artboard). One cycle: he idles for
-/// `idleBeat`, plays one random scene (a letter to bounce or a paper plane to chase), then dozes off (snoring).
-/// A tap wakes him and the cycle starts again. With reduced motion he skips the play and just dozes off.
+/// Syllie at the top of Home (the `HomeSyllie` artboard), on a loop: a short idle, one random play scene (a letter
+/// to bounce or a paper plane to chase), a nap (snoring) for `sleepBeat`, waking up, and round again.
+/// A tap wakes him early. With reduced motion he skips the play, just dozes off and stays asleep until tapped.
 /// Decorative except for that tap.
 private struct LessonMascot: View {
     /// How long Syllie idles before he plays.
-    private static let idleBeat: Duration = .seconds(4)
+    private static let idleBeat: Duration = .seconds(2)
+    /// How long Syllie naps before he wakes up on his own.
+    private static let sleepBeat: Duration = .seconds(6)
 
     /// The 520×560 artboard at a size where his body is about 104 pt wide (w-[104px]): the body spans ~81% of the width.
     static let size = CGSize(width: 128, height: 138)
@@ -447,8 +472,12 @@ private struct LessonMascot: View {
             case .playLetters, .planeChase:
                 guard let duration = scene.duration, await pause(duration) else { return }
                 scene = .sleepy
-            case .sleepy, .wakeUp:
-                return
+            case .sleepy:
+                guard !motion.reduceMotion, await pause(Self.sleepBeat) else { return }
+                scene = .wakeUp
+            case .wakeUp:
+                guard let duration = scene.duration, await pause(duration) else { return }
+                scene = .idle
             }
         }
     }

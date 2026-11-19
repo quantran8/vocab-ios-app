@@ -7,11 +7,14 @@ struct FittedSheet<Content: View>: View {
     @State private var height: CGFloat = 320
 
     var body: some View {
-        content
-            .fixedSize(horizontal: false, vertical: true)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .presentationDetents([.height(height)])
+        // Content taller than the screen (e.g. the language list) stops at the largest detent and scrolls.
+        ScrollView {
+            content
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .presentationDetents([.height(height)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(Radii.sheet)
             .presentationBackground(Color.canvas)
@@ -24,7 +27,7 @@ struct ConfirmSheet: View {
     enum Style {
         /// Coral trash icon, Cancel + Delete side by side (flat).
         case destructive(systemImage: String)
-        /// Syllie on top, stacked Ink "keep going" + outline "leave" (practice).
+        /// Syllie on top, stacked Ink "keep going" + flat outline "leave" (practice).
         case leavePractice
     }
 
@@ -90,7 +93,7 @@ struct ConfirmSheet: View {
                         Button(action: onConfirm) {
                             ActionButtonLabel(title: confirmTitle)
                         }
-                        .buttonStyle(ActionButtonStyle(kind: .outline3D, foregroundOverride: .destructiveInk))
+                        .buttonStyle(ActionButtonStyle(kind: .outline, foregroundOverride: .destructiveInk))
                     }
                     .padding(.top, Spacing.l)
                 }

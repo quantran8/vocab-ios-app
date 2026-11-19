@@ -350,14 +350,14 @@ function wordIntro(known) {
   </div>
   <div class="px-6 pt-3 pb-10 space-y-3">
     <button class="btn btn-ink">Tiếp tục</button>
-    ${known ? '<button class="btn btn-line">Tôi biết từ này</button>' : ''}
+    ${known ? '<button class="btn text-ink-950">Tôi biết từ này</button>' : ''}
   </div>`;
 }
 
 /* Other meanings of the word being introduced: reference only, grouped by part of speech; several rows can be open. */
 function otherMeaningsSheet() {
-  /* Same meaning card as Chi tiết từ (3.x), without the learned pill and skills: these meanings aren't being learned. */
-  const meaning = (m, open, def, ex, tr) => `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="font-bold text-[16px] flex-1">${m}</span>${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
+  /* Same meaning card as Chi tiết từ (3.x), with its Đã học / Chưa học pill but without skills. */
+  const meaning = (m, learned, open, def, ex, tr) => `<div class="mt-3 card"><div class="flex items-center gap-3 px-4 h-14"><span class="font-bold text-[16px] flex-1">${m}</span>${learned ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã học</span>` : '<span class="pill bg-ink-100 text-ink-600">Chưa học</span>'}${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
     ${open ? `<div class="px-4 pb-4 space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
       <div><div class="eyebrow mb-1.5">Trong ngữ cảnh</div><p class="text-[15px] leading-snug">${ex}</p>
         <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div></div>` : ''}</div>`;
@@ -369,8 +369,8 @@ function otherMeaningsSheet() {
       <span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
     <div class="flex-1 overflow-hidden px-5 pt-6">
       <div class="eyebrow">tính từ</div>
-      ${meaning('đàn hồi, bền (vật liệu)', true, 'able to return to its original shape after being bent or stretched', `A ${hl('resilient')} rubber sole absorbs the shock.`, 'Đế cao su đàn hồi giúp giảm chấn.')}
-      ${meaning('lạc quan, không nản lòng', false)}
+      ${meaning('đàn hồi, bền (vật liệu)', true, true, 'able to return to its original shape after being bent or stretched', `A ${hl('resilient')} rubber sole absorbs the shock.`, 'Đế cao su đàn hồi giúp giảm chấn.')}
+      ${meaning('lạc quan, không nản lòng', false, false)}
     </div>`, 300);
 }
 
@@ -454,7 +454,7 @@ function exitSheet() {
       <img src="${SYLLIE}" alt="" class="w-20 mx-auto">
       <div class="mt-3 text-[22px] font-extrabold tracking-tight">Rời buổi học?</div>
       <p class="mt-2 text-[15px] text-ink-600 leading-snug">Tiến độ chỉ được tính khi bạn hoàn thành cả buổi học.</p>
-      <div class="mt-6 space-y-3"><button class="btn btn-ink">Tiếp tục luyện tập</button><button class="btn btn-line3d text-coral-700">Rời đi không lưu</button></div>
+      <div class="mt-6 space-y-3"><button class="btn btn-ink">Tiếp tục luyện tập</button><button class="btn btn-line text-coral-700">Rời đi không lưu</button></div>
     </div>`, 470);
 }
 
@@ -582,7 +582,7 @@ function results(collectionDone = false) {
       <div class="flex-1"><div class="text-[17px] font-bold leading-snug">Tiếp theo với Everyday</div>
         <p class="mt-1 text-[14px] text-ink-600 leading-snug">Từ đã học vẫn được ôn đều. Chọn bộ từ khác để học thêm từ mới.</p></div></div>` : ''}
   </div>
-  <div class="px-6 pt-3 pb-10 ${collectionDone ? 'space-y-3' : ''}">${collectionDone ? '<button class="btn btn-ink">Chọn bộ từ khác</button><button class="btn btn-line3d">Để sau</button>' : '<button class="btn btn-ink">Xong</button>'}</div>`;
+  <div class="px-6 pt-3 pb-10 ${collectionDone ? 'space-y-3' : ''}">${collectionDone ? '<button class="btn btn-ink">Chọn bộ từ khác</button><button class="btn btn-line">Để sau</button>' : '<button class="btn btn-ink">Xong</button>'}</div>`;
 }
 
 const STRIPE = 'background:repeating-linear-gradient(135deg,#92AEEF 0 3px,#EEF3FD 3px 6px)';
@@ -689,7 +689,7 @@ function home(done = false) {
   // No wordmark, no greeting: Syllie is the warmth, LP is the only number up top.
   const top = `<div class="flex items-center justify-between pt-2"><img src="${SYLLIE}" alt="" class="w-[104px]">
       <span class="pill h-8 px-3 text-[14px] bg-sun-50 text-sun-800">${ic('zap', 'w-4 h-4 text-sun-500', true)}1.240</span></div>`;
-  const topics = done ? [['bubble', 'Daily conversation', 40, 40], ['cart', 'Shopping', 30, 30], ['plane', 'Travel', 30, 30]] : [['bubble', 'Daily conversation', 24, 40], ['cart', 'Shopping', 12, 30], ['plane', 'Travel', 5, 30]];
+  const topics = done ? [['bubble', 'Daily conversation', 40, 40], ['cart', 'Shopping', 30, 30], ['plane', 'Travel', 30, 30]] : [['bubble', 'Daily conversation', 24, 40], ['cart', 'Shopping', 30, 30], ['plane', 'Travel', 5, 30]];
   const daily = done ? `<div class="mt-7 card p-5">
       <div class="eyebrow">Bài học hôm nay</div>
       <div class="mt-3 flex items-start gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy', 'w-5 h-5')}</span>
@@ -714,12 +714,12 @@ function home(done = false) {
       <div class="card">
         <div class="p-4">
           <div class="flex items-center gap-2 min-w-0"><i class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${MARK.everyday}"></i><span class="font-bold text-[17px] flex-1 min-w-0 truncate">Everyday</span></div>
-          <div class="mt-3 h-2.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${MARK.everyday};width:${done ? 100 : 21}%"></div></div>
+          <div class="mt-3 h-2.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${done ? '#2BC86A' : MARK.everyday};width:${done ? 100 : 21}%"></div></div>
           <div class="mt-2 flex items-center gap-2 text-[14px] text-ink-500 tabular-nums">${done ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Hoàn thành</span>600 từ` : '128 / 600 từ'}</div>
         </div>
         ${topics.map(([i, n, a, b]) => `<div class="flex items-center gap-3 px-4 py-3.5 border-t-[1.5px] border-ink-100">
           <span class="ico w-9 h-9 bg-ink-50 text-ink-700">${ic(i, 'w-[18px] h-[18px]')}</span>
-          <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${n}</div><div class="mt-1.5 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${MARK.everyday};width:${a / b * 100}%"></div></div></div>
+          <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${n}</div><div class="mt-1.5 h-1.5 rounded-full bg-ink-100 overflow-hidden"><div class="h-full rounded-full" style="background:${a === b ? '#2BC86A' : MARK.everyday};width:${a / b * 100}%"></div></div></div>
           <span class="text-[13px] text-ink-500 tabular-nums w-12 text-right">${a}/${b}</span></div>`).join('')}
       </div>
     </div>
@@ -1232,7 +1232,7 @@ function obPlacementQuestion() {
   </div>
   <div class="px-6 pt-3 pb-10">
     <p class="text-[13px] text-ink-500 text-center mb-3">Không chắc thì chọn Bỏ qua: đoán bừa có thể xếp bạn quá cao.</p>
-    <div class="grid grid-cols-[1fr_2fr] gap-3"><button class="btn btn-line3d">Bỏ qua</button><button class="btn btn-ink">Tiếp</button></div>
+    <div class="grid grid-cols-[1fr_2fr] gap-3"><button class="btn btn-line">Bỏ qua</button><button class="btn btn-ink">Tiếp</button></div>
   </div>`;
 }
 
@@ -1347,7 +1347,7 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Làm bài kiểm tra'),
     frame('0b.3a', 'Bài kiểm tra trình độ', obPlacementQuestion(), [
       'Vùng luyện tập: khung ✕ + thanh tiến độ, thẻ đáp án có cạnh dày như bài tập (không có panel đúng/sai, backend chấm cuối bài).',
-      '"Bỏ qua" (viền 3D) và "Tiếp" (Ink) cạnh nhau; câu cuối là "Xem kết quả". Lời nhắc đừng đoán nằm ngay trên hai nút.',
+      '"Bỏ qua" (viền phẳng, không cạnh dày) và "Tiếp" (Ink) cạnh nhau; câu cuối là "Xem kết quả". Lời nhắc đừng đoán nằm ngay trên hai nút.',
       '✕ mở sheet "Rời bài kiểm tra?" như Rời buổi học (1.11).',
     ]),
     go('Câu cuối'),
@@ -1384,6 +1384,9 @@ document.getElementById('flows').innerHTML = [
       'Bỏ card "Ôn thêm" đứng riêng (không đọc được mục đích). Thay bằng một dòng trong chính card Bài học hôm nay, nói rõ lý do và việc sẽ xảy ra: "Còn 24 từ khác chờ ôn" / "Ôn riêng 10 từ, không có từ mới". 24 = số từ đến hạn trừ phần bài học đã lấy (backlog − dueCap); 10 = dueCap.',
       'Dòng này chỉ hiện khi số từ chờ ôn vượt ngưỡng (> 10, <code>ReviewLoad.statusThreshold</code>). Chạm: bắt đầu buổi chỉ ôn (<code>reviewOnly</code>).',
       'Thêm khối "Đang học": tiến độ Collection và các Topic đang học, mọi thanh tiến độ dùng màu dấu của Collection (Everyday = xanh trời).',
+      'Thanh của Collection hoặc Topic đã học hết đổi sang Green 500 để không lẫn với phần đang học (ví dụ Shopping 30/30; Collection xem 1.1a).',
+      'Tên Topic dài xuống dòng, không cắt "…".',
+      'Khối chỉ hiện tối đa 5 Topic; khi nhiều hơn, dòng cuối "Xem tất cả (N)" mở toàn bộ, bấm lại "Thu gọn" để về 5.',
       'Dòng tên Collection chỉ có chấm màu và tên, chiếm trọn chiều ngang; tên dài thu nhỏ tới 80% rồi cắt "…". Số từ "128 / 600 từ" nằm dưới thanh tiến độ.',
       'Bỏ chữ "Syll" ở góc trái: người dùng đã ở trong app, tab bar đã báo Trang chủ.',
       'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
@@ -1427,15 +1430,15 @@ document.getElementById('flows').innerHTML = [
     frame('1.9a', 'Nghĩa khác (sheet)', otherMeaningsSheet(), [
       'Sheet <code>.medium</code>/<code>.large</code>, có grabber và nút ✕; phụ đề "Chỉ để tham khảo · Không thuộc bài học này".',
       'Tiêu đề Sheet Title 26 Heavy; phụ đề Secondary 15 ink-600.',
-      'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), mở được nhiều card cùng lúc (mở sẵn nghĩa đầu tiên). Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), không có pill Đã học hay Kỹ năng.',
+      'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), mở được nhiều card cùng lúc (mở sẵn nghĩa đầu tiên). Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), có pill Đã học / Chưa học như Chi tiết từ (bên phải tên nghĩa, trước chevron), không có Kỹ năng.',
       'Không đổi tiến độ buổi học: đóng sheet là về lại 1.9, "Tiếp tục" vẫn như cũ.',
     ]),
     go('Đóng sheet · Tiếp tục'),
-    frame('1.10', 'Giới thiệu từ · kiểm tra "đã biết"', wordIntro(true), ['"Tôi biết từ này" là nút viền trắng, phẳng (không cạnh dày) dưới "Tiếp tục".']),
+    frame('1.10', 'Giới thiệu từ · kiểm tra "đã biết"', wordIntro(true), ['"Tôi biết từ này" là nút chữ ink, không nền, không viền, không cạnh dày, dưới "Tiếp tục".']),
     go('Chạm ✕ bất kỳ lúc nào'),
     frame('1.11', 'Rời buổi học (sheet)', exitSheet(), [
       'Sheet hệ thống (<code>.sheet</code> + detent) thay <code>.alert</code>.',
-      '"Tiếp tục luyện tập" là nút Ink; "Rời đi không lưu" nút viền chữ coral.',
+      '"Tiếp tục luyện tập" là nút Ink; "Rời đi không lưu" nút viền phẳng (không cạnh dày) chữ coral.',
       'Sửa bản dịch "Rời khỏi flow này?" thành "Rời buổi học?".',
     ]),
     go('Hết bài'),
@@ -1471,8 +1474,8 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Tiếp tục'),
     frame('1.12c', 'Tổng kết · học hết Collection', results(true), [
       'Tổng kết như 1.12b, thêm card "Tiếp theo với Everyday" dưới card LP: một dòng nói rõ điều gì xảy ra tiếp.',
-      'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở Nguồn từ (2.4) trên tab Hồ sơ; "Để sau" (viền) về Trang chủ.',
-      'Chỉ hết các Topic đang chọn: nút chính "Chọn thêm chủ đề".',
+      'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở Nguồn từ (2.4) trên tab Hồ sơ; "Để sau" (viền phẳng, không cạnh dày) về Trang chủ.',
+      'Chỉ hết một Topic (Collection chưa xong): không có card này, màn như 1.12b.',
     ]),
     go('Để sau'),
     frame('1.1a', 'Trang chủ · đã học hết Collection', home(true), [

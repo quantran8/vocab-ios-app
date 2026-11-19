@@ -62,6 +62,13 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(legacyRecording.body, .recording(accepted: []))
     }
 
+    func testRecordingMeaningCueIsOptional() throws {
+        let base = #""template":"recording","variant":"scripted_pronunciation","prompt":{"type":"text","text":"clarify"},"assessment":{"kind":"azurePronunciation"},"evaluation":{"acceptedResponses":["clarify"]}"#
+        let cued = try decodeTask(base + #","meaningCue":{"text":"làm rõ","question":"Which English word means this?"}"#)
+        XCTAssertEqual(cued.meaningCue, MeaningCue(text: "làm rõ", question: "Which English word means this?"))
+        XCTAssertNil(try decodeTask(base).meaningCue, "A new word's recording, or an older backend, has no cue")
+    }
+
     func testMaxRetriesIsOptional() throws {
         let body = #""template":"typing","variant":"meaning_recall","prompt":{"type":"text","text":"x"},"evaluation":{"acceptedResponses":["a"]}"#
         XCTAssertEqual(try decodeTask(body + #","maxRetries":2"#).maxRetries, 2)

@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Sheet editing only the routine (daily goal, reviews per session, learning days, reminder); topics are untouched.
+/// Speaking practice is a switch on the Profile card instead.
 /// Dismissing discards the draft.
 struct EditRoutineView: View {
     let onSave: (LearningPreferences) -> Void

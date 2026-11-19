@@ -88,7 +88,7 @@ struct CustomWordEditFields: View {
                         Label("The example must contain “\(draft.lemma)”.", systemImage: "exclamationmark.circle")
                             .font(Typography.micro).foregroundStyle(Color.errorInk)
                     } else {
-                        Text(highlightedExample(example.text.trimmed, at: draft.locator(for: example)))
+                        HighlightedSentence(sentence: example.text.trimmed, locator: draft.locator(for: example))
                             .font(Typography.secondary)
                     }
                     EditorField(title: "Translation", text: $example.translation, maxLength: CustomWordInput.maxFieldLength,
@@ -134,16 +134,4 @@ struct EditorField: View {
         guard let maxLength else { return false }
         return text.utf16.count > maxLength
     }
-}
-
-/// Sentence with its target word marked (Blue 100 behind bold Blue 800), placed by the backend's locator
-/// rather than by search.
-func highlightedExample(_ sentence: String, at locator: TargetLocator?) -> AttributedString {
-    var attributed = AttributedString(sentence)
-    if let range = locator?.nsRange(in: sentence).flatMap({ Range<AttributedString.Index>($0, in: attributed) }) {
-        attributed[range].inlinePresentationIntent = .stronglyEmphasized
-        attributed[range].foregroundColor = Color.infoInk
-        attributed[range].backgroundColor = Color.focusHalo
-    }
-    return attributed
 }

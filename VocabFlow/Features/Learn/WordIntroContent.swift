@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// The Learn word introduction: centered spelling hero (animated unless turned off) with IPA and audio,
-/// then Part of speech, Meaning, Definition and In context sections separated by dividers.
-/// `.card` (live practice) puts the sections in one card, each under an eyebrow; `.flat` leaves them on the page.
+/// The Learn word introduction: centered spelling hero (animated unless turned off) with IPA and audio.
+/// `.card` (live practice, docs/app-redesign-v1.html 1.10): the part of speech is an italic line under the word
+/// (it belongs to the word, not the meaning); one card without eyebrows holds the meaning and the example, and
+/// the English definition opens in place behind "See details".
+/// `.flat` (demo engine): Part of speech, Meaning, Definition and In context sections, each under an eyebrow.
 struct WordIntroContent: View {
     enum Style { case flat, card }
 
@@ -15,11 +17,20 @@ struct WordIntroContent: View {
     var animatesWord = true
     var style: Style = .flat
     @Environment(SpeechPlayer.self) private var speech
+    @Environment(\.motion) private var motion
+    /// Card style: whether the definition is open. Presentation only; never affects the session.
+    @State private var showsDetails = false
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: style == .card ? Spacing.m : Spacing.xs) {
+            VStack(spacing: style == .card ? Spacing.s : Spacing.xs) {
                 IntroMotionHost(word: word.term, presentation: presentation, animates: animatesWord)
+                if style == .card, let partOfSpeech = word.partOfSpeechLabel {
+                    Text(verbatim: partOfSpeech)
+                        .font(Typography.secondary)
+                        .italic()
+                        .foregroundStyle(Color.mutedInk)
+                }
                 WordPronunciation(
                     term: word.term,
                     ipa: word.ipa,
@@ -36,13 +47,76 @@ struct WordIntroContent: View {
             case .flat:
                 sections
             case .card:
-                sections
+                cardSections
                     .padding(.horizontal, Spacing.m + Spacing.xxs)
                     .padding(.vertical, Spacing.xxs)
                     .cardSurface()
             }
         }
+        .onChange(of: word.id) { showsDetails = false }
         .onDisappear { speech.stop() }
+    }
+
+    /// Meaning, then the example; the definition stays closed until the learner asks for it.
+    private var cardSections: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(verbatim: word.meaningVi)
+                .font(Typography.wordMeaning)
+                .tracking(Typography.tightTracking)
+                .foregroundStyle(Color.ink)
+                .accessibilityLabel(Text("Vietnamese meaning: \(word.meaningVi)"))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, Spacing.m)
+
+            if !word.example.isEmpty {
+                CardDivider()
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    HighlightedSentence(sentence: word.example, term: word.term)
+                        .font(Typography.body)
+                        .foregroundStyle(bodyColor)
+                    if let translation = word.exampleTranslation, !translation.isEmpty {
+                        ExampleTranslation(text: translation)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, Spacing.m)
+            }
+
+            if let definition = word.definitionEN {
+                if showsDetails {
+                    CardDivider()
+                    section("Definition") {
+                        Text(verbatim: definition)
+                            .font(Typography.body)
+                            .foregroundStyle(bodyColor)
+                    }
+                    .transition(.opacity)
+                }
+                CardDivider()
+                detailsToggle
+            }
+        }
+    }
+
+    private var detailsToggle: some View {
+        Button {
+            motion.perform(MotionTokens.transition) { showsDetails.toggle() }
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                Text(showsDetails ? LocalizedStringKey("Show less") : LocalizedStringKey("See details"))
+                Spacer(minLength: 0)
+                Image(systemName: showsDetails ? "chevron.up" : "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .font(Typography.secondary.weight(.semibold))
+            .foregroundStyle(Color.mutedInk)
+            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget + Spacing.xxs)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScaleButtonStyle())
     }
 
     @ViewBuilder private var sections: some View {
@@ -78,7 +152,7 @@ struct WordIntroContent: View {
                 divider
                 section("In context") {
                     VStack(alignment: .leading, spacing: style == .card ? Spacing.xs : Spacing.s) {
-                        Text(style == .card ? Self.marked(word.term, in: word.example) : LearnView.highlight(word.term, in: word.example))
+                        Text(LearnView.highlight(word.term, in: word.example))
                             .font(Typography.body)
                             .foregroundStyle(bodyColor)
                         if let translation = word.exampleTranslation, !translation.isEmpty {
@@ -113,17 +187,6 @@ struct WordIntroContent: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, Spacing.m)
-    }
-
-    /// The word marked like a highlighter: Blue 100 behind bold Blue 800 text.
-    private static func marked(_ term: String, in sentence: String) -> AttributedString {
-        var attributed = AttributedString(sentence)
-        if let range = attributed.range(of: term, options: .caseInsensitive) {
-            attributed[range].inlinePresentationIntent = .stronglyEmphasized
-            attributed[range].foregroundColor = Color.blue800
-            attributed[range].backgroundColor = Color.blue100
-        }
-        return attributed
     }
 }
 

@@ -40,6 +40,8 @@ struct UserSettings: Decodable, Equatable {
     var leaderboardVisible: Bool? = nil
     /// Reviews per daily session the learner chose; nil follows the new-word goal (or an older backend).
     var reviewsPerSession: Int? = nil
+    /// Opt-in recordings in Daily; they never move progress. Nil from an older backend (treated as off).
+    var dailySpeaking: Bool? = nil
 }
 
 struct LearningScope: Codable, Equatable {
@@ -79,6 +81,7 @@ struct SettingsUpdate: Encodable, Equatable {
     var leaderboardVisible: Bool?
     /// `.some(nil)` is sent as `null`: back to following the new-word goal.
     var reviewsPerSession: Int?? = nil
+    var dailySpeaking: Bool? = nil
 }
 
 struct ReviewPause: Decodable, Equatable {

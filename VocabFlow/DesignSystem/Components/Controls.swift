@@ -289,6 +289,38 @@ extension View {
 
 // MARK: - Rows, dividers, fields
 
+/// ⓘ beside a label: the explanation opens in a 280 pt popover, like "Today’s lesson" on Home, so rows keep
+/// a single line instead of a subtitle. Full 44 pt touch target without making the row taller.
+struct InfoPopoverButton: View {
+    let text: LocalizedStringKey
+    let accessibilityLabel: LocalizedStringKey
+    @State private var isShowing = false
+
+    var body: some View {
+        Button {
+            isShowing = true
+        } label: {
+            Image(systemName: "info.circle")
+                .font(Typography.secondary.weight(.semibold))
+                .foregroundStyle(Color.mutedInk)
+                .frame(minWidth: Spacing.minTouchTarget, minHeight: Spacing.minTouchTarget)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, -Spacing.s)
+        .accessibilityLabel(Text(accessibilityLabel))
+        .popover(isPresented: $isShowing) {
+            Text(text)
+                .font(Typography.secondary)
+                .foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(Spacing.m)
+                .frame(width: 280, alignment: .leading)
+                .presentationCompactAdaptation(.popover)
+        }
+    }
+}
+
 /// 1.5 pt Ink 100 line between rows inside a card.
 struct CardDivider: View {
     var body: some View {

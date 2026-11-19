@@ -185,8 +185,16 @@ struct ProfileView: View {
                     ? Text(preferences.reminderDate, format: .dateTime.hour().minute())
                     : Text("Off"))
                 CardDivider()
+                toggleRow(label: "Speaking practice",
+                          info: "Read words aloud in your lessons. Right or wrong, it never changes your progress.",
+                          infoLabel: "About speaking practice",
+                          isOn: preferences.dailySpeaking) { enabled in
+                    try await learner.setDailySpeaking(enabled)
+                }
+                CardDivider()
                 toggleRow(label: "Balance reviews and new words",
-                          hint: "Fewer new words while many words wait for review",
+                          info: "Fewer new words while many words wait for review",
+                          infoLabel: "About balancing reviews and new words",
                           isOn: learner.home?.reviewLoad?.autoBalance ?? learner.profile?.settings.autoBalanceNewWords ?? false) { enabled in
                     try await learner.setAutoBalance(enabled)
                 }
@@ -244,18 +252,22 @@ struct ProfileView: View {
         .modifier(RowPadding())
     }
 
-    private func toggleRow(label: LocalizedStringKey, hint: LocalizedStringKey, isOn: Bool,
+    /// Label and ⓘ (the explanation is in its popover, not a subtitle), then the system switch, saved at once.
+    /// The switch keeps the label for VoiceOver; ⓘ is its own element.
+    private func toggleRow(label: LocalizedStringKey, info: LocalizedStringKey, infoLabel: LocalizedStringKey, isOn: Bool,
                            onChange: @escaping (Bool) async throws -> Void) -> some View {
-        Toggle(isOn: Binding(get: { isOn }, set: { value in save { try await onChange(value) } })) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Spacing.xxs) {
+            Text(label)
+                .font(Typography.body)
+                .foregroundStyle(Color.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityHidden(true)
+            InfoPopoverButton(text: info, accessibilityLabel: infoLabel)
+            Spacer(minLength: Spacing.s)
+            Toggle(isOn: Binding(get: { isOn }, set: { value in save { try await onChange(value) } })) {
                 Text(label)
-                    .font(Typography.body)
-                    .foregroundStyle(Color.ink)
-                Text(hint)
-                    .font(Typography.micro)
-                    .foregroundStyle(Color.mutedInk)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+            .labelsHidden()
         }
         .modifier(RowPadding())
     }

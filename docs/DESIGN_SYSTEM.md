@@ -235,13 +235,13 @@ Mặt nút Ink dùng ink-800 trên cạnh ink-950 (đổi từ ink-700 ngày 14/
 - **Trang con (push):** thanh điều hướng của iOS chỉ có nút quay lại; iOS 26 vẽ nút này thành vòng tròn kính, dưới iOS 26 giữ mũi tên của hệ thống. Nút ✕ và nút quay lại tự vẽ (màn không có thanh điều hướng) thì dưới iOS 26 là vòng tròn ink-100 36pt. Không đặt tiêu đề trên thanh. Tiêu đề lớn nằm trong nội dung, mỗi màn một tiêu đề.
 - **Sheet:** grabber của hệ thống, nút đóng ✕ ở góc phải (bước trong sheet có thêm ‹ ở góc trái), vẽ như nút trên thanh điều hướng: vòng tròn kính trên iOS 26, icon ink trơn trước đó (`SystemBarButtonLabel`, giống nút bánh răng ở Hồ sơ). Một luồng nhiều bước (ví dụ Thêm từ) nằm trong **một sheet**, chuyển bước bên trong sheet. Không chồng nhiều sheet lên nhau.
 - **Tab bar:** tab bar của iOS, bốn mục Trang chủ, Từ của tôi, Xếp hạng, Hồ sơ. Tint blue-500.
-- **Buổi học:** nút ✕ trơn (icon ink-400, không vòng tròn, vùng chạm 44pt; `FlowHeader`) và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng.
+- **Buổi học:** nút ✕ trơn (icon ink-400, không vòng tròn, vùng chạm 44pt; `FlowHeader`) và thanh tiến độ cao 10pt màu blue-500, không có vệt sáng. Ô ✕ rộng 24pt (vùng chạm 44pt tràn ra hai bên), bên phải thanh có một ô trống 24pt, nên thanh nằm giữa màn hình.
 
 ### 5.4 Điều khiển
 
 | Thành phần                                            | Quy định                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Toggle                                                | Bản iOS, `.tint` blue-500 khi bật                                               |
+| Toggle                                                | Bản iOS, `.tint` blue-500 khi bật. Dòng toggle không có dòng phụ: lời giải thích nằm sau ⓘ cạnh nhãn (`InfoPopoverButton`, popover 280pt như ⓘ của Bài học hôm nay) |
 | Segmented control, DatePicker, Stepper hệ thống, Menu | Bản iOS, chỉ đặt tint                                                           |
 | Stepper số từ (− số +)                                | Thành phần riêng: card có hai nút tròn ink-100 và số lớn ở giữa                 |
 | Chọn ngày học                                         | Thành phần riêng: ô bo 12, viền 2pt; đang chọn thì nền blue-50 và viền blue-500 |
@@ -318,10 +318,11 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
 
 ### 6.4 Giới thiệu từ
 
-- Từ lớn ở giữa, bên dưới là IPA kèm nút loa tròn blue-50.
-- **Một card duy nhất**, các mục ngăn bằng đường kẻ: Loại từ → Nghĩa → Định nghĩa → Trong ngữ cảnh. Nghĩa là thông tin chính (lớn, đậm nhất); định nghĩa và ví dụ chữ thường, màu nhạt hơn. Trong câu ví dụ, từ đang học được tô nền blue-100.
-- Link "Nghĩa khác (N)" nằm dưới card.
-- Hai nút: "Tiếp tục" (Ink), và "Tôi biết từ này" (nút viền phẳng, không cạnh dày) ở bước kiểm tra đã biết.
+- Từ lớn ở giữa; ngay dưới là loại từ (chữ nghiêng 15, ink-500: loại từ thuộc về từ, không phải tiêu đề của nghĩa), rồi IPA kèm nút loa tròn blue-50.
+- **Một card duy nhất, gọn, không eyebrow:** Nghĩa (thông tin chính, 26 Heavy), đường kẻ, câu ví dụ kèm bản dịch. Trong câu ví dụ, từ đang học được tô nền blue-100.
+- Định nghĩa tiếng Anh ẩn sau hàng "Xem chi tiết ⌄" (ink-500) ở đáy card; chạm thì card mở rộng tại chỗ, hiện khối Định nghĩa (có eyebrow), hàng đổi thành "Thu gọn ⌃". Chỉ là trình bày, không đổi tiến độ buổi học.
+- Link "Nghĩa khác (N)" nằm **ngoài** card, ngay dưới: card là nghĩa đang học, còn nghĩa khác chỉ để tham khảo, không thuộc bài học. Chỉ hiện khi từ có nghĩa khác.
+- Hai nút: "Tiếp tục" (Ink) và "Tôi biết từ này" (nút chữ ink, không nền, không viền). Buổi học hằng ngày luôn có bước kiểm tra đã biết, nên đây là màn giới thiệu từ duy nhất.
 
 ### 6.5 Các dạng bài tập
 
@@ -334,6 +335,7 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
 | Nối cặp            | Hai cột thẻ cao bằng nhau; cặp đúng khóa màu Green, đang chọn màu Blue                                                                         |
 | Sửa lỗi chính tả   | Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; phím cao 50pt, chữ 20pt, card đệm ngang 8pt để phím rộng nhất có thể                     |
 | Đọc to             | Nút giữa bài tập (5.6) với icon micro; nút phụ "Không thể nói lúc này"                                                                         |
+| Đọc to · gợi nghĩa | Chỉ với từ đã học (`meaningCue`): bước đầu không chấm, không ghi âm. Tiêu đề là câu hỏi của backend, nghĩa ở giữa (30pt như đề của Gõ từ), dòng "Hãy nói thành tiếng, rồi xem từ để kiểm tra.", nút Ink "Xem từ" + nút phụ "Không thể nói lúc này". "Xem từ" chuyển sang bước Đọc to ở trên |
 
 ### 6.6 Kết quả
 
@@ -371,11 +373,12 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Mỗi màn một câu hỏi, một hành động chính; nút vô hiệu tới khi đã chọn.
   - Bốn bước giữa có header chung: nút quay lại tròn và thanh 4 đoạn blue-500, không có chữ "Bước n/4".
   - Lựa chọn một (ngôn ngữ, trình độ, bộ từ) là các dòng trong một card với dấu tick tròn; chủ đề là chip có icon.
+  - Lịch học: dưới "Từ ôn / buổi" là card Toggle "Luyện nói" (mặc định tắt). ⓘ cạnh nhãn mở popover "Đọc to từ trong các bài học. Đúng hay sai đều không ảnh hưởng tiến độ học của bạn." Câu này luôn phải có: luyện nói chỉ để tập phát âm. Ở Hồ sơ, "Luyện nói" là dòng Toggle (cùng ⓘ) ngay trong card "Lịch học của bạn", trên "Tự cân bằng ôn và từ mới": bật/tắt là lưu ngay, không mở sheet Lịch học, và sheet không có mục này.
   - Trình độ: card "Chưa chắc? Làm bài kiểm tra" đứng đầu, rồi 6 trình độ, mỗi dòng có tên tiếng Việt và một ví dụ làm được gì. Bài kiểm tra là vùng luyện tập (thẻ đáp án có cạnh dày, "Bỏ qua" + "Tiếp").
   - Sẵn sàng: Syllie, tóm tắt là các dòng nhãn / giá trị trong một card, nút Blue "Học bài đầu tiên".
 - **Trang chủ:**
   - Lời chào tách hai dòng: "Chào buổi sáng" (17pt Semibold, ink-500) và tên (26pt Heavy, ink-950) trên một dòng. Tên dài tự thu nhỏ tới 80% rồi cắt "…". Syllie rộng khoảng 88pt bên phải, không có bóng.
-  - Card "Bài học hôm nay" chỉ nói buổi học kế tiếp có gì ("10 từ ôn · 8 từ mới") và nút Blue "Bắt đầu". Không có thanh tiến độ hay ước lượng thời gian: không có dữ liệu đứng sau.
+  - Card "Bài học hôm nay" chỉ nói buổi học kế tiếp có gì ("10 từ ôn · 8 từ mới") và nút Blue "Bắt đầu". Phần nào bằng 0 thì bỏ, không ghi "0 từ ôn": chỉ "8 từ mới" hoặc "10 từ ôn"; cả hai bằng 0 thì ẩn dòng. Không có thanh tiến độ hay ước lượng thời gian: không có dữ liệu đứng sau.
   - Thử thách tạm ẩn.
   - Khi số từ chờ ôn vượt ngưỡng, card Bài học hôm nay có thêm một dòng dưới đường kẻ: "Còn N từ khác chờ ôn" / "Ôn riêng 10 từ, không có từ mới" (N = số từ đến hạn trừ phần bài học đã lấy). Chạm để bắt đầu buổi chỉ ôn. Không đặt thành card riêng tên "Ôn thêm": tách khỏi bài học thì không đọc được mục đích.
   - **Đã học hết Collection:** card Bài học hôm nay nói thẳng trạng thái (icon cúp nền sun-50, "Bạn đã học hết …", một dòng hướng dẫn), nút Blue "Ôn N từ" (không có từ đến hạn thì "Luyện tập") và nút viền "Chọn bộ từ khác". Không hiện "Ôn thêm". Khối Đang học: dòng dưới thanh tiến độ đổi thành pill "Hoàn thành" kèm tổng số từ. Chỉ hết các Topic đang chọn thì nút viền là "Chọn thêm chủ đề".

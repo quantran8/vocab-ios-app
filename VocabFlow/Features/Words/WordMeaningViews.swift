@@ -248,17 +248,6 @@ struct WordHeroHeader: View {
     }
 }
 
-/// An example sentence with its word marked: Blue 100 behind bold Blue 800 text.
-func markedExample(_ sentence: String, term: String) -> AttributedString {
-    var attributed = AttributedString(sentence)
-    if let range = attributed.range(of: term, options: .caseInsensitive) {
-        attributed[range].inlinePresentationIntent = .stronglyEmphasized
-        attributed[range].foregroundColor = Color.infoInk
-        attributed[range].backgroundColor = Color.focusHalo
-    }
-    return attributed
-}
-
 // MARK: - Word detail (My Words)
 
 /// Every meaning of a word grouped by part of speech; progress belongs to each meaning, not the word.
@@ -449,7 +438,7 @@ struct WordDetailSheet: View {
             if let example = sense.examples?.first {
                 field("Example") {
                     VStack(alignment: .leading, spacing: Spacing.xs - 2) {
-                        Text(markedExample(example.text, term: lemma))
+                        HighlightedSentence(sentence: example.text, term: lemma)
                             .font(Typography.secondary)
                             .foregroundStyle(Color.ink)
                         if let translation = example.translation, !translation.isEmpty {

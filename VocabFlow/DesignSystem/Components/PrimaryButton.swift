@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Where a button sits. The primary button is Ink with a depth edge everywhere (Check, Continue, Save…);
 /// Blue `.practice` is only for actions that start practice (Home "Continue", "Practise now"), passed explicitly.
@@ -269,8 +270,21 @@ struct PinnedActionBar<Content: View>: View {
         content
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.top, Spacing.s)
-            .padding(.bottom, Spacing.xs)
+            .padding(.bottom, PinnedBarInset.bottom)
             .background(Color.canvas)
+    }
+}
+
+/// Space under a pinned bottom bar (`PinnedActionBar`, `FeedbackActionPanel`). The home indicator's safe area
+/// already leaves room, so only a little is added (the button ends about 38 pt above the screen edge, the
+/// design's pb-10); a phone without one (iPhone SE) gets more, or the button would sit on the edge.
+@MainActor
+enum PinnedBarInset {
+    static var bottom: CGFloat {
+        let windowInset = UIApplication.shared.connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
+            .first?.safeAreaInsets.bottom ?? 0
+        return windowInset > 0 ? Spacing.xxs : Spacing.m
     }
 }
 

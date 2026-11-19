@@ -16,13 +16,15 @@ struct LearningPreferences: Codable, Equatable {
     var wordsPerDay: Int
     /// Nil follows `wordsPerDay` (see `effectiveReviewsPerSession`).
     var reviewsPerSession: Int?
+    /// Read-aloud tasks in Daily (backend `dailySpeaking`, off by default). Practice only: never moves progress.
+    var dailySpeaking: Bool
     var learningDays: Set<Int>
     var reminderEnabled: Bool
     var reminderHour: Int
     var reminderMinute: Int
 
     private enum CodingKeys: String, CodingKey {
-        case collectionID, topicIDs, wordsPerDay, reviewsPerSession, learningDays, reminderEnabled, reminderHour, reminderMinute
+        case collectionID, topicIDs, wordsPerDay, reviewsPerSession, dailySpeaking, learningDays, reminderEnabled, reminderHour, reminderMinute
     }
 
     static let `default` = LearningPreferences(
@@ -30,6 +32,7 @@ struct LearningPreferences: Codable, Equatable {
         topicIDs: ["everyday-english", "travel"],
         wordsPerDay: 5,
         reviewsPerSession: nil,
+        dailySpeaking: false,
         learningDays: [2, 3, 4, 5, 6],
         reminderEnabled: true,
         reminderHour: 20,
@@ -115,6 +118,7 @@ extension LearningPreferences {
         }
         wordsPerDay = min(try container.decode(Int.self, forKey: .wordsPerDay), Self.wordsPerDayRange.upperBound)
         reviewsPerSession = try container.decodeIfPresent(Int.self, forKey: .reviewsPerSession)
+        dailySpeaking = try container.decodeIfPresent(Bool.self, forKey: .dailySpeaking) ?? false
         learningDays = try container.decode(Set<Int>.self, forKey: .learningDays)
         reminderEnabled = try container.decode(Bool.self, forKey: .reminderEnabled)
         reminderHour = try container.decode(Int.self, forKey: .reminderHour)

@@ -15,4 +15,6 @@ enum Radii {
     static let field: CGFloat = 16
     /// Small code badges such as the level codes (rounded-lg).
     static let badge: CGFloat = 8
+    /// The highlighter mark behind a word in a sentence (rounded-md).
+    static let highlight: CGFloat = 6
 }

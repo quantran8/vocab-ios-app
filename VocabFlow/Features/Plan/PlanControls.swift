@@ -338,6 +338,35 @@ struct ReviewsPerSessionPicker: View {
     }
 }
 
+/// "Speaking practice": read-aloud tasks in Daily. Its ⓘ says that speaking never changes a word's progress
+/// (backend "Daily speaking"), so turning it on is only about pronunciation.
+struct DailySpeakingToggle: View {
+    @Binding var preferences: LearningPreferences
+    @Environment(AppSettingsStore.self) private var settings
+
+    var body: some View {
+        HStack(spacing: Spacing.xxs) {
+            PlanSectionTitle(text: "Speaking practice")
+                .accessibilityHidden(true)
+            InfoPopoverButton(
+                text: "Read words aloud in your lessons. Right or wrong, it never changes your progress.",
+                accessibilityLabel: "About speaking practice"
+            )
+            Spacer(minLength: Spacing.s)
+            Toggle(isOn: $preferences.dailySpeaking) {
+                Text("Speaking practice")
+            }
+            .labelsHidden()
+            .tint(Color.interactive)
+        }
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
+        .frame(minHeight: Spacing.rowMinHeight)
+        .cardSurface()
+        .onChange(of: preferences.dailySpeaking) { settings.feedback.selectionChanged() }
+    }
+}
+
 /// One card: a "Remind me" switch row above the reminder time. Tapping the time opens the system time
 /// picker as a popup (compact `DatePicker`); the row dims while reminders are off.
 struct ReminderPicker: View {

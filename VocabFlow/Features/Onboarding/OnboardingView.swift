@@ -361,6 +361,7 @@ private struct RoutineStep: View {
                     WordsPerDayStepper(value: store.draft.wordsPerDay) { store.adjustWordsPerDay(by: $0) }
                 }
                 ReviewsPerSessionPicker(preferences: $store.draft)
+                DailySpeakingToggle(preferences: $store.draft)
                 LearningDaysPicker(
                     selected: store.draft.learningDays,
                     onToggleDay: { store.toggleDay($0) },

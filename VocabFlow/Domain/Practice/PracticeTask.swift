@@ -312,6 +312,13 @@ enum TaskBody: Equatable {
     case recording(accepted: [String])
 }
 
+/// A recording of a learned word first shows its meaning for an unscored try at saying the word
+/// (FRONTEND_FLOW §7.7). Only the read-aloud that follows is scored and sends events.
+struct MeaningCue: Decodable, Equatable {
+    let text: String
+    let question: String
+}
+
 /// An unknown template or variant fails the whole plan: commit needs a result for every task,
 /// so one that can't be rendered can't be skipped.
 struct PracticeTask: Decodable, Equatable, Identifiable {
@@ -324,9 +331,11 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
     let body: TaskBody
     /// Tries after a wrong answer, so 1 + this in total. Nil means unlimited: sessions issued before the limit.
     let maxRetries: Int?
+    /// Recording only; nil for a new word's recording and from an older backend.
+    let meaningCue: MeaningCue?
 
     private enum CodingKeys: String, CodingKey {
-        case id, template, variant, prompt, question, options, sentenceParts, tiles, pairs, word, evaluation, maxRetries
+        case id, template, variant, prompt, question, options, sentenceParts, tiles, pairs, word, evaluation, maxRetries, meaningCue
     }
 
     private struct Pairs: Decodable {
@@ -342,7 +351,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         let replacement: String?
     }
 
-    init(id: String, template: TaskTemplate, variant: String, prompt: TaskPrompt?, question: String?, body: TaskBody, maxRetries: Int? = nil) {
+    init(id: String, template: TaskTemplate, variant: String, prompt: TaskPrompt?, question: String?, body: TaskBody, maxRetries: Int? = nil, meaningCue: MeaningCue? = nil) {
         self.id = id
         self.template = template
         self.variant = variant
@@ -350,6 +359,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         self.question = question
         self.body = body
         self.maxRetries = maxRetries
+        self.meaningCue = meaningCue
     }
 
     init(from decoder: Decoder) throws {
@@ -366,6 +376,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         question = try container.decodeIfPresent(String.self, forKey: .question)
         body = try Self.decodeBody(template, container)
         maxRetries = try container.decodeIfPresent(Int.self, forKey: .maxRetries)
+        meaningCue = template == .recording ? try container.decodeIfPresent(MeaningCue.self, forKey: .meaningCue) : nil
     }
 
     private static func decodeBody(_ template: TaskTemplate, _ container: KeyedDecodingContainer<CodingKeys>) throws -> TaskBody {

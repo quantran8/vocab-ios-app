@@ -123,6 +123,8 @@ final class OnboardingStore {
             var settings = SettingsUpdate(dailyNewWordGoal: draft.wordsPerDay, weeklySessionGoal: draft.weeklySessionGoal)
             // Left out while it follows the new-word goal, so a backend without the field never sees it.
             if let reviews = draft.reviewsPerSession { settings.reviewsPerSession = .some(reviews) }
+            // Off is the backend's default, so it is only sent once the learner opts in.
+            if draft.dailySpeaking { settings.dailySpeaking = true }
             try await self.api.updateSettings(settings)
             self.plan.save(draft)
             self.haptics.success()

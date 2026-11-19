@@ -118,6 +118,15 @@ final class ScopeReviewLoadTests: XCTestCase {
         let encode = { (update: SettingsUpdate) in String(decoding: try JSONEncoder().encode(update), as: UTF8.self) }
         XCTAssertEqual(try encode(SettingsUpdate(reviewsPerSession: .some(nil))), #"{"reviewsPerSession":null}"#)
         XCTAssertEqual(try encode(SettingsUpdate(dailyNewWordGoal: 5)), #"{"dailyNewWordGoal":5}"#)
+        XCTAssertEqual(try encode(SettingsUpdate(dailySpeaking: false)), #"{"dailySpeaking":false}"#)
+    }
+
+    func testDailySpeakingIsOffByDefaultAndForOlderPlans() throws {
+        XCTAssertFalse(LearningPreferences.default.dailySpeaking)
+        var saved = try JSONSerialization.jsonObject(with: JSONEncoder().encode(LearningPreferences.default)) as! [String: Any]
+        saved.removeValue(forKey: "dailySpeaking")
+        let decoded = try JSONDecoder().decode(LearningPreferences.self, from: JSONSerialization.data(withJSONObject: saved))
+        XCTAssertFalse(decoded.dailySpeaking, "A plan saved before the setting reads as off")
     }
 
     func testSessionReviewsBelowTheCapAreTheWholeBacklog() {

@@ -62,7 +62,7 @@ struct FeedbackActionPanel<Action: View>: View {
         }
         .padding(.horizontal, Spacing.practiceGutter)
         .padding(.top, feedback == nil ? Spacing.s : Spacing.l - 4)
-        .padding(.bottom, Spacing.xs)
+        .padding(.bottom, PinnedBarInset.bottom)
         .background {
             UnevenRoundedRectangle(
                 topLeadingRadius: Radii.hero,

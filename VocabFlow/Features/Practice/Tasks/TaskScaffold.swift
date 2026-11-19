@@ -5,6 +5,8 @@ struct TaskScaffold<Content: View, Action: View>: View {
     let attempt: TaskAttempt
     /// Replaces the attempt's own feedback, for a result that doesn't change its status (Recording).
     var feedback: FeedbackCopy? = nil
+    /// Recording's unscored first step: the meaning and its question stand in for the task's question and word.
+    var meaningCue: MeaningCue? = nil
     /// Called on a tap anywhere in the scroll area that no control takes, e.g. to close the keyboard (Typing).
     var onTapOutside: (() -> Void)? = nil
     @ViewBuilder let content: Content
@@ -22,10 +24,15 @@ struct TaskScaffold<Content: View, Action: View>: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.l) {
-                if let question = attempt.task.question {
-                    ExerciseHeading(title: Text(verbatim: question))
+                if let meaningCue {
+                    ExerciseHeading(title: Text(verbatim: meaningCue.question))
+                    MeaningCueText(text: meaningCue.text)
+                } else {
+                    if let question = attempt.task.question {
+                        ExerciseHeading(title: Text(verbatim: question))
+                    }
+                    TaskPromptView(attempt: attempt)
                 }
-                TaskPromptView(attempt: attempt)
 
                 // While a wrong answer is shown, the exercise waits for "Try again" or "Continue".
                 content
@@ -175,13 +182,28 @@ struct TaskPromptView: View {
     }
 
     /// The prompt's area is as tall as the audio button, so text and audio prompts start the content at one height.
-    private static let promptMinHeight: CGFloat = 96
+    static let promptMinHeight: CGFloat = 96
 
     private func promptText(_ text: String, highlight: PromptHighlight?) -> Text {
         guard let parts = highlight?.split(text) else { return Text(verbatim: text) }
         return Text(verbatim: parts.before)
             + Text(verbatim: parts.word).foregroundColor(Color.interactive).underline()
             + Text(verbatim: parts.after)
+    }
+}
+
+/// A meaning shown in place of the word, styled like a meaning prompt (Typing, Reorder).
+private struct MeaningCueText: View {
+    let text: String
+
+    var body: some View {
+        Text(verbatim: text)
+            .font(Typography.stat)
+            .tracking(Typography.displayTracking)
+            .foregroundStyle(Color.ink)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, minHeight: TaskPromptView.promptMinHeight)
     }
 }
 

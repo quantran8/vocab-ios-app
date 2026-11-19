@@ -22,11 +22,13 @@ struct FlowHeader: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Color.ink400)
-                    .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget, alignment: .leading)
+                    .frame(width: Spacing.minTouchTarget, height: Spacing.minTouchTarget)
                     .contentShape(Rectangle())
             }
             .buttonStyle(PressScaleButtonStyle())
             .accessibilityLabel(Text(closeLabel))
+            // Laid out in a 24 pt slot (the icon's), keeping the 44 pt target overhanging both sides.
+            .padding(.horizontal, -(Spacing.minTouchTarget - Self.sideSlot) / 2)
 
             Group {
                 switch style {
@@ -38,14 +40,22 @@ struct FlowHeader: View {
             .accessibilityLabel(Text(stage))
             .accessibilityValue(Text("Question \(stageCurrent) of \(stageTotal)"))
 
+            // As wide as the ✕ slot, so the bar sits centred on the screen.
             if style == .segmented {
                 Text(verbatim: "\(step) / \(totalSteps)")
                     .font(Typography.micro.weight(.bold).monospacedDigit())
                     .foregroundStyle(Color.mutedInk)
+                    .fixedSize()
+                    .frame(minWidth: Self.sideSlot, alignment: .trailing)
                     .accessibilityHidden(true)
+            } else {
+                Color.clear.frame(width: Self.sideSlot, height: 0)
             }
         }
     }
+
+    /// The ✕ icon's width; the bar keeps this much room on each side.
+    private static let sideSlot: CGFloat = 24
 
     private var segmentedBar: some View {
         HStack(spacing: Spacing.xxs) {

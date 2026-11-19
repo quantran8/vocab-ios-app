@@ -54,7 +54,12 @@ final class LearnerStore {
             await syncDeviceSettings(profile.settings, weeklySessionGoal: localWeeklyGoal)
             if let scope = profile.scope, profile.hasFinishedOnboarding {
                 TopicCatalog.update(with: try await api.catalog())
-                plan.adopt(scope, wordsPerDay: profile.settings.dailyNewWordGoal, reviewsPerSession: profile.settings.reviewsPerSession)
+                plan.adopt(
+                    scope,
+                    wordsPerDay: profile.settings.dailyNewWordGoal,
+                    reviewsPerSession: profile.settings.reviewsPerSession,
+                    dailySpeaking: profile.settings.dailySpeaking ?? false
+                )
             } else {
                 plan.resetOnboarding()
             }
@@ -178,6 +183,9 @@ final class LearnerStore {
         if preferences.reviewsPerSession != profile?.settings.reviewsPerSession {
             update.reviewsPerSession = .some(preferences.reviewsPerSession)
         }
+        if preferences.dailySpeaking != (profile?.settings.dailySpeaking ?? false) {
+            update.dailySpeaking = preferences.dailySpeaking
+        }
         try await api.updateSettings(update)
         plan.save(preferences)
         // Home's review count (`dueCap`) follows both numbers.
@@ -223,6 +231,16 @@ final class LearnerStore {
     func clearNewWordOverride() async throws {
         try await api.clearNewWordOverride()
         await refreshHome()
+    }
+
+    /// Saved straight from the Profile switch. The server first, so a failed save leaves the local plan unchanged;
+    /// it applies from the next planned session.
+    func setDailySpeaking(_ enabled: Bool) async throws {
+        try await api.updateSettings(SettingsUpdate(dailySpeaking: enabled))
+        var preferences = plan.current
+        preferences.dailySpeaking = enabled
+        plan.save(preferences)
+        await reloadProfile()
     }
 
     func setAutoBalance(_ enabled: Bool) async throws {

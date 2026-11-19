@@ -67,6 +67,16 @@ struct HomeView: View {
         return status.backlog > status.sessionReviews
     }
 
+    /// What the next session holds, naming only the parts it has ("8 new", not "0 to review · 8 new").
+    private func sessionCounts(_ status: DailyLessonStatus) -> Text? {
+        switch (status.sessionReviews > 0, status.newWords > 0) {
+        case (true, true): Text("\(status.sessionReviews) to review · \(status.newWords) new")
+        case (true, false): Text("\(status.sessionReviews) to review")
+        case (false, true): Text("\(status.newWords) new")
+        case (false, false): nil
+        }
+    }
+
     // MARK: Header
 
     /// One row, no wordmark and no greeting (docs/app-redesign-v1.html, 1.1): Syllie on the left, the learner's lifetime LP
@@ -135,8 +145,8 @@ struct HomeView: View {
                         }
                     }
                     .padding(.top, Spacing.s)
-                } else {
-                    Text("\(status.sessionReviews) to review · \(status.newWords) new")
+                } else if let counts = sessionCounts(status) {
+                    counts
                         .font(Typography.screenTitle.weight(.heavy).monospacedDigit())
                         .padding(.top, Spacing.xxs)
                 }

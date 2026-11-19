@@ -497,6 +497,27 @@
           "evaluation": {
             "acceptedResponses": ["appreciate"]
           }
+        },
+        {
+          "id": "lab-recording-2",
+          "template": "recording",
+          "variant": "scripted_pronunciation",
+          "maxRetries": 2,
+          "prompt": {
+            "type": "text",
+            "text": "clarify"
+          },
+          "question": "Read this word aloud.",
+          "assessment": {
+            "kind": "azurePronunciation"
+          },
+          "meaningCue": {
+            "text": "làm rõ",
+            "question": "Which English word means this? Try saying it before you see the word."
+          },
+          "evaluation": {
+            "acceptedResponses": ["clarify"]
+          }
         }
       ]
     }

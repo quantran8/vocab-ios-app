@@ -599,7 +599,7 @@ private struct WordReview: View {
                     }
                     ForEach(draft.examples) { example in
                         Eyebrow(text: "Example")
-                        Text(highlightedExample(example.text, at: draft.locator(for: example))).font(Typography.secondary)
+                        HighlightedSentence(sentence: example.text, locator: draft.locator(for: example)).font(Typography.secondary)
                         if !example.translation.isEmpty { ExampleTranslation(text: example.translation) }
                     }
                     if canSelect {

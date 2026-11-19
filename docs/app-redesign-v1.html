@@ -315,42 +315,41 @@ const blankUnder = `<div class="absolute inset-0 bg-white">${status()}</div>`;
 </script>
 <script>
 /* ===================== PRACTICE SCREENS (inspired by Duolingo) ===================== */
+/* ✕ in a 24pt slot (its 44pt tap area overhangs), and an empty 24pt slot on the other side, so the bar is centred. */
 const practiceHeader = (pct) => `
   <div class="px-5 pt-1 pb-3 flex items-center gap-4">
-    <span class="text-ink-400">${ic('x', 'w-6 h-6')}</span>
+    <span class="w-6 shrink-0 text-ink-400">${ic('x', 'w-6 h-6')}</span>
     <div class="flex-1">${bar(pct, 'bg-blue-500', 'h-2.5')}</div>
+    <span class="w-6 shrink-0"></span>
   </div>`;
 
-function wordIntro(known) {
+/* Word intro (always the known-check step): part of speech is an italic line under the word; the card shows
+   the meaning and example, the English definition is behind "Xem chi tiết"; "Nghĩa khác" sits outside the card. */
+function wordIntro() {
   return `${status()}${practiceHeader(38)}
   <div class="flex-1 overflow-hidden px-6">
     <div class="text-center pt-5">
       <div class="text-[44px] font-extrabold tracking-[-1.6px] leading-none">resilient</div>
-      <div class="mt-4 flex items-center justify-center gap-3 text-[17px] text-ink-600">/rɪˈzɪliənt/
+      <div class="mt-2.5 text-[15px] italic text-ink-500">tính từ</div>
+      <div class="mt-3 flex items-center justify-center gap-3 text-[17px] text-ink-600">/rɪˈzɪliənt/
         ${soundInline('l')}</div>
     </div>
-    <div class="mt-7 card p-5">
-      <div class="eyebrow">Loại từ</div>
-      <div class="mt-1.5 text-[17px] font-semibold">tính từ</div>
-      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
-        <div class="eyebrow">Nghĩa</div>
-        <div class="mt-1.5 text-[26px] font-extrabold tracking-tight leading-tight">kiên cường, mau phục hồi</div>
+    <div class="mt-7 card">
+      <div class="p-5 pb-4">
+        <div class="text-[26px] font-extrabold tracking-tight leading-tight">kiên cường, mau phục hồi</div>
       </div>
-      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
-        <div class="eyebrow">Định nghĩa</div>
-        <p class="mt-1.5 text-[16px] leading-snug text-ink-700">able to recover quickly from difficult conditions</p>
-      </div>
-      <div class="mt-4 pt-4 border-t-[1.5px] border-ink-100">
-        <div class="eyebrow">Trong ngữ cảnh</div>
-        <p class="mt-1.5 text-[16px] leading-snug text-ink-700">Children are often more <mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">resilient</mark> than adults.</p>
+      <div class="mx-5 pt-4 pb-4 border-t-[1.5px] border-ink-100">
+        <p class="text-[16px] leading-snug text-ink-700">Children are often more <mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">resilient</mark> than adults.</p>
         <p class="mt-2 text-[14px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-0.5')}Trẻ em thường kiên cường hơn người lớn.</p>
       </div>
+      <div class="mx-5 border-t-[1.5px] border-ink-100 h-12 flex items-center justify-between text-[15px] font-semibold text-ink-500">
+        Xem chi tiết${ic('down', 'w-4 h-4')}</div>
     </div>
-    ${known ? '' : `<button class="mt-2 w-full h-11 flex items-center gap-2 text-[15px] font-semibold text-blue-600">${ic('book', 'w-5 h-5')}Nghĩa khác<span class="pill bg-blue-50 text-blue-700">2</span><span class="ml-auto">${ic('chev', 'w-4 h-4')}</span></button>`}
+    <button class="mt-2 w-full h-11 flex items-center gap-2 text-[15px] font-semibold text-blue-600">${ic('book', 'w-5 h-5')}Nghĩa khác<span class="pill bg-blue-50 text-blue-700">2</span><span class="ml-auto">${ic('chev', 'w-4 h-4')}</span></button>
   </div>
   <div class="px-6 pt-3 pb-10 space-y-3">
     <button class="btn btn-ink">Tiếp tục</button>
-    ${known ? '<button class="btn text-ink-950">Tôi biết từ này</button>' : ''}
+    <button class="btn text-ink-950">Tôi biết từ này</button>
   </div>`;
 }
 
@@ -362,7 +361,7 @@ function otherMeaningsSheet() {
       <div><div class="eyebrow mb-1.5">Trong ngữ cảnh</div><p class="text-[15px] leading-snug">${ex}</p>
         <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div></div>` : ''}</div>`;
   const hl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
-  return sheetOver(wordIntro(false), `
+  return sheetOver(wordIntro(), `
     <div class="flex items-start gap-3 px-5 pt-3">
       <div class="flex-1"><h2 class="text-[26px] font-extrabold tracking-[-0.6px] leading-tight">Các nghĩa khác của “resilient”</h2>
         <p class="mt-1.5 text-[15px] text-ink-600">Chỉ để tham khảo · Không thuộc bài học này</p></div>
@@ -683,6 +682,16 @@ function recordingTask() {
   });
 }
 
+/* A learned word's recording (meaningCue): an unscored try from the meaning, then the read-aloud above. */
+function recordingCueTask() {
+  return taskScreen({
+    question: 'Từ tiếng Anh nào có nghĩa này? Hãy thử nói trước khi xem từ.',
+    prompt: textPrompt('trân trọng', 30),
+    content: `<p class="mt-8 text-center text-[15px] text-ink-600">Hãy nói thành tiếng, rồi xem từ để kiểm tra.</p>`,
+    panelHtml: panel('custom', { html: '<button class="btn btn-ink">Xem từ</button><button class="btn btn-line3d mt-3">Không thể nói lúc này</button>' }),
+  });
+}
+
 /* ===================== PRODUCT SCREENS (inspired by Brilliant) ===================== */
 /* done: every new word of the collection is learned (scope exhausted, all topics chosen, no added words left). */
 function home(done = false) {
@@ -895,7 +904,8 @@ function profile() {
         <div class="row"><span class="flex-1">Từ ôn / buổi</span><span class="font-bold">20 từ</span></div>
         <div class="row"><span class="flex-1">Ngày học</span><span class="font-bold">Mỗi ngày</span></div>
         <div class="row"><span class="flex-1">Nhắc nhở</span><span class="font-bold">20:00</span></div>
-        <div class="row py-3"><div class="flex-1"><div>Tự cân bằng ôn và từ mới</div><div class="text-[13px] text-ink-500">Bớt từ mới khi có nhiều từ chờ ôn</div></div><span class="switch on"></span></div>
+        <div class="row"><span class="flex-1 flex items-center gap-1.5">Luyện nói${ic('info', 'w-4 h-4 text-ink-500')}</span><span class="switch"></span></div>
+        <div class="row"><span class="flex-1 flex items-center gap-1.5">Tự cân bằng ôn và từ mới${ic('info', 'w-4 h-4 text-ink-500')}</span><span class="switch on"></span></div>
       </div></div>
     <div class="mt-8">${sectionTitle('Ôn tập')}
       <div class="card">
@@ -1224,7 +1234,7 @@ function obLevel(selected) {
 
 function obPlacementQuestion() {
   return `${status()}
-  <div class="px-5 pt-1 pb-3 flex items-center gap-4"><span class="text-ink-400">${ic('x', 'w-6 h-6')}</span><div class="flex-1">${bar(40, 'bg-blue-500', 'h-2.5')}</div></div>
+  <div class="px-5 pt-1 pb-3 flex items-center gap-4"><span class="w-6 shrink-0 text-ink-400">${ic('x', 'w-6 h-6')}</span><div class="flex-1">${bar(40, 'bg-blue-500', 'h-2.5')}</div><span class="w-6 shrink-0"></span></div>
   <div class="flex-1 overflow-hidden px-6">
     <h2 class="text-[22px] font-bold tracking-tight mt-2">Chọn nghĩa đúng của từ</h2>
     ${textPrompt('reluctant')}
@@ -1276,6 +1286,7 @@ function obRoutine() {
     ${obTitle('Lịch học của bạn')}
     <div class="mt-7"><div class="font-bold mb-2.5">Từ mới / ngày</div>${stepper(10)}</div>
     <div class="mt-6"><div class="font-bold mb-2.5">Từ ôn / buổi</div>${stepper(10)}<div class="mt-2 text-[13px] text-ink-500">Theo số từ mới, ít nhất 5.</div></div>
+    <div class="mt-6 card"><div class="row"><span class="flex-1 flex items-center gap-1.5 font-bold">Luyện nói${ic('info', 'w-4 h-4 text-ink-500')}</span><span class="switch"></span></div></div>
     <div class="mt-6"><div class="flex justify-between items-baseline mb-2.5"><span class="font-bold">Ngày học</span><span class="link text-[14px]">Mỗi ngày</span></div>
       <div class="flex gap-1.5">${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((d, i) => `<span class="day ${i < 5 ? 'on' : ''}">${d}</span>`).join('')}</div></div>
     <div class="mt-6 card">
@@ -1369,6 +1380,7 @@ document.getElementById('flows').innerHTML = [
     go('Tiếp tục'),
     frame('0b.6', 'Lịch học', obRoutine(), [
       'Cùng thành phần và nhãn với Lịch học của bạn ở Hồ sơ (stepper "Từ mới / ngày", ô ngày, Toggle + giờ của iOS). Không ghi ước lượng thời gian: không có dữ liệu đứng sau.',
+      '"Luyện nói" (Toggle iOS, mặc định tắt) bật bài đọc to trong Daily. Không có dòng phụ: ⓘ cạnh nhãn mở popover "Đọc to từ trong các bài học. Đúng hay sai đều không ảnh hưởng tiến độ học của bạn.", như ⓘ của Bài học hôm nay.',
       'Nút "Tạo kế hoạch học" thay "Create my flow". Lỗi lưu hiện dưới nội dung, nút giữ nguyên để thử lại.',
     ]),
     go('Tạo kế hoạch học'),
@@ -1421,20 +1433,21 @@ document.getElementById('flows').innerHTML = [
       'Một nút "Học từ mới".',
     ]),
     go('Học từ mới'),
-    frame('1.9', 'Giới thiệu từ', wordIntro(false), [
-      'Một card: Loại từ → Nghĩa → Định nghĩa → Trong ngữ cảnh; Nghĩa là thông tin chính.',
-      'Dưới từ chỉ còn IPA và loa.',
-      'Link "Nghĩa khác" (Blue, kèm số nghĩa) chỉ hiện khi từ có nghĩa khác ngoài nghĩa đang học; tải lỗi thì ẩn link.',
+    frame('1.10', 'Giới thiệu từ', wordIntro(), [
+      'Màn giới thiệu từ duy nhất: buổi học hằng ngày luôn có bước kiểm tra "đã biết", nên luôn có "Tôi biết từ này".',
+      'Loại từ thuộc về từ, không thuộc về nghĩa (như Cambridge / từ điển Apple): một dòng nghiêng 15 ink-500 ngay dưới từ, trên dòng IPA + loa.',
+      'Card không có eyebrow: Nghĩa (26 Heavy), rồi ví dụ kèm bản dịch.',
+      'Định nghĩa tiếng Anh ẩn sau hàng "Xem chi tiết ⌄" ở đáy card (ink-500); chạm thì card mở rộng tại chỗ, hiện khối Định nghĩa (có eyebrow), hàng đổi thành "Thu gọn ⌃". Không đổi tiến độ buổi học.',
+      'Link "Nghĩa khác" (Blue, kèm số nghĩa) nằm ngoài card, vì card là nghĩa đang học còn nghĩa khác không thuộc bài học. Chỉ hiện khi từ có nghĩa khác; tải lỗi thì ẩn link.',
+      '"Tôi biết từ này" là nút chữ ink, không nền, không viền, không cạnh dày, dưới "Tiếp tục".',
     ]),
     go('Chạm Nghĩa khác'),
-    frame('1.9a', 'Nghĩa khác (sheet)', otherMeaningsSheet(), [
+    frame('1.10a', 'Nghĩa khác (sheet)', otherMeaningsSheet(), [
       'Sheet <code>.medium</code>/<code>.large</code>, có grabber và nút ✕; phụ đề "Chỉ để tham khảo · Không thuộc bài học này".',
       'Tiêu đề Sheet Title 26 Heavy; phụ đề Secondary 15 ink-600.',
       'Nhóm theo loại từ (eyebrow); mỗi nghĩa là một card mở/đóng giống Chi tiết từ (viền 2pt ink-200, bo 20), mở được nhiều card cùng lúc (mở sẵn nghĩa đầu tiên). Card mở hiện Định nghĩa + Trong ngữ cảnh (bản dịch kèm icon), có pill Đã học / Chưa học như Chi tiết từ (bên phải tên nghĩa, trước chevron), không có Kỹ năng.',
-      'Không đổi tiến độ buổi học: đóng sheet là về lại 1.9, "Tiếp tục" vẫn như cũ.',
+      'Không đổi tiến độ buổi học: đóng sheet là về lại 1.10, "Tiếp tục" và "Tôi biết từ này" vẫn như cũ.',
     ]),
-    go('Đóng sheet · Tiếp tục'),
-    frame('1.10', 'Giới thiệu từ · kiểm tra "đã biết"', wordIntro(true), ['"Tôi biết từ này" là nút chữ ink, không nền, không viền, không cạnh dày, dưới "Tiếp tục".']),
     go('Chạm ✕ bất kỳ lúc nào'),
     frame('1.11', 'Rời buổi học (sheet)', exitSheet(), [
       'Sheet hệ thống (<code>.sheet</code> + detent) thay <code>.alert</code>.',
@@ -1533,6 +1546,7 @@ document.getElementById('flows').innerHTML = [
     frame('T5', 'Nối cặp (match)', matchTask(), ['Không có nút Kiểm tra: cặp đúng khóa màu Green, đang chọn màu Blue; panel đếm số cặp đã ghép.']),
     frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.', 'Phím cao 46pt, chữ 20pt (gần bàn phím iOS); card bàn phím đệm ngang 8pt để phím rộng nhất có thể.']),
     frame('T7', 'Đọc to (recording)', recordingTask(), ['Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
+    frame('T7a', 'Đọc to · gợi nghĩa', recordingCueTask(), ['Chỉ có ở recording của từ đã học (từ ôn trong Daily, Ngẫu nhiên, Từ còn yếu; backend gửi <code>meaningCue</code>). Từ mới vào thẳng T7.', 'Bước này không chấm, không ghi âm, không gửi event: không có micro. Tiêu đề và nghĩa lấy từ backend; nghĩa cỡ 30pt như đề của Gõ từ.', '"Xem từ" (Ink) chuyển sang T7 với chính từ đó; "Không thể nói lúc này" bỏ qua cả bài như ở T7.']),
   ]),
   flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (cần chọn kỹ năng), từ còn yếu (bắt đầu ngay), quản lý từ đã thêm.', [
     frame('2.1', 'Từ của tôi', myWords(), [

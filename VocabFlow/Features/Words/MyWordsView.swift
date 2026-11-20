@@ -40,7 +40,7 @@ struct MyWordsView: View {
 
                     SectionTitle("Practice")
                         .padding(.top, Spacing.xl + Spacing.xxs)
-                    practiceCard(needPractice: needPractice)
+                    practiceSection(needPractice: needPractice)
 
                     SectionTitle("All words") {
                         TextLink(title: "Manage added") { customWordSheet = .list }
@@ -145,9 +145,28 @@ struct MyWordsView: View {
         Task { await practice.start(mode) }
     }
 
-    /// Random practice needs one more step (›); Weak Words and Speaking start at once, Weak Words only when it has words.
-    private func practiceCard(needPractice: Int) -> some View {
-        VStack(spacing: 0) {
+    /// Weak Words and Speaking start at once (a button each; Weak Words only when it has words); Random needs one more step (›).
+    private func practiceSection(needPractice: Int) -> some View {
+        VStack(spacing: Spacing.s) {
+            HStack(alignment: .top, spacing: Spacing.s) {
+                PracticeTile(
+                    systemImage: "scope",
+                    tone: .error,
+                    title: "Weak Words",
+                    subtitle: needPractice > 0 ? "Words you keep missing" : "No words need practice"
+                ) {
+                    if needPractice > 0 {
+                        SmallButton(title: "Practice now", kind: .practice, fillsWidth: true) { startPractice(.weakWordsPractice) }
+                    }
+                }
+                PracticeTile(systemImage: "mic.fill", tone: .success, title: "Speaking Practice", subtitle: "Say your words out loud") {
+                    SmallButton(title: "Speak now", systemImage: "mic.fill", kind: .practice, fillsWidth: true) {
+                        startPractice(.speakingPractice)
+                    }
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+
             Button(action: onOpenRandomPractice) {
                 PracticeRow(systemImage: "shuffle", tone: .accent, title: "Random Practice", subtitle: "Choose a collection or topics to practice") {
                     Image(systemName: "chevron.right")
@@ -159,29 +178,8 @@ struct MyWordsView: View {
             }
             .buttonStyle(PressScaleButtonStyle())
             .accessibilityElement(children: .combine)
-
-            CardDivider()
-
-            PracticeRow(
-                systemImage: "scope",
-                tone: .error,
-                title: "Weak Words",
-                subtitle: needPractice > 0 ? "Words you keep missing" : "No words need practice"
-            ) {
-                if needPractice > 0 {
-                    SmallButton(title: "Practice now", kind: .practice) { startPractice(.weakWordsPractice) }
-                }
-            }
-            .accessibilityElement(children: .contain)
-
-            CardDivider()
-
-            PracticeRow(systemImage: "mic.fill", tone: .success, title: "Speaking Practice", subtitle: "Say your words out loud") {
-                SmallButton(title: "Practice now", kind: .practice) { startPractice(.speakingPractice) }
-            }
-            .accessibilityElement(children: .contain)
+            .cardSurface()
         }
-        .cardSurface()
     }
 
     private func row(_ word: WordProgress, isLast: Bool) -> some View {
@@ -242,7 +240,7 @@ private enum CustomWordSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
-/// The two library figures in one card, split by a hairline. Read-only.
+/// Words learned as the main figure; need practice and fluent are subsets of it, so they sit smaller beside it. Read-only.
 private struct LibraryStats: View {
     let learned: Int
     let needPractice: Int
@@ -251,43 +249,101 @@ private struct LibraryStats: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            figure(learned, caption: "Words learned", color: .ink)
-            divider
-            figure(needPractice, caption: "Need practice", color: needPractice > 0 ? .coral600 : .ink400)
-            if let fluent {
-                divider
-                figure(fluent, caption: "Said fluently", color: .successInk)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(learned, format: .number.locale(AppLanguage.active.locale))
+                    .font(Typography.stat.monospacedDigit())
+                    .tracking(Typography.tightTracking)
+                    .foregroundStyle(Color.ink)
+                    .contentTransition(.numericText())
+                caption("Words learned")
             }
+            .padding(Spacing.m)
+            .frame(maxHeight: .infinity, alignment: .leading)
+            .layoutPriority(1)
+            .accessibilityElement(children: .combine)
+
+            Rectangle()
+                .fill(Color.divider)
+                .frame(width: Borders.hairline)
+                .accessibilityHidden(true)
+
+            // Not a Grid: Grid truncates a caption instead of wrapping it.
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                subset(needPractice, caption: "Need practice", color: needPractice > 0 ? .coral600 : .ink400)
+                if let fluent {
+                    subset(fluent, caption: "Said fluently", color: .successInk)
+                }
+            }
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
         .fixedSize(horizontal: false, vertical: true)
         .cardSurface()
     }
 
-    private var divider: some View {
-        Rectangle()
-            .fill(Color.divider)
-            .frame(width: Borders.hairline)
-            .accessibilityHidden(true)
+    private func subset(_ value: Int, caption label: LocalizedStringKey, color: Color) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+            // Both figures laid out hidden so the number column is as wide as the wider one.
+            ZStack(alignment: .leading) {
+                figure(needPractice).hidden()
+                figure(fluent ?? 0).hidden()
+                figure(value)
+                    .foregroundStyle(color)
+                    .contentTransition(.numericText())
+            }
+            caption(label)
+        }
+        .accessibilityElement(children: .combine)
     }
 
-    private func figure(_ value: Int, caption: LocalizedStringKey, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value, format: .number.locale(AppLanguage.active.locale))
-                .font(Typography.stat.monospacedDigit())
-                .tracking(Typography.tightTracking)
-                .foregroundStyle(color)
-                .contentTransition(.numericText())
-            Text(caption)
-                .font(Typography.micro.weight(.semibold))
-                .foregroundStyle(Color.mutedInk)
-        }
-        .padding(Spacing.m)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+    private func figure(_ value: Int) -> Text {
+        Text(value, format: .number.locale(AppLanguage.active.locale))
+            .font(Typography.statSmall.monospacedDigit())
+    }
+
+    private func caption(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(Typography.micro.weight(.semibold))
+            .foregroundStyle(Color.mutedInk)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
-/// A row of the Practice card: icon badge, title and subtitle, then a trailing chevron or button.
+/// A practice that starts at once: icon, title and subtitle on top, its button pinned to the bottom so side-by-side tiles line up.
+private struct PracticeTile<Action: View>: View {
+    let systemImage: String
+    let tone: IconBadge.Tone
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    @ViewBuilder let action: Action
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            IconBadge(systemImage: systemImage, tone: tone)
+            VStack(alignment: .leading, spacing: Spacing.xxs / 2) {
+                Text(title)
+                    .font(Typography.emphasis)
+                    .foregroundStyle(Color.ink)
+                Text(subtitle)
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
+            }
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, Spacing.s)
+            .accessibilityElement(children: .combine)
+            Spacer(minLength: 0)
+            action
+                .padding(.top, Spacing.m)
+        }
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .cardSurface()
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// The Random Practice row: icon badge, title and subtitle, then a trailing chevron or button.
 private struct PracticeRow<Trailing: View>: View {
     let systemImage: String
     let tone: IconBadge.Tone

@@ -93,6 +93,7 @@ struct SmallButton: View {
     let title: LocalizedStringKey
     var systemImage: String?
     var kind: ActionButtonStyle.Kind = .outline
+    var fillsWidth = false
     let action: () -> Void
 
     var body: some View {
@@ -104,11 +105,13 @@ struct SmallButton: View {
                         .accessibilityHidden(true)
                 }
                 Text(title)
+                    .minimumScaleFactor(fillsWidth ? 0.8 : 1)
             }
             .font(Typography.actionSmall)
             .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, Spacing.m)
+            .fixedSize(horizontal: !fillsWidth, vertical: true)
+            .padding(.horizontal, fillsWidth ? Spacing.s : Spacing.m)
+            .frame(maxWidth: fillsWidth ? .infinity : nil)
             .frame(height: Spacing.buttonSmallHeight)
         }
         // Never squeezed into "…" by a row: the row's text wraps instead.

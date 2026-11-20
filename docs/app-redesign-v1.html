@@ -725,23 +725,26 @@ function home(done = false) {
   </div>${tabbar('Trang chủ')}`;
 }
 
-/* `noWeak`: no word needs practice, so the Weak row says so and has no button. */
+/* `noWeak`: no word needs practice, so the Weak Words tile says so and has no button. */
 function myWords(noWeak = false) {
+  const tile = (icon, tone, title, sub, btn) => `<div class="card p-4 flex flex-col"><span class="ico ${tone}">${ic(icon)}</span><div class="mt-3 font-bold">${title}</div><div class="text-[13px] text-ink-500">${sub}</div><div class="flex-1"></div>${btn}</div>`;
   const words = [['resilient', '/rɪˈzɪliənt/', 2, 3], ['meticulous', '/məˈtɪkjələs/', 1, 1], ['ambiguous', '/æmˈbɪɡjuəs/', 1, 2], ['commute', '/kəˈmjuːt/', 2, 2], ['negotiate', '/nɪˈɡoʊʃieɪt/', 1, 1], ['thrive', '/θraɪv/', 1, 1]];
   return `${status()}
   <div class="flex-1 overflow-hidden px-5">
     <div class="flex items-center justify-between pt-6"><h1 class="h-display">Từ của tôi</h1><button class="btn btn-line btn-sm">${ic('plus', 'w-4 h-4')}Thêm từ</button></div>
-    <div class="mt-6 card grid grid-cols-3">
+    <div class="mt-6 card flex">
       <div class="p-4"><div class="text-[30px] font-extrabold tracking-tight tabular-nums">248</div><div class="text-[13px] text-ink-500 font-semibold">Từ đã học</div></div>
-      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums ${noWeak ? 'text-ink-400' : 'text-coral-600'}">${noWeak ? 0 : 12}</div><div class="text-[13px] text-ink-500 font-semibold">Cần luyện thêm</div></div>
-      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums text-green-800">31</div><div class="text-[13px] text-ink-500 font-semibold">Nói thành thạo</div></div>
+      <div class="p-4 flex-1 border-l-[1.5px] border-ink-100 flex flex-col gap-2 justify-center">
+        <div class="flex items-baseline gap-2"><span class="w-7 text-[19px] font-extrabold tabular-nums ${noWeak ? 'text-ink-400' : 'text-coral-600'}">${noWeak ? 0 : 12}</span><span class="text-[13px] text-ink-500 font-semibold">Cần luyện thêm</span></div>
+        <div class="flex items-baseline gap-2"><span class="w-7 text-[19px] font-extrabold tabular-nums text-green-800">31</span><span class="text-[13px] text-ink-500 font-semibold">Nói thành thạo</span></div>
+      </div>
     </div>
     <div class="mt-9">${sectionTitle('Luyện tập')}
-      <div class="card">
-        <div class="flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('shuffle')}</span><div class="flex-1"><div class="font-bold">Luyện tập ngẫu nhiên</div><div class="text-[13px] text-ink-500">Chọn bộ từ hoặc chủ đề để luyện</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
-        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-coral-50 text-coral-600">${ic('target')}</span><div class="flex-1"><div class="font-bold">Từ còn yếu</div><div class="text-[13px] text-ink-500">${noWeak ? 'Không có từ nào cần luyện' : 'Những từ bạn hay sai'}</div></div>${noWeak ? '' : '<button class="btn btn-blue btn-sm">Luyện ngay</button>'}</div>
-        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-green-50 text-green-700">${ic('mic')}</span><div class="flex-1"><div class="font-bold">Luyện nói</div><div class="text-[13px] text-ink-500">Đọc to các từ của bạn</div></div><button class="btn btn-blue btn-sm">Luyện ngay</button></div>
+      <div class="grid grid-cols-2 gap-3">
+        ${tile('target', 'bg-coral-50 text-coral-600', 'Từ còn yếu', noWeak ? 'Không có từ nào cần luyện' : 'Những từ bạn hay sai', noWeak ? '' : '<button class="btn btn-blue btn-sm w-full mt-4">Luyện ngay</button>')}
+        ${tile('mic', 'bg-green-50 text-green-700', 'Luyện nói', 'Đọc to các từ của bạn', `<button class="btn btn-blue btn-sm w-full mt-4">${ic('mic', 'w-4 h-4')}Nói ngay</button>`)}
       </div>
+      <div class="card mt-3"><div class="flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('shuffle')}</span><div class="flex-1"><div class="font-bold">Luyện tập ngẫu nhiên</div><div class="text-[13px] text-ink-500">Chọn bộ từ hoặc chủ đề để luyện</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div></div>
     </div>
     <div class="mt-9">${sectionTitle('Tất cả từ', '<span class="link">Quản lý từ đã thêm</span>')}
       <div class="field">${ic('search', 'w-5 h-5 text-ink-400')}<span class="text-ink-400">Tìm trong từ của bạn</span></div>
@@ -1516,13 +1519,13 @@ document.getElementById('flows').innerHTML = [
   ]),
   flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (chọn nguồn từ), từ còn yếu và luyện nói (bắt đầu ngay), quản lý từ đã thêm.', [
     frame('2.1', 'Từ của tôi', myWords(), [
-      'Các con số thống kê nằm chung một card để có điểm tựa; chỉ để xem, không chạm được. "Nói thành thạo" chỉ hiện khi server gửi fluentWords.',
-      'Luyện tập là các dòng trong một card. Ngẫu nhiên có › vì cần thêm bước chọn nguồn từ (câu phụ nói rõ bước đó); Từ còn yếu và Luyện nói có nút "Luyện ngay". Từ còn yếu là từ trả lời sai gần đây (lần gần nhất vẫn sai); Luyện nói là mỗi từ một bài ghi âm, từ nói trượt lần trước lên đầu.',
+      'Card thống kê có thứ bậc: "Từ đã học" là số chính bên trái (30pt); "Cần luyện thêm" và "Nói thành thạo" là tập con của nó nên nhỏ hơn (19pt), xếp chồng bên phải, cột số rộng bằng số dài hơn để chữ thẳng hàng. Cột trái chỉ rộng vừa nội dung, phần còn lại cho cột phải; nhãn dài thì xuống dòng, không cắt "…". Chỉ để xem, không chạm được. "Nói thành thạo" chỉ hiện khi server gửi fluentWords.',
+      'Luyện tập: Từ còn yếu và Luyện nói bấm là vào luyện ngay, nên là hai ô cạnh nhau, cao bằng nhau, nút Blue nằm sát đáy ô để hai nút luôn thẳng hàng dù chữ dài ngắn. Nút của Luyện nói có icon micro và chữ "Nói ngay" để khác "Luyện ngay". Luyện tập ngẫu nhiên là một dòng có › bên dưới, vì nó mở màn chọn nguồn từ (câu phụ nói rõ bước đó). Từ còn yếu là từ trả lời sai gần đây (lần gần nhất vẫn sai); Luyện nói là mỗi từ một bài ghi âm, từ nói trượt lần trước lên đầu.',
       'IPA nằm dưới từ, chỉ khi mọi nghĩa của từ (kể cả nghĩa chưa học) đọc giống nhau; đọc khác nhau thì dòng từ không có IPA.',
     ], 1130),
     go('Không còn từ yếu'),
     frame('2.1a', 'Từ của tôi · không có từ yếu', myWords(true), [
-      'Cần luyện thêm = 0: số chuyển Ink 400; dòng Từ còn yếu ghi "Không có từ nào cần luyện" và không có nút, chạm vào không làm gì (không mở phiên rỗng).',
+      'Cần luyện thêm = 0: số chuyển Ink 400; ô Từ còn yếu ghi "Không có từ nào cần luyện" và không có nút (vẫn cao bằng ô bên cạnh), chạm vào không làm gì (không mở phiên rỗng).',
       'Luyện nói luôn có nút: chưa học từ nào thì cả khối Luyện tập ẩn (Từ của tôi hiện màn trống).',
     ], 1130),
     go('Chạm một từ'),

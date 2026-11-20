@@ -256,52 +256,21 @@ struct CheckpointChallenge: Decodable, Equatable, Identifiable {
     let meaningCount: Int
 }
 
-enum SkillStatus: String, Decodable {
-    case demonstrated
-    case notVerified = "not_verified"
-
-    /// An older backend still sends `verified`; it was a stronger `demonstrated`.
-    init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self)
-        guard let status = raw == "verified" ? .demonstrated : SkillStatus(rawValue: raw) else {
-            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Unknown skill status \(raw)"))
-        }
-        self = status
-    }
+/// A pronunciation's speaking progress. `notTried`: no recording of it has been scored yet.
+enum SpeakingStatus: String, LenientEnum, Equatable {
+    case notTried = "not_tried"
+    case practicing, fluent
+    case unknown
+    static let fallback = SpeakingStatus.unknown
 }
 
-enum SkillIssue: String, Decodable {
-    case failed, assisted
-}
-
-struct SkillState: Decodable, Equatable {
-    let status: SkillStatus
-    let needsPractice: Bool
-    let issue: SkillIssue?
-}
-
-/// Form skills only; whether the meaning is remembered is `MeaningMemory`.
-struct MeaningSkills: Decodable, Equatable {
-    let spelling: SkillState
-    /// Absent when the meaning has no pronunciation.
-    let listening: SkillState?
-    let speaking: SkillState?
-
-    private enum CodingKeys: String, CodingKey { case spelling, writing, listening, speaking }
-
-    init(spelling: SkillState, listening: SkillState? = nil, speaking: SkillState? = nil) {
-        self.spelling = spelling
-        self.listening = listening
-        self.speaking = speaking
-    }
-
-    /// An older backend calls spelling `writing` and also sends `reading`, which is ignored.
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        spelling = try container.decodeIfPresent(SkillState.self, forKey: .spelling) ?? container.decode(SkillState.self, forKey: .writing)
-        listening = try container.decodeIfPresent(SkillState.self, forKey: .listening)
-        speaking = try container.decodeIfPresent(SkillState.self, forKey: .speaking)
-    }
+/// Speaking progress of a meaning's default pronunciation.
+struct MeaningSpeaking: Decodable, Equatable {
+    let status: SpeakingStatus
+    /// Azure scores only; nil when every take was scored on the device.
+    var lastScore: Double? = nil
+    var bestScore: Double? = nil
+    var lastAssessedAt: Date? = nil
 }
 
 /// How well a learned meaning holds now (FSRS).
@@ -329,7 +298,7 @@ struct WordMeaning: Decodable, Equatable {
     let nextReviewAt: Date?
 }
 
-/// One library row. Skill states are not part of it: they load with `WordDetail` when a word opens.
+/// One library row. Memory and speaking are not part of it: they load with `WordDetail` when a word opens.
 struct WordProgress: Decodable, Equatable, Identifiable {
     let wordId: String
     let lemma: String
@@ -354,6 +323,8 @@ struct WordProgress: Decodable, Equatable, Identifiable {
 struct WordStats: Decodable, Equatable {
     let learnedWords: Int
     let needPracticeWords: Int
+    /// Words whose default pronunciation is fluent; nil from an older backend.
+    var fluentWords: Int? = nil
 }
 
 /// Every meaning of the word, including the ones not learned yet (`learnedAt == nil`).
@@ -362,9 +333,12 @@ struct WordDetail: Decodable, Equatable {
         let meaningId: String
         let meaning: WordMeaning.Sense
         let learnedAt: Date?
-        let skills: MeaningSkills
         /// Nil until learned, and from an older backend.
         var memory: MeaningMemory? = nil
+        /// Nil when the meaning has no pronunciation to record, and from an older backend.
+        var speaking: MeaningSpeaking? = nil
+        /// Missed recently, the latest answer included (the Weak Words definition).
+        var needsPractice: Bool? = nil
     }
 
     let wordId: String

@@ -1,37 +1,19 @@
 import SwiftUI
 
-/// Pushed from My Words' Random Practice tile. Nothing is planned until Start.
+/// Pushed from My Words' Random Practice tile: pick the words to practise from, right on the screen. Nothing is
+/// planned until Start.
 struct RandomPracticeView: View {
     @Environment(PracticeSessionStore.self) private var practice
-    @Environment(AppSettingsStore.self) private var settings
-    @Environment(\.motion) private var motion
-    /// All four is the mixed practice. Empty can't start.
-    @State private var skills = Set(PracticeSkill.allCases)
     @State private var source: WordSource = .all
-    @State private var showsSourceSheet = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                ScreenTitle("Choose skills")
-
-                SectionTitle("Skills") {
-                    SelectAllButton(allSelected: skills.count == PracticeSkill.allCases.count, action: toggleAllSkills)
-                }
-                .padding(.top, Spacing.xl)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.s), GridItem(.flexible(), spacing: Spacing.s)],
-                          spacing: Spacing.s) {
-                    ForEach(PracticeSkill.allCases) { skill in
-                        SkillCard(skill: skill, isSelected: skills.contains(skill)) { toggle(skill) }
-                    }
-                }
+                ScreenTitle("Random Practice")
 
                 SectionTitle("Word source")
                     .padding(.top, Spacing.xl)
-                SourceButton(entry: WordSourceEntry.entry(for: source, in: sourceCollections), detail: sourceDetail) {
-                    showsSourceSheet = true
-                    settings.feedback.selectionChanged()
-                }
+                WordSourceList(collections: sourceCollections, source: $source)
             }
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.top, Spacing.xxs)
@@ -43,9 +25,6 @@ struct RandomPracticeView: View {
                 PrimaryButton(title: "Start", requirement: startRequirement, isEnabled: startRequirement == nil, action: start)
             }
         }
-        .sheet(isPresented: $showsSourceSheet) {
-            WordSourceSheet(collections: sourceCollections, source: $source)
-        }
     }
 
     /// Collections the learner has learned from.
@@ -53,43 +32,16 @@ struct RandomPracticeView: View {
         TopicCatalog.collections.filter { ($0.learned ?? 0) > 0 }
     }
 
-    /// Under the source name: the collection's word count, or how many topics are picked once the
-    /// learner narrowed it.
-    private var sourceDetail: LocalizedStringKey? {
-        guard case .collection(let id, let topics) = source,
-              let collection = sourceCollections.first(where: { $0.id == id }) else { return nil }
-        if topics.count < collection.learnedTopics.count { return "\(topics.count) topics selected" }
-        return "\(collection.learned ?? 0) words learned"
-    }
-
     /// Why Start is off, or nil when it can start.
     private var startRequirement: LocalizedStringKey? {
-        if skills.isEmpty { return "Choose at least one skill" }
         if case .collection(_, let topics) = source, topics.isEmpty { return "Choose at least one topic" }
         return nil
     }
 
-    private func toggle(_ skill: PracticeSkill) {
-        motion.perform(MotionTokens.snap) {
-            if skills.contains(skill) { skills.remove(skill) } else { skills.insert(skill) }
-        }
-        settings.feedback.selectionChanged()
-    }
-
-    private func toggleAllSkills() {
-        motion.perform(MotionTokens.snap) {
-            skills = skills.count == PracticeSkill.allCases.count ? [] : Set(PracticeSkill.allCases)
-        }
-        settings.feedback.selectionChanged()
-    }
-
     private func start() {
         guard startRequirement == nil else { return }
-        // Every skill is the mixed practice, which the backend plans when no skills are sent.
-        // Wire order follows the enum so the same choice always sends the same request.
-        let chosen = skills.count == PracticeSkill.allCases.count ? [] : PracticeSkill.allCases.filter(skills.contains)
         let filter = source.filter(in: sourceCollections)
-        Task { await practice.startPractice(chosen, filter: filter) }
+        Task { await practice.startPractice(filter: filter) }
     }
 }
 
@@ -146,14 +98,6 @@ private struct WordSourceEntry: Identifiable {
                         mark: CollectionMarkColor.color(for: collection))
     }
 
-    static func entry(for source: WordSource, in collections: [VocabCollection]) -> WordSourceEntry {
-        switch source {
-        case .all: .all
-        case .custom: .custom
-        case .collection(let id, _): collections.first { $0.id == id }.map(collection) ?? .all
-        }
-    }
-
     func matches(_ source: WordSource) -> Bool {
         switch source {
         case .all: id == Self.all.id
@@ -163,53 +107,28 @@ private struct WordSourceEntry: Identifiable {
     }
 }
 
-/// Bottom sheet listing every word source. Picking a collection keeps it open and unfolds its topics right
-/// under that row, inside the same card; any other source closes it.
-private struct WordSourceSheet: View {
+/// Every word source in one card. Picking a collection unfolds its topics right under that row, inside the
+/// same card.
+private struct WordSourceList: View {
     let collections: [VocabCollection]
     @Binding var source: WordSource
     @Environment(AppSettingsStore.self) private var settings
     @Environment(\.motion) private var motion
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Spacer()
-                    SheetCloseButton()
+        let entries = WordSourceEntry.list(collections)
+        VStack(spacing: 0) {
+            ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                if index > 0 { CardDivider() }
+                SourceOptionRow(entry: entry, isSelected: entry.matches(source)) { pick(entry) }
+                if case .collection(let id, let topics) = source,
+                   let collection = entry.collection, collection.id == id {
+                    topicSection(collection, picked: topics)
+                        .transition(.opacity)
                 }
-
-                SheetTitle("Word source")
-
-                let entries = WordSourceEntry.list(collections)
-                VStack(spacing: 0) {
-                    ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
-                        if index > 0 { CardDivider() }
-                        SourceOptionRow(entry: entry, isSelected: entry.matches(source)) { pick(entry) }
-                        if case .collection(let id, let topics) = source,
-                           let collection = entry.collection, collection.id == id {
-                            topicSection(collection, picked: topics)
-                                .transition(.opacity)
-                        }
-                    }
-                }
-                .cardSurface()
-                .padding(.top, Spacing.l)
-            }
-            .padding(.horizontal, Spacing.screenGutter)
-            .padding(.top, Spacing.xs)
-            .padding(.bottom, Spacing.l)
-        }
-        .safeAreaInset(edge: .bottom) {
-            PinnedActionBar {
-                PrimaryButton(title: "Done") { dismiss() }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationCornerRadius(Radii.sheet)
-        .presentationBackground(Color.canvas)
+        .cardSurface()
     }
 
     private func topicSection(_ collection: VocabCollection, picked: Set<String>) -> some View {
@@ -256,8 +175,9 @@ private struct WordSourceSheet: View {
                 source = .collection(id: collection.id, topics: Set(collection.learnedTopics.map(\.id)))
             }
         } else {
-            source = entry.id == WordSourceEntry.custom.id ? .custom : .all
-            dismiss()
+            motion.perform(MotionTokens.snap) {
+                source = entry.id == WordSourceEntry.custom.id ? .custom : .all
+            }
         }
     }
 
@@ -267,96 +187,13 @@ private struct WordSourceSheet: View {
     }
 }
 
-/// "Select all" / "Deselect all", for the skills grid and a collection's topics.
+/// "Select all" / "Deselect all", for a collection's topics.
 private struct SelectAllButton: View {
     let allSelected: Bool
     let action: () -> Void
 
     var body: some View {
         TextLink(title: allSelected ? "Deselect all" : "Select all", action: action)
-    }
-}
-
-/// Selected: Blue 500 border on Blue 50, a white icon badge and a round check.
-private struct SkillCard: View {
-    let skill: PracticeSkill
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Radii.card, style: .continuous)
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                HStack(alignment: .top) {
-                    IconBadge(systemImage: systemImage, tone: isSelected ? .onAccent : .neutral)
-                    Spacer(minLength: 0)
-                    SelectionMark(isOn: isSelected)
-                }
-                Text(title)
-                    .font(Typography.wordClass.weight(.bold))
-                    .foregroundStyle(isSelected ? Color.infoInk : Color.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(Spacing.m)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(isSelected ? Color.selectedSurface : Color.surface, in: shape)
-            .overlay(shape.strokeBorder(isSelected ? Color.interactive : Color.stroke, lineWidth: Borders.card))
-            .contentShape(shape)
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    private var title: LocalizedStringKey {
-        switch skill {
-        case .spelling: "Spelling"
-        case .listening: "Listening"
-        case .speaking: "Speaking"
-        }
-    }
-
-    private var systemImage: String {
-        switch skill {
-        case .spelling: "pencil"
-        case .listening: "headphones"
-        case .speaking: "mic"
-        }
-    }
-}
-
-/// The chosen word source on the main screen; opens the sheet.
-private struct SourceButton: View {
-    let entry: WordSourceEntry
-    let detail: LocalizedStringKey?
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: Spacing.s) {
-                IconBadge(systemImage: entry.systemImage)
-                    .overlay(alignment: .bottomTrailing) {
-                        if let mark = entry.mark {
-                            CollectionMarkDot(color: mark)
-                                .overlay(Circle().strokeBorder(Color.surface, lineWidth: Borders.hairline))
-                                .offset(x: Spacing.xxs / 2, y: Spacing.xxs / 2)
-                        }
-                    }
-                SourceText(title: entry.title, detail: detail)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Color.ink400)
-                    .accessibilityHidden(true)
-            }
-            .padding(Spacing.m)
-            .cardSurface()
-            .contentShape(RoundedRectangle(cornerRadius: Radii.card, style: .continuous))
-        }
-        .buttonStyle(PressScaleButtonStyle())
-        .accessibilityElement(children: .combine)
-        .accessibilityHint(Text("Shows the other word sources"))
     }
 }
 

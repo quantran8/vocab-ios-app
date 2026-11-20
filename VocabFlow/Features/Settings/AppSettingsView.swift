@@ -52,7 +52,7 @@ struct AppSettingsView: View {
                             isChoosingLanguage = true
                         } label: {
                             SettingRow(systemImage: "globe", title: "Language") {
-                                chevron(Text(verbatim: currentLanguage.nativeName))
+                                chevron(Text(verbatim: settings.language.nativeName))
                             }
                         }
                         .buttonStyle(.plain)
@@ -130,7 +130,7 @@ struct AppSettingsView: View {
         }
         .background(Color.canvas)
         .sheet(isPresented: $isChoosingLanguage, onDismiss: applyPickedLanguage) {
-            LanguageSheet(selected: currentLanguage) { language in
+            LanguageSheet(selected: settings.language) { language in
                 pickedLanguage = language
                 isChoosingLanguage = false
             }
@@ -157,10 +157,6 @@ struct AppSettingsView: View {
             }
             .interactiveDismissDisabled(auth.isDeletingAccount)
         }
-    }
-
-    private var currentLanguage: AppLanguage {
-        settings.language ?? .device
     }
 
     /// The task isn't tied to this view: changing the language rebuilds the screen.

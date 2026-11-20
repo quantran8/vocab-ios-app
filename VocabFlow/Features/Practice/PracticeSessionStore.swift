@@ -115,7 +115,6 @@ final class PracticeSessionStore {
     private struct Request {
         var mode: SessionMode
         var challengeID: String? = nil
-        var skills: [PracticeSkill]? = nil
         var filter: PracticeFilter? = nil
         var reviewOnly = false
     }
@@ -199,16 +198,16 @@ final class PracticeSessionStore {
     }
 
     var isWeakPractice: Bool { lastRequest?.mode == .weakWordsPractice }
+    var isSpeakingPractice: Bool { lastRequest?.mode == .speakingPractice }
     var isDaily: Bool { lastRequest?.mode == .daily }
     var isReviewOnly: Bool { lastRequest?.reviewOnly == true }
-    var practiceSkills: [PracticeSkill]? { lastRequest?.skills }
     var practiceFilter: PracticeFilter? { lastRequest?.filter }
-    /// Random and Weak end with "Practice again", which plans the same request anew.
-    var canPracticeAgain: Bool { lastRequest.map { [.randomPractice, .weakWordsPractice].contains($0.mode) } ?? false }
+    /// Random, Weak and Speaking end with "Practice again", which plans the same request anew.
+    var canPracticeAgain: Bool { lastRequest.map { [.randomPractice, .weakWordsPractice, .speakingPractice].contains($0.mode) } ?? false }
 
     /// What the results screen shows for `summary`, the summary in `.finished`.
     func result(for summary: CommitSummary) -> PracticeResult {
-        PracticeResult(mode: lastRequest?.mode ?? .daily, summary: summary, chosenSkills: lastRequest?.skills)
+        PracticeResult(mode: lastRequest?.mode ?? .daily, summary: summary)
     }
     /// A denied microphone empties a speaking plan, and only Settings can fix that.
     var canRecord: Bool { recorder.canRecord }
@@ -226,13 +225,13 @@ final class PracticeSessionStore {
         await begin(Request(mode: .daily, reviewOnly: true))
     }
 
-    /// Random practice on `skills` (empty is mixed practice), from `filter` (nil is every learned word).
-    func startPractice(_ skills: [PracticeSkill], filter: PracticeFilter? = nil) async {
+    /// Random practice from `filter` (nil is every learned word).
+    func startPractice(filter: PracticeFilter? = nil) async {
         guard stage == .idle else { return }
-        await begin(Request(mode: .randomPractice, skills: skills.isEmpty ? nil : skills, filter: filter))
+        await begin(Request(mode: .randomPractice, filter: filter))
     }
 
-    /// From the results of a Random or Weak session: a new session with the same skills and source.
+    /// From the results of a Random, Weak or Speaking session: a new session with the same source.
     func practiceAgain() async {
         guard case .finished = stage, canPracticeAgain, let request = lastRequest else { return }
         close()
@@ -595,7 +594,6 @@ final class PracticeSessionStore {
             mode: request.mode,
             capabilities: capabilities,
             challengeId: request.challengeID,
-            skills: request.skills,
             reviewOnly: isDaily && request.reviewOnly ? true : nil,
             knownCheck: isDaily && !request.reviewOnly ? true : nil,
             filter: request.filter

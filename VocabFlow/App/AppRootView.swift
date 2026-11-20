@@ -30,8 +30,8 @@ struct AppRootView: View {
                 .id(settings.language)
         }
         .environment(\.motion, motion)
-        .environment(\.locale, settings.language?.locale ?? .autoupdatingCurrent)
-        .environment(\.layoutDirection, settings.language?.layoutDirection ?? .leftToRight)
+        .environment(\.locale, settings.language.locale)
+        .environment(\.layoutDirection, settings.language.layoutDirection)
         .scrollBounceBehavior(.basedOnSize)
         .preferredColorScheme(.light)
         .task { await auth.restore() }
@@ -41,7 +41,6 @@ struct AppRootView: View {
             endSplashIfReady(motion)
         }
         .onChange(of: isLaunchLoading) { _, _ in endSplashIfReady(motion) }
-        // Waits for the language step, so `load()` sends the chosen `uiLocale` before anything reads the catalog.
         .task(id: canLoadLearner) {
             if canLoadLearner { await learner.load() }
         }
@@ -66,7 +65,7 @@ struct AppRootView: View {
     }
 
     private var canLoadLearner: Bool {
-        auth.phase == .signedIn && settings.language != nil
+        auth.phase == .signedIn
     }
 
     private var route: RouteID {
@@ -76,9 +75,6 @@ struct AppRootView: View {
     private var appRoute: RouteID {
         guard auth.phase == .signedIn else {
             return auth.phase == .launching ? .loading : .auth
-        }
-        guard settings.language != nil else {
-            return .language
         }
         guard learner.phase == .ready else {
             return .loading
@@ -112,8 +108,6 @@ struct AppRootView: View {
             StatusScreen(title: "Syll", isBusy: true)
         } else if auth.phase == .signedOut {
             AuthView()
-        } else if settings.language == nil {
-            LanguageSelectionView()
         } else if case .failed(let message) = learner.phase {
             StatusScreen(title: "Couldn’t load your account", message: Text(verbatim: message)) {
                 PrimaryButton(title: "Try again") {
@@ -154,7 +148,6 @@ private enum RouteID: Hashable {
     case splash
     case loading
     case auth
-    case language
     case onboarding
     case practice(token: UUID)
     case challenge(token: UUID)

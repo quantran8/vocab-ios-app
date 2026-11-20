@@ -166,9 +166,8 @@ final class ScopeReviewLoadTests: XCTestCase {
 
     func testRandomPracticeSendsTheChosenSource() async {
         let store = makeStore(SessionPlan(sessionID: nil, mode: .randomPractice, steps: []))
-        await store.startPractice([], filter: .topics(["t1"]))
+        await store.startPractice(filter: .topics(["t1"]))
         XCTAssertEqual(api.planRequests.last?.filter, .topics(["t1"]))
-        XCTAssertNil(api.planRequests.last?.skills)
         XCTAssertEqual(store.stage, .empty)
     }
 
@@ -176,7 +175,7 @@ final class ScopeReviewLoadTests: XCTestCase {
         let events = ScopeEvents(completedTopicIds: ["t1"], scopeExhausted: true, collectionCompleted: false)
         let store = makeStore(SessionPlan(sessionID: "s1", mode: .randomPractice, steps: review))
         api.commitResults = [.success(CommitResponse(sessionId: "s1", summary: summary, scopeEvents: events))]
-        await store.startPractice([])
+        await store.startPractice()
         store.continueToPractice()
         store.submitOption(3)
         store.advance()

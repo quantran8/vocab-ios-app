@@ -450,26 +450,24 @@ struct WordDetailSheet: View {
             if let learnedAt = item.learnedAt {
                 if let memory = item.memory {
                     field("Memory") {
-                        MemoryStrengthRow(memory: memory)
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            MemoryStrengthRow(memory: memory)
+                            if item.needsPractice == true {
+                                StatusPill("Needs practice", tone: .error)
+                            }
+                        }
                     }
                 }
-                field("Skills") {
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: Spacing.xs), GridItem(.flexible(), spacing: Spacing.xs)],
-                              spacing: Spacing.xs) {
-                        skillCell("Spelling", item.skills.spelling)
-                        if let listening = item.skills.listening {
-                            skillCell("Listening", listening)
-                        }
-                        if let speaking = item.skills.speaking {
-                            skillCell("Speaking", speaking)
-                        }
+                if let speaking = item.speaking {
+                    field("Speaking") {
+                        speakingCell(speaking)
                     }
                 }
                 Text("Learned \(learnedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: AppLanguage.active.locale)))")
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
             } else {
-                Text("This meaning hasn’t been learned yet. No skill progress is available.")
+                Text("This meaning hasn’t been learned yet. No progress is available.")
                     .font(Typography.secondary)
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
@@ -509,48 +507,47 @@ struct WordDetailSheet: View {
         }
     }
 
-    /// A tinted 2×2 cell: the skill's name over its state, coloured by that state.
-    private func skillCell(_ name: LocalizedStringKey, _ skill: SkillState) -> some View {
-        let tone = skillTone(skill)
+    /// A tinted cell: the speaking status, coloured by it, over the scores when Azure scored the takes.
+    private func speakingCell(_ speaking: MeaningSpeaking) -> some View {
+        let tone = speakingTone(speaking.status)
         return VStack(alignment: .leading, spacing: Spacing.xxs / 2) {
             HStack(spacing: Spacing.xxs) {
-                Text(name)
+                Text(speakingLabel(speaking.status))
                     .font(Typography.micro.weight(.bold))
-                if skill.issue == nil && skill.status == .demonstrated {
+                if speaking.status == .fluent {
                     Image(systemName: "checkmark")
                         .font(Typography.caption.weight(.heavy))
                         .accessibilityHidden(true)
                 }
             }
-            Text(skillLabel(skill))
-                .font(Typography.caption)
-                .opacity(0.9)
-                .fixedSize(horizontal: false, vertical: true)
+            if let last = speaking.lastScore {
+                let best = Int((speaking.bestScore ?? last).rounded())
+                Text("Last score \(Int(last.rounded())) · best \(best)")
+                    .font(Typography.caption)
+                    .opacity(0.9)
+            }
         }
         .foregroundStyle(tone.fg)
         .padding(.horizontal, Spacing.s)
         .padding(.vertical, Spacing.xs)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(tone.bg, in: RoundedRectangle(cornerRadius: Radii.chip, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
-    // Copy rules: memory skill-issue-display
-    private func skillLabel(_ skill: SkillState) -> LocalizedStringKey {
-        switch (skill.issue, skill.status) {
-        case (.failed, _): "Needs practice again"
-        case (.assisted, _): "Recently needed help"
-        case (nil, .demonstrated): "Demonstrated"
-        case (nil, .notVerified): "Not verified"
+    private func speakingLabel(_ status: SpeakingStatus) -> LocalizedStringKey {
+        switch status {
+        case .fluent: "Fluent"
+        case .practicing: "Practicing"
+        case .notTried, .unknown: "Not tried yet"
         }
     }
 
-    private func skillTone(_ skill: SkillState) -> (bg: Color, fg: Color) {
-        switch (skill.issue, skill.status) {
-        case (.failed, _): (.errorSurface, .errorInk)
-        case (.assisted, _): (.selectedSurface, .selectedInk)
-        case (nil, .demonstrated): (.successSurface, .successInk)
-        case (nil, .notVerified): (.neutralSurface, .ink600)
+    private func speakingTone(_ status: SpeakingStatus) -> (bg: Color, fg: Color) {
+        switch status {
+        case .fluent: (.successSurface, .successInk)
+        case .practicing: (.selectedSurface, .selectedInk)
+        case .notTried, .unknown: (.neutralSurface, .ink600)
         }
     }
 }

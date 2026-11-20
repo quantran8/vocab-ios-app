@@ -34,7 +34,7 @@ struct MyWordsView: View {
                         .padding(.top, Spacing.xl)
                 } else {
                     if let stats {
-                        LibraryStats(learned: stats.learnedWords, needPractice: needPractice)
+                        LibraryStats(learned: stats.learnedWords, needPractice: needPractice, fluent: stats.fluentWords)
                             .padding(.top, Spacing.l)
                     }
 
@@ -145,11 +145,11 @@ struct MyWordsView: View {
         Task { await practice.start(mode) }
     }
 
-    /// Random practice needs one more step (›); Weak Words starts at once.
+    /// Random practice needs one more step (›); Weak Words and Speaking start at once, Weak Words only when it has words.
     private func practiceCard(needPractice: Int) -> some View {
         VStack(spacing: 0) {
             Button(action: onOpenRandomPractice) {
-                PracticeRow(systemImage: "shuffle", tone: .accent, title: "Random Practice", subtitle: "Mixed or by skill") {
+                PracticeRow(systemImage: "shuffle", tone: .accent, title: "Random Practice", subtitle: "Choose a collection or topics to practice") {
                     Image(systemName: "chevron.right")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Color.ink400)
@@ -166,14 +166,18 @@ struct MyWordsView: View {
                 systemImage: "scope",
                 tone: .error,
                 title: "Weak Words",
-                subtitle: needPractice > 0 ? "Practice your weak skills" : "Nothing to review yet"
+                subtitle: needPractice > 0 ? "Words you keep missing" : "No words need practice"
             ) {
                 if needPractice > 0 {
                     SmallButton(title: "Practice now", kind: .practice) { startPractice(.weakWordsPractice) }
-                } else {
-                    SmallButton(title: "All caught up", systemImage: "checkmark", kind: .practice) {}
-                        .disabled(true)
                 }
+            }
+            .accessibilityElement(children: .contain)
+
+            CardDivider()
+
+            PracticeRow(systemImage: "mic.fill", tone: .success, title: "Speaking Practice", subtitle: "Say your words out loud") {
+                SmallButton(title: "Practice now", kind: .practice) { startPractice(.speakingPractice) }
             }
             .accessibilityElement(children: .contain)
         }
@@ -242,18 +246,28 @@ private enum CustomWordSheet: String, Identifiable {
 private struct LibraryStats: View {
     let learned: Int
     let needPractice: Int
+    /// Nil from an older backend: the figure is left out.
+    let fluent: Int?
 
     var body: some View {
         HStack(spacing: 0) {
             figure(learned, caption: "Words learned", color: .ink)
-            Rectangle()
-                .fill(Color.divider)
-                .frame(width: Borders.hairline)
-                .accessibilityHidden(true)
-            figure(needPractice, caption: "Need practice", color: .coral600)
+            divider
+            figure(needPractice, caption: "Need practice", color: needPractice > 0 ? .coral600 : .ink400)
+            if let fluent {
+                divider
+                figure(fluent, caption: "Said fluently", color: .successInk)
+            }
         }
         .fixedSize(horizontal: false, vertical: true)
         .cardSurface()
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.divider)
+            .frame(width: Borders.hairline)
+            .accessibilityHidden(true)
     }
 
     private func figure(_ value: Int, caption: LocalizedStringKey, color: Color) -> some View {

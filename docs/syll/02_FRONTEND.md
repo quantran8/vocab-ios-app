@@ -22,13 +22,12 @@ App không dùng `NavigationStack` ở cấp gốc. `AppRootView` suy ra một r
 ```text
 Splash
   └─► Auth (chưa có token)
-        └─► Chọn ngôn ngữ (lần đầu, chưa chọn)
-              └─► Loading hồ sơ (GET /me)
-                    ├─► Onboarding (chưa có level/scope)
-                    └─► Main shell (TabView)
-                          ├─ Home ── Challenge Map
-                          ├─ My Words ── Random Practice
-                          └─ Profile ── Settings ── Practice Lab
+        └─► Loading hồ sơ (GET /me)
+              ├─► Onboarding (chưa có level/scope)
+              └─► Main shell (TabView)
+                    ├─ Home ── Challenge Map
+                    ├─ My Words ── Random Practice
+                    └─ Profile ── Settings ── Practice Lab
 Practice session (toàn màn hình, đè lên shell khi đang có session)
 Challenge run / Match Madness (toàn màn hình, đè lên shell khi đang có run)
 ```
@@ -48,9 +47,9 @@ Thứ tự ưu tiên của route: trạng thái auth → ngôn ngữ → hồ s�
 
 Cấu hình provider (Google Cloud, Apple Developer, Supabase, SMTP): `docs/AUTH_SETUP.md`.
 
-### 2.2. Chọn ngôn ngữ (`LanguageSelectionView`)
+### 2.2. Ngôn ngữ giao diện
 
-Sau lần đăng nhập đầu, người dùng chọn ngôn ngữ giao diện (English / Tiếng Việt) trước khi app gọi `GET /me`. Đổi lại được trong Settings, áp dụng ngay không cần khởi động lại.
+Không hỏi người dùng: chưa chọn thì app dùng ngôn ngữ của máy (`AppLanguage.device`, ngôn ngữ đầu tiên trong danh sách của iOS mà app hỗ trợ, không có thì English) và không lưu lại, nên đổi ngôn ngữ máy thì app đổi theo. Chọn trong Settings thì lưu và áp dụng ngay không cần khởi động lại.
 
 ## 3. Onboarding (`Features/Onboarding/`, `Features/PlacementTest/`)
 

@@ -16,20 +16,6 @@ enum ResultSkill: String, LenientEnum, Equatable, CaseIterable {
     }
 }
 
-/// Skill level in a change ("Not verified → Demonstrated"); lenient, unlike `SkillStatus` on the word page.
-enum ResultSkillStatus: String, LenientEnum, Equatable {
-    case notVerified = "not_verified"
-    case demonstrated
-    case unknown
-    static let fallback = ResultSkillStatus.unknown
-
-    /// Sessions saved by an older backend may say `verified`, a stronger `demonstrated`.
-    init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self)
-        self = raw == "verified" ? .demonstrated : ResultSkillStatus(rawValue: raw) ?? .fallback
-    }
-}
-
 /// Why a word is in a weaker group: the answer that decided it. Unknown values show no reason.
 enum ResultCause: String, LenientEnum, Equatable {
     case hinted, retried, primed
@@ -55,51 +41,34 @@ struct ResultItem: Decodable, Equatable {
     /// Weaker review and new-word items: what happened, and in which skill.
     var cause: ResultCause? = nil
     var struggledAt: ResultSkill? = nil
-    /// Practice answers and skill changes.
+    /// Practice answers: the kind of task, as a label.
     var skill: ResultSkill? = nil
-    /// Practice answers: the (word, skill) pair had an open issue before the session.
-    var hadIssue: Bool? = nil
-    var from: ResultSkillStatus? = nil
-    var to: ResultSkillStatus? = nil
-    var confirmableAt: Date? = nil
+    /// Speaking changes: the status after the session, and the Azure score (nil when scored on the device).
+    var status: SpeakingStatus? = nil
+    var score: Double? = nil
+}
 
+// In an extension, so the memberwise initializer stays.
+extension ResultItem {
     private enum CodingKeys: String, CodingKey {
-        case meaningId, wordId, lemma, gloss, nextReviewAt, learnedAt, cause, struggledAt, skill, hadIssue, from, to, confirmableAt
-    }
-
-    init(meaningId: String, wordId: String? = nil, lemma: String = "", gloss: String = "", nextReviewAt: Date? = nil,
-         learnedAt: Date? = nil, cause: ResultCause? = nil, struggledAt: ResultSkill? = nil, skill: ResultSkill? = nil, hadIssue: Bool? = nil,
-         from: ResultSkillStatus? = nil, to: ResultSkillStatus? = nil, confirmableAt: Date? = nil) {
-        self.meaningId = meaningId
-        self.wordId = wordId
-        self.lemma = lemma
-        self.gloss = gloss
-        self.nextReviewAt = nextReviewAt
-        self.learnedAt = learnedAt
-        self.cause = cause
-        self.struggledAt = struggledAt
-        self.skill = skill
-        self.hadIssue = hadIssue
-        self.from = from
-        self.to = to
-        self.confirmableAt = confirmableAt
+        case meaningId, wordId, lemma, gloss, nextReviewAt, learnedAt, cause, struggledAt, skill, status, score
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        meaningId = try c.decode(String.self, forKey: .meaningId)
-        wordId = try c.decodeIfPresent(String.self, forKey: .wordId)
-        lemma = try c.decodeIfPresent(String.self, forKey: .lemma) ?? ""
-        gloss = try c.decodeIfPresent(String.self, forKey: .gloss) ?? ""
-        nextReviewAt = try c.decodeIfPresent(Date.self, forKey: .nextReviewAt)
-        learnedAt = try c.decodeIfPresent(Date.self, forKey: .learnedAt)
-        cause = try c.decodeIfPresent(ResultCause.self, forKey: .cause)
-        struggledAt = try c.decodeIfPresent(ResultSkill.self, forKey: .struggledAt)
-        skill = try c.decodeIfPresent(ResultSkill.self, forKey: .skill)
-        hadIssue = try c.decodeIfPresent(Bool.self, forKey: .hadIssue)
-        from = try c.decodeIfPresent(ResultSkillStatus.self, forKey: .from)
-        to = try c.decodeIfPresent(ResultSkillStatus.self, forKey: .to)
-        confirmableAt = try c.decodeIfPresent(Date.self, forKey: .confirmableAt)
+        self.init(
+            meaningId: try c.decode(String.self, forKey: .meaningId),
+            wordId: try c.decodeIfPresent(String.self, forKey: .wordId),
+            lemma: try c.decodeIfPresent(String.self, forKey: .lemma) ?? "",
+            gloss: try c.decodeIfPresent(String.self, forKey: .gloss) ?? "",
+            nextReviewAt: try c.decodeIfPresent(Date.self, forKey: .nextReviewAt),
+            learnedAt: try c.decodeIfPresent(Date.self, forKey: .learnedAt),
+            cause: try c.decodeIfPresent(ResultCause.self, forKey: .cause),
+            struggledAt: try c.decodeIfPresent(ResultSkill.self, forKey: .struggledAt),
+            skill: try c.decodeIfPresent(ResultSkill.self, forKey: .skill),
+            status: try c.decodeIfPresent(SpeakingStatus.self, forKey: .status),
+            score: try c.decodeIfPresent(Double.self, forKey: .score)
+        )
     }
 }
 
@@ -144,10 +113,6 @@ enum PracticeGroup: String, CaseIterable {
     case clean, helped, missed
 }
 
-enum SkillChangeGroup: String, CaseIterable {
-    case leveledUp, cleared, pendingConfirm, regressed
-}
-
 struct ReviewSummary: Decodable, Equatable {
     var total: Int? = nil
     var groups = ResultGroups<ReviewGroup>()
@@ -173,4 +138,29 @@ struct PracticeSummary: Decodable, Equatable {
 struct NeedPracticeCount: Decodable, Equatable {
     var before: Int? = nil
     var after: Int? = nil
+}
+
+/// Recordings scored this session: one per pronunciation, and the words whose speaking status changed.
+struct SpeakingSummary: Decodable, Equatable {
+    var total = 0
+    var passed = 0
+    var becameFluent: [ResultItem] = []
+    var slipped: [ResultItem] = []
+
+    private enum CodingKeys: String, CodingKey { case total, passed, becameFluent, slipped }
+
+    init(total: Int = 0, passed: Int = 0, becameFluent: [ResultItem] = [], slipped: [ResultItem] = []) {
+        self.total = total
+        self.passed = passed
+        self.becameFluent = becameFluent
+        self.slipped = slipped
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        total = try c.decodeIfPresent(Int.self, forKey: .total) ?? 0
+        passed = try c.decodeIfPresent(Int.self, forKey: .passed) ?? 0
+        becameFluent = try c.decodeIfPresent([ResultItem].self, forKey: .becameFluent) ?? []
+        slipped = try c.decodeIfPresent([ResultItem].self, forKey: .slipped) ?? []
+    }
 }

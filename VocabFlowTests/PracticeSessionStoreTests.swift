@@ -195,50 +195,25 @@ final class PracticeSessionStoreTests: XCTestCase {
         XCTAssertEqual(request?.challengeId, "c1")
     }
 
-    func testSkillPracticeAsksForRandomPracticeOnThatSkill() async {
+    func testRandomPracticeIsMixedPractice() async {
         let store = makeStore(steps: learnAndChoice)
-        await store.startPractice([.listening])
-        let request = api.planRequests.first
-        XCTAssertEqual(request?.mode, .randomPractice)
-        XCTAssertEqual(request?.skills, [.listening])
-        XCTAssertEqual(store.practiceSkills, [.listening])
-    }
-
-    func testSkillPracticeSendsEveryChosenSkill() async {
-        let store = makeStore(steps: learnAndChoice)
-        await store.startPractice([.spelling, .listening])
-        XCTAssertEqual(api.planRequests.first?.skills, [.spelling, .listening])
-    }
-
-    func testSkillPracticeWithNoSkillIsMixedPractice() async {
-        let store = makeStore(steps: learnAndChoice)
-        await store.startPractice([])
+        await store.startPractice()
         XCTAssertEqual(api.planRequests.first?.mode, .randomPractice)
-        XCTAssertNil(api.planRequests.first?.skills)
+        XCTAssertNil(api.planRequests.first?.filter)
     }
 
-    func testRetryingAFailedSkillPlanKeepsTheSkill() async {
+    func testRetryingAFailedRandomPlanKeepsTheSource() async {
         let store = makeStore(steps: learnAndChoice)
         api.plan = .failure(.transport)
-        await store.startPractice([.spelling, .speaking])
+        await store.startPractice(filter: .topics(["t1"]))
         await store.retry()
-        XCTAssertEqual(api.planRequests.map(\.skills), [[.spelling, .speaking], [.spelling, .speaking]])
+        XCTAssertEqual(api.planRequests.map(\.filter), [.topics(["t1"]), .topics(["t1"])])
     }
 
-    func testOtherModesSendNoSkillAfterASkillSession() async {
-        let store = makeStore(steps: learnAndChoice)
-        await store.startPractice([.spelling])
-        store.close()
-        await store.start(.daily)
-        XCTAssertEqual(api.planRequests.last?.mode, .daily)
-        XCTAssertNil(api.planRequests.last?.skills)
-        XCTAssertNil(store.practiceSkills)
-    }
-
-    func testEmptySkillPlanEndsAtTheEmptyStage() async {
+    func testEmptyRandomPlanEndsAtTheEmptyStage() async {
         let store = makeStore(steps: [])
         api.plan = .success(SessionPlan(sessionID: nil, mode: .randomPractice, steps: []))
-        await store.startPractice([.speaking])
+        await store.startPractice()
         XCTAssertEqual(store.stage, .empty)
     }
 
@@ -483,18 +458,17 @@ final class PracticeSessionStoreTests: XCTestCase {
         XCTAssertEqual(store.stage, .finished(next))
     }
 
-    func testPracticeAgainPlansTheSameSkillsAndSource() async {
+    func testPracticeAgainPlansTheSameSource() async {
         let store = makeStore(steps: [.practice(phase: .randomPractice, task: PracticeFixtures.choice())])
         api.plan = .success(SessionPlan(sessionID: "s1", mode: .randomPractice, steps: [.practice(phase: .randomPractice, task: PracticeFixtures.choice())]))
         api.commitResults = [.success(committed)]
-        await store.startPractice([.spelling, .listening], filter: .topics(["t1"]))
+        await store.startPractice(filter: .topics(["t1"]))
         store.submitOption(3)
         store.advance()
         await waitForStage(store) { $0 != .running && $0 != .committing }
         guard case .finished(let summary) = store.stage else { return XCTFail("Expected results, got \(store.stage)") }
         XCTAssertTrue(store.canPracticeAgain)
         XCTAssertEqual(store.result(for: summary).kind, .randomPractice)
-        XCTAssertEqual(store.result(for: summary).chosenSkills, [.spelling, .listening])
         let firstToken = store.sessionToken
 
         await store.practiceAgain()
@@ -502,6 +476,21 @@ final class PracticeSessionStoreTests: XCTestCase {
         XCTAssertNotEqual(store.sessionToken, firstToken)
         XCTAssertEqual(api.planRequests.count, 2)
         XCTAssertEqual(api.planRequests.last, api.planRequests.first)
+    }
+
+    func testSpeakingPracticeAsksForItsModeAndCanRunAgain() async {
+        let store = makeStore(steps: [.practice(phase: .speakingPractice, task: PracticeFixtures.choice())])
+        api.plan = .success(SessionPlan(sessionID: "s1", mode: .speakingPractice, steps: [.practice(phase: .speakingPractice, task: PracticeFixtures.choice())]))
+        api.commitResults = [.success(committed)]
+        await store.start(.speakingPractice)
+        XCTAssertEqual(api.planRequests.first?.mode, .speakingPractice)
+        XCTAssertTrue(store.isSpeakingPractice)
+        store.submitOption(3)
+        store.advance()
+        await waitForStage(store) { $0 != .running && $0 != .committing }
+        guard case .finished(let summary) = store.stage else { return XCTFail("Expected results, got \(store.stage)") }
+        XCTAssertTrue(store.canPracticeAgain)
+        XCTAssertEqual(store.result(for: summary).kind, .speakingPractice)
     }
 
     func testDailyHasNoPracticeAgain() async {

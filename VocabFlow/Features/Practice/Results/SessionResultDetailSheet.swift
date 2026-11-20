@@ -78,16 +78,24 @@ struct SessionResultDetailSheet: View {
                 }
             }
 
-            VStack(spacing: 0) {
-                ForEach(Array(block.groups.enumerated()), id: \.element.id) { index, group in
-                    if index > 0 { CardDivider() }
-                    groupView(group, in: block)
-                }
+            if let spoken = block.spoken {
+                Text("Said right: \(spoken.passed) of \(spoken.total) words")
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Color.ink)
             }
-            .cardSurface()
+
+            if !block.groups.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(block.groups.enumerated()), id: \.element.id) { index, group in
+                        if index > 0 { CardDivider() }
+                        groupView(group, in: block)
+                    }
+                }
+                .cardSurface()
+            }
 
             if let excluded = block.excluded, excluded.count > 0 {
-                Text("\(excluded.count) answers didn’t count toward skills: \(reasonList(excluded.reasons))")
+                Text("\(excluded.count) answers weren’t scored: \(reasonList(excluded.reasons))")
                     .font(Typography.micro)
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
@@ -236,17 +244,8 @@ struct SessionResultDetailSheet: View {
     }
 
     private func tag(for item: ResultItem, in group: ResultSheetGroup) -> Text? {
-        if group.kind == .waitingToConfirm, let at = item.confirmableAt {
-            return Text("can confirm at \(at.formatted(timeStyle))")
-        }
-        if group.kind == .leveledUp || group.kind == .regressed,
-           let skill = item.skill?.name, let from = item.from?.name, let to = item.to?.name {
-            return Text("\(skill): \(from) → \(to)")
-        }
-        if group.marksFrequentMistakes {
-            if let skill = item.skill?.name { return Text("\(skill) · frequent mistake lately") }
-            return Text("frequent mistake lately")
-        }
+        // Speaking changes: the Azure score; a device-scored take has none.
+        if let score = item.score { return Text("Score \(Int(score.rounded()))") }
         if let skill = item.skill?.name { return Text(verbatim: skill) }
         // Review and new words: what the deciding answer was.
         if let cause = item.cause, cause != .unknown { return Text(cause.text) }
@@ -290,19 +289,16 @@ struct SessionResultDetailSheet: View {
         Date.FormatStyle(locale: AppLanguage.active.locale, calendar: calendar, timeZone: calendar.timeZone).weekday(.wide)
     }
 
-    private var timeStyle: Date.FormatStyle {
-        Date.FormatStyle(date: .omitted, time: .shortened, locale: AppLanguage.active.locale, calendar: calendar, timeZone: calendar.timeZone)
-    }
-
     private func reasonList(_ reasons: [String]) -> String {
         reasons.compactMap(Self.reasonName).formatted(.list(type: .and).locale(AppLanguage.active.locale))
     }
 
     private static func reasonName(_ reason: String) -> String? {
         switch reason {
-        case "weak_template": String(localized: "easier exercise types", bundle: .appLanguage)
         case "invalid_recording": String(localized: "unclear recordings", bundle: .appLanguage)
         case "unavailable": String(localized: "couldn’t record", bundle: .appLanguage)
+        // Sent by an older backend only.
+        case "weak_template": String(localized: "easier exercise types", bundle: .appLanguage)
         case "audio_not_played": String(localized: "audio didn’t play", bundle: .appLanguage)
         case "quality_unqualified": String(localized: "exercises still in review", bundle: .appLanguage)
         default: nil
@@ -320,10 +316,7 @@ extension ResultSheetBlock.Title {
         case .review: "Review"
         case .newWords: "New words"
         case .answers: "Answers"
-        case .answersFor(let skill): "Answers · \(skill.name ?? "")"
-        case .skillChanges: "Skill changes"
-        case .weakWords: "Weak words"
-        case .frequentMistakes: "Frequent mistakes"
+        case .speaking: "Speaking"
         }
     }
 }
@@ -358,7 +351,8 @@ extension ResultSheetGroup.Kind {
         case .missed: "Not right this time"
         case .helped: "Right with a hint or another try"
         case .clean: "Right first time, on your own"
-        case .regressed, .leveledUp, .stillNeedsPractice, .waitingToConfirm, .settled: nil
+        case .becameFluent: "Said right again and again"
+        case .slipped: "Fluent before, not right this time"
         }
     }
 
@@ -374,11 +368,8 @@ extension ResultSheetGroup.Kind {
         case .missed: "Not done yet (\(count))"
         case .helped: "Right with help (\(count))"
         case .clean: "Right on your own (\(count))"
-        case .regressed: "Need practice again (\(count))"
-        case .leveledUp: "Leveled up (\(count))"
-        case .stillNeedsPractice: "Still needs practice (\(count))"
-        case .waitingToConfirm: "Waiting to confirm (\(count))"
-        case .settled: "Settled (\(count))"
+        case .becameFluent: "Now fluent (\(count))"
+        case .slipped: "Need practice again (\(count))"
         }
     }
 }
@@ -391,26 +382,6 @@ extension ResultSkill {
         case .listening: String(localized: "Listening", bundle: .appLanguage)
         case .speaking: String(localized: "Speaking", bundle: .appLanguage)
         case .unknown: nil
-        }
-    }
-}
-
-extension ResultSkillStatus {
-    /// The word page's labels (`SkillStatus.label`), so both screens say the same thing.
-    var name: String? {
-        switch self {
-        case .notVerified: SkillStatus.notVerified.label
-        case .demonstrated: SkillStatus.demonstrated.label
-        case .unknown: nil
-        }
-    }
-}
-
-extension SkillStatus {
-    var label: String {
-        switch self {
-        case .notVerified: String(localized: "Not verified", bundle: .appLanguage)
-        case .demonstrated: String(localized: "Demonstrated", bundle: .appLanguage)
         }
     }
 }

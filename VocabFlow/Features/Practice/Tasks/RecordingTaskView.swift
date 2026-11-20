@@ -1,53 +1,23 @@
 import SwiftUI
 
 /// Read aloud, get scored, optionally read again. The last assessment is what gets committed.
-/// A learned word's recording (`meaningCue`) starts with an unscored step: the meaning only, an attempt to say
-/// the word, then "Show the word" leads to the scored read-aloud. The cue step records nothing and sends no event.
+/// `meaningCue` is decoded but not shown: a learned word's recording goes straight to the read-aloud.
 struct RecordingTaskView: View {
     let attempt: TaskAttempt
     @Environment(PracticeSessionStore.self) private var store
-    @Environment(\.motion) private var motion
-    /// Per step: the view is rebuilt for every task (`.id(stepIndex)`), so this starts over each time.
-    @State private var isShowingCue: Bool
-
-    init(attempt: TaskAttempt) {
-        self.attempt = attempt
-        _isShowingCue = State(initialValue: attempt.task.meaningCue != nil)
-    }
 
     var body: some View {
-        TaskScaffold(attempt: attempt, feedback: isShowingCue ? nil : feedback, meaningCue: isShowingCue ? attempt.task.meaningCue : nil) {
-            if isShowingCue {
-                cueHint
-            } else {
-                VStack(spacing: Spacing.m) {
-                    micButton
-                    status
-                }
-                .frame(maxWidth: .infinity)
+        TaskScaffold(attempt: attempt, feedback: feedback) {
+            VStack(spacing: Spacing.m) {
+                micButton
+                status
             }
+            .frame(maxWidth: .infinity)
         } action: {
             VStack(spacing: Spacing.s) {
-                if isShowingCue {
-                    cueActions
-                } else {
-                    actions
-                }
+                actions
             }
         }
-    }
-
-    private var cueHint: some View {
-        statusText("Say it out loud, then check the word.")
-            .frame(maxWidth: .infinity)
-    }
-
-    @ViewBuilder
-    private var cueActions: some View {
-        PrimaryButton(title: "Show the word") {
-            motion.perform(MotionTokens.transition) { isShowingCue = false }
-        }
-        SecondaryButton(title: "Can’t speak now") { store.acceptRecording() }
     }
 
     private var isRecording: Bool { store.recording == .recording }

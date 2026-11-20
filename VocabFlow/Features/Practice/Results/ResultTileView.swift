@@ -160,8 +160,8 @@ extension ResultTile {
         case .review: "Review"
         case .newWords: "New words"
         case .practice: "Practice"
-        case .skillsLeveledUp: "Skills"
         case .weakRemaining: "Still to practise"
+        case .speaking: "Speaking"
         }
     }
 }
@@ -175,9 +175,9 @@ extension ResultTile.Caption {
         case .noNewWords: "no new words today"
         case .practiceClean: "right on your own"
         case .noSkillMeasured: "no skills measured this session"
-        case .skillsLeveledUp: "skills leveled up"
         case .weakRemaining: "words to practise"
         case .noWeakWordsLeft: "no weak words left"
+        case .saidRight: "said right"
         }
     }
 }
@@ -192,9 +192,9 @@ extension ResultTile.Line {
         case .alreadyKnew(let n): "+\(n) already knew"
         case .missed(let n): "\(n) not done yet"
         case .helped(let n): "\(n) needed help"
-        case .regressed(let n): "\(n) to practise again"
         case .weakDelta(let delta): "\(ResultTile.Line.signed(delta)) after this session"
-        case .weakPending(let n): "\(n) to confirm after 12 h"
+        case .becameFluent(let n): "\(n) now fluent"
+        case .slipped(let n): "\(n) to practise again"
         }
     }
 

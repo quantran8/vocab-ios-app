@@ -3,8 +3,8 @@ import XCTest
 
 /// The results screen rules ("Session Result Statistics" §4.3, §11) and the sheet's grouping.
 final class ResultTileTests: XCTestCase {
-    private func items(_ count: Int, _ prefix: String = "m", struggledAt: ResultSkill? = nil, skill: ResultSkill? = nil, to: ResultSkillStatus? = nil) -> [ResultItem] {
-        (0..<count).map { ResultItem(meaningId: "\(prefix)\($0)", struggledAt: struggledAt, skill: skill, to: to) }
+    private func items(_ count: Int, _ prefix: String = "m", struggledAt: ResultSkill? = nil, skill: ResultSkill? = nil, status: SpeakingStatus? = nil) -> [ResultItem] {
+        (0..<count).map { ResultItem(meaningId: "\(prefix)\($0)", struggledAt: struggledAt, skill: skill, status: status) }
     }
 
     private func review(solid: Int = 0, shaky: Int = 0, relearn: Int = 0) -> ReviewSummary {
@@ -64,34 +64,31 @@ final class ResultTileTests: XCTestCase {
                        ResultTile(kind: .practice, number: .none, caption: .noSkillMeasured, isEmpty: true))
     }
 
-    func testSkillsTileWithNothingLeveledUpShowsZero() {
-        XCTAssertEqual(ResultTiles.skillsTile(ResultGroups()),
-                       ResultTile(kind: .skillsLeveledUp, number: .count(0), caption: .skillsLeveledUp, lines: []))
-        let regressed = ResultGroups<SkillChangeGroup>([.regressed: items(1)])
-        XCTAssertEqual(ResultTiles.skillsTile(regressed).lines, [.regressed(1)])
-    }
-
-    func testSkillsTileCountsLevelUps() {
-        let changes = ResultGroups<SkillChangeGroup>([.leveledUp: items(3, "a", to: .demonstrated)])
-        let tile = ResultTiles.skillsTile(changes)
-        XCTAssertEqual(tile.number, .plus(3))
-        XCTAssertEqual(tile.lines, [])
-        let regressedToo = ResultGroups<SkillChangeGroup>([.leveledUp: items(1, to: .demonstrated), .regressed: items(1, "r")])
-        XCTAssertEqual(ResultTiles.skillsTile(regressedToo).lines, [.regressed(1)])
-    }
-
-    func testWeakTileShowsWhatIsLeftWithTheDeltaAndPending() {
-        let changes = ResultGroups<SkillChangeGroup>([.pendingConfirm: items(2)])
-        XCTAssertEqual(ResultTiles.weakTile(NeedPracticeCount(before: 11, after: 8), changes: changes),
-                       ResultTile(kind: .weakRemaining, number: .count(8), caption: .weakRemaining, lines: [.weakDelta(-3), .weakPending(2)]))
-        XCTAssertEqual(ResultTiles.weakTile(NeedPracticeCount(before: 4, after: 4), changes: nil).lines, [])
+    func testWeakTileShowsWhatIsLeftWithTheDelta() {
+        XCTAssertEqual(ResultTiles.weakTile(NeedPracticeCount(before: 11, after: 8)),
+                       ResultTile(kind: .weakRemaining, number: .count(8), caption: .weakRemaining, lines: [.weakDelta(-3)]))
+        XCTAssertEqual(ResultTiles.weakTile(NeedPracticeCount(before: 4, after: 4)).lines, [])
     }
 
     func testWeakTileAtZeroCelebrates() {
-        let tile = ResultTiles.weakTile(NeedPracticeCount(before: 1, after: 0), changes: nil)
+        let tile = ResultTiles.weakTile(NeedPracticeCount(before: 1, after: 0))
         XCTAssertEqual(tile.caption, .noWeakWordsLeft)
         XCTAssertTrue(tile.celebrates)
-        XCTAssertTrue(ResultTiles.weakTile(nil, changes: nil).isEmpty)
+        XCTAssertTrue(ResultTiles.weakTile(nil).isEmpty)
+    }
+
+    // MARK: Speaking tile
+
+    func testSpeakingTileCountsWhatWasSaidRightAndNamesChanges() {
+        let speaking = SpeakingSummary(total: 5, passed: 3, becameFluent: items(2, "f", status: .fluent), slipped: items(1, "s", status: .practicing))
+        XCTAssertEqual(ResultTiles.speakingTile(speaking),
+                       ResultTile(kind: .speaking, number: .fraction(3, of: 5), caption: .saidRight, lines: [.becameFluent(2), .slipped(1)]))
+        XCTAssertEqual(ResultTiles.speakingTile(SpeakingSummary(total: 2, passed: 2)).lines, [])
+    }
+
+    func testSpeakingTileIsEmptyWithoutScoredRecordings() {
+        XCTAssertTrue(ResultTiles.speakingTile(nil).isEmpty)
+        XCTAssertTrue(ResultTiles.speakingTile(SpeakingSummary()).isEmpty)
     }
 
     func testSignedDeltaUsesARealMinus() {
@@ -104,17 +101,21 @@ final class ResultTileTests: XCTestCase {
     func testEachModeShowsOnlyTheTilesWithSomethingToSay() {
         let both = PracticeResult(kind: .daily, summary: CommitSummary(review: review(solid: 1), newWords: NewWordSummary(groups: ResultGroups([.smooth: items(1)]))))
         XCTAssertEqual(both.tiles?.map(\.kind), [.review, .newWords])
+        let spoken = SpeakingSummary(total: 1, passed: 1)
+        let dailySpeaking = PracticeResult(kind: .daily, summary: CommitSummary(review: review(solid: 1), newWords: NewWordSummary(), speaking: spoken))
+        XCTAssertEqual(dailySpeaking.tiles?.map(\.kind), [.review, .speaking])
         // Review only: no new-word tile at all, not an empty one.
         let reviewOnly = PracticeResult(kind: .daily, summary: CommitSummary(review: review(solid: 1), newWords: NewWordSummary()))
         XCTAssertEqual(reviewOnly.tiles?.map(\.kind), [.review])
 
-        let practice = CommitSummary(practice: PracticeSummary(groups: ResultGroups([.clean: items(1)])), skillChanges: ResultGroups(),
+        let practice = CommitSummary(practice: PracticeSummary(groups: ResultGroups([.clean: items(1)])), speaking: spoken,
                                      needPractice: NeedPracticeCount(before: 2, after: 1))
-        XCTAssertEqual(PracticeResult(kind: .randomPractice, summary: practice).tiles?.map(\.kind), [.practice, .skillsLeveledUp])
+        XCTAssertEqual(PracticeResult(kind: .randomPractice, summary: practice).tiles?.map(\.kind), [.practice, .speaking])
         XCTAssertEqual(PracticeResult(kind: .weakPractice, summary: practice).tiles?.map(\.kind), [.practice, .weakRemaining])
-        let unmeasured = CommitSummary(practice: PracticeSummary(), skillChanges: ResultGroups())
-        XCTAssertEqual(PracticeResult(kind: .randomPractice, summary: unmeasured).tiles?.map(\.kind), [.skillsLeveledUp])
+        let unmeasured = CommitSummary(practice: PracticeSummary())
+        XCTAssertEqual(PracticeResult(kind: .randomPractice, summary: unmeasured).tiles?.map(\.kind), [])
         XCTAssertEqual(PracticeResult(kind: .weakPractice, summary: unmeasured).tiles?.map(\.kind), [])
+        XCTAssertEqual(PracticeResult(kind: .speakingPractice, summary: CommitSummary(speaking: spoken)).tiles?.map(\.kind), [.speaking])
     }
 
     func testOlderBackendsAndCheckpointsUseTheCountGrid() {
@@ -138,29 +139,42 @@ final class ResultTileTests: XCTestCase {
         XCTAssertEqual(blocks[1].bar, [2, 0, 0])
     }
 
-    func testWeakSheetSplitsIssuesFromFrequentMistakes() {
-        let practice = PracticeSummary(groups: ResultGroups([
-            .clean: [ResultItem(meaningId: "a", skill: .listening, hadIssue: true)],
-            .missed: [ResultItem(meaningId: "b", skill: .spelling, hadIssue: true), ResultItem(meaningId: "c", skill: .speaking, hadIssue: false)],
+    func testWeakSheetListsEveryAnswerInOneBlock() {
+        let practice = PracticeSummary(excluded: .init(count: 1, reasons: ["unavailable"]), groups: ResultGroups([
+            .clean: [ResultItem(meaningId: "a", skill: .listening)],
+            .missed: [ResultItem(meaningId: "b", skill: .spelling), ResultItem(meaningId: "c", skill: nil)],
         ]))
-        let changes = ResultGroups<SkillChangeGroup>([.pendingConfirm: [ResultItem(meaningId: "a", skill: .listening)]])
-        let blocks = ResultSheetModel.blocks(for: PracticeResult(kind: .weakPractice, summary: CommitSummary(practice: practice, skillChanges: changes)))
-        XCTAssertEqual(blocks.map(\.title), [.weakWords, .frequentMistakes])
-        XCTAssertEqual(blocks[0].groups.map(\.kind), [.stillNeedsPractice, .waitingToConfirm])
-        XCTAssertEqual(blocks[0].groups[0].items.map(\.meaningId), ["b"])
-        XCTAssertEqual(blocks[1].groups.map(\.kind), [.missed])
-        XCTAssertTrue(blocks[1].groups[0].marksFrequentMistakes)
+        let blocks = ResultSheetModel.blocks(for: PracticeResult(kind: .weakPractice, summary: CommitSummary(practice: practice)))
+        XCTAssertEqual(blocks.map(\.title), [.answers])
+        XCTAssertEqual(blocks[0].groups.map(\.kind), [.missed, .clean])
+        XCTAssertEqual(blocks[0].groups[0].items.map(\.meaningId), ["b", "c"])
+        XCTAssertEqual(blocks[0].excluded?.count, 1)
     }
 
-    func testRandomSheetGroupsChosenSkillsFirst() {
+    func testSpeakingBlockFollowsTheOthersWhenARecordingWasScored() {
+        let speaking = SpeakingSummary(total: 3, passed: 2, becameFluent: items(1, "f", status: .fluent), slipped: items(1, "s", status: .practicing))
+        let daily = ResultSheetModel.blocks(for: PracticeResult(kind: .daily, summary: CommitSummary(review: review(solid: 1), speaking: speaking)))
+        XCTAssertEqual(daily.map(\.section), [.review, .speaking])
+        XCTAssertEqual(daily[1].groups.map(\.kind), [.slipped, .becameFluent])
+        XCTAssertEqual(daily[1].spoken, .init(passed: 2, total: 3))
+        XCTAssertNil(daily[1].bar)
+
+        // No status changed: the block still says how it went, so the tile has somewhere to open.
+        let quiet = ResultSheetModel.blocks(for: PracticeResult(kind: .speakingPractice, summary: CommitSummary(speaking: SpeakingSummary(total: 2, passed: 1))))
+        XCTAssertEqual(quiet.map(\.title), [.speaking])
+        XCTAssertEqual(quiet[0].groups, [])
+        XCTAssertTrue(ResultSheetModel.blocks(for: PracticeResult(kind: .speakingPractice, summary: CommitSummary())).isEmpty)
+    }
+
+    func testRandomSheetListsAnswersThenTheReviewsTheyCounted() {
         let practice = PracticeSummary(groups: ResultGroups([
             .clean: [ResultItem(meaningId: "a", skill: .spelling), ResultItem(meaningId: "b", skill: .listening)],
         ]))
-        let result = PracticeResult(kind: .randomPractice, summary: CommitSummary(practice: practice, countedAsReview: [ResultItem(meaningId: "a")]),
-                                   chosenSkills: [.listening, .spelling])
+        let result = PracticeResult(kind: .randomPractice, summary: CommitSummary(practice: practice, countedAsReview: [ResultItem(meaningId: "a")]))
         let blocks = ResultSheetModel.blocks(for: result)
-        XCTAssertEqual(blocks.map(\.title), [.answersFor(.listening), .answersFor(.spelling), .skillChanges])
-        XCTAssertEqual(blocks.last?.countedAsReview.map(\.meaningId), ["a"])
+        XCTAssertEqual(blocks.map(\.title), [.answers])
+        XCTAssertEqual(blocks[0].groups.map(\.kind), [.clean])
+        XCTAssertEqual(blocks[0].countedAsReview.map(\.meaningId), ["a"])
     }
 
     // MARK: Dates
@@ -190,6 +204,6 @@ final class ResultTileTests: XCTestCase {
         for fixture in fixtures {
             XCTAssertNotNil(fixture.result.tiles, fixture.id)
         }
-        XCTAssertEqual(Set(fixtures.map(\.result.kind)), [.daily, .randomPractice, .weakPractice])
+        XCTAssertEqual(Set(fixtures.map(\.result.kind)), [.daily, .randomPractice, .weakPractice, .speakingPractice])
     }
 }

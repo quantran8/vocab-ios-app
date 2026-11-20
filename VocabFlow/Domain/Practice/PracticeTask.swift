@@ -5,13 +5,8 @@ enum SessionMode: String, Codable, Equatable {
     case checkpointChallenge = "checkpoint_challenge"
     case randomPractice = "random_practice"
     case weakWordsPractice = "weak_words_practice"
-}
-
-/// Focuses `random_practice` on the chosen skills. The backend rejects it with any other mode.
-enum PracticeSkill: String, Codable, Equatable, CaseIterable, Identifiable {
-    case spelling, listening, speaking
-
-    var id: String { rawValue }
+    /// One recording per learned word, weakest speaking first. Never moves the review schedule.
+    case speakingPractice = "speaking_practice"
 }
 
 struct PlanRequest: Encodable, Equatable {
@@ -23,8 +18,6 @@ struct PlanRequest: Encodable, Equatable {
     let mode: SessionMode
     let capabilities: Capabilities
     var challengeId: String?
-    /// Nil is mixed practice; never empty (the backend rejects an empty list).
-    var skills: [PracticeSkill]?
     /// Daily only: due reviews and no new words.
     var reviewOnly: Bool?
     /// Daily only: an optional "I know this" recall before each new word.
@@ -157,7 +150,7 @@ struct LearnCard: Decodable, Equatable {
 }
 
 enum TaskPhase: Equatable {
-    case dueReview, newPractice, knownCheck, checkpointChallenge, randomPractice, weakWordsPractice, other
+    case dueReview, newPractice, knownCheck, checkpointChallenge, randomPractice, weakWordsPractice, speakingPractice, other
 
     /// Display-only on the backend, so a new phase must not break the session.
     init(rawValue: String) {
@@ -168,6 +161,7 @@ enum TaskPhase: Equatable {
         case "checkpoint_challenge": self = .checkpointChallenge
         case "random_practice": self = .randomPractice
         case "weak_words_practice": self = .weakWordsPractice
+        case "speaking_practice": self = .speakingPractice
         default: self = .other
         }
     }
@@ -333,9 +327,11 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
     let maxRetries: Int?
     /// Recording only; nil for a new word's recording and from an older backend.
     let meaningCue: MeaningCue?
+    /// Recording only: the sound to read. One spelling can have two (bass /bæs/, /beɪs/). Nil when the meaning has none.
+    let ipa: String?
 
     private enum CodingKeys: String, CodingKey {
-        case id, template, variant, prompt, question, options, sentenceParts, tiles, pairs, word, evaluation, maxRetries, meaningCue
+        case id, template, variant, prompt, question, options, sentenceParts, tiles, pairs, word, evaluation, maxRetries, meaningCue, ipa
     }
 
     private struct Pairs: Decodable {
@@ -351,7 +347,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         let replacement: String?
     }
 
-    init(id: String, template: TaskTemplate, variant: String, prompt: TaskPrompt?, question: String?, body: TaskBody, maxRetries: Int? = nil, meaningCue: MeaningCue? = nil) {
+    init(id: String, template: TaskTemplate, variant: String, prompt: TaskPrompt?, question: String?, body: TaskBody, maxRetries: Int? = nil, meaningCue: MeaningCue? = nil, ipa: String? = nil) {
         self.id = id
         self.template = template
         self.variant = variant
@@ -360,6 +356,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         self.body = body
         self.maxRetries = maxRetries
         self.meaningCue = meaningCue
+        self.ipa = ipa
     }
 
     init(from decoder: Decoder) throws {
@@ -377,6 +374,7 @@ struct PracticeTask: Decodable, Equatable, Identifiable {
         body = try Self.decodeBody(template, container)
         maxRetries = try container.decodeIfPresent(Int.self, forKey: .maxRetries)
         meaningCue = template == .recording ? try container.decodeIfPresent(MeaningCue.self, forKey: .meaningCue) : nil
+        ipa = template == .recording ? try container.decodeIfPresent(String.self, forKey: .ipa) : nil
     }
 
     private static func decodeBody(_ template: TaskTemplate, _ container: KeyedDecodingContainer<CodingKeys>) throws -> TaskBody {
@@ -454,11 +452,12 @@ struct CommitSummary: Decodable, Equatable {
     /// Words passed with "I know this"; nil from an older backend.
     var knownMeanings: Int? = nil
 
-    // Results screen (Session Result Statistics). Daily: `review` + `newWords`. Random/Weak: the rest.
+    // Results screen (Session Result Statistics). Daily: `review` + `newWords`. Random/Weak: `practice` and the rest.
     var review: ReviewSummary? = nil
     var newWords: NewWordSummary? = nil
     var practice: PracticeSummary? = nil
-    var skillChanges: ResultGroups<SkillChangeGroup>? = nil
+    /// Any mode that scored a recording; nil otherwise.
+    var speaking: SpeakingSummary? = nil
     var needPractice: NeedPracticeCount? = nil
     var countedAsReview: [ResultItem]? = nil
 }

@@ -69,6 +69,14 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertNil(try decodeTask(base).meaningCue, "A new word's recording, or an older backend, has no cue")
     }
 
+    func testRecordingIPAIsOptionalAndOnlyOnRecording() throws {
+        let recording = #""template":"recording","variant":"scripted_pronunciation","prompt":{"type":"text","text":"bass"},"assessment":{"kind":"azurePronunciation"},"evaluation":{"acceptedResponses":["bass"]}"#
+        XCTAssertEqual(try decodeTask(recording + #","ipa":"/beɪs/""#).ipa, "/beɪs/")
+        XCTAssertNil(try decodeTask(recording).ipa, "A meaning with no IPA, or an older backend, sends none")
+        let typing = #""template":"typing","variant":"meaning_recall","prompt":{"type":"text","text":"x"},"evaluation":{"acceptedResponses":["a"]},"ipa":"/x/""#
+        XCTAssertNil(try decodeTask(typing).ipa)
+    }
+
     func testMaxRetriesIsOptional() throws {
         let body = #""template":"typing","variant":"meaning_recall","prompt":{"type":"text","text":"x"},"evaluation":{"acceptedResponses":["a"]}"#
         XCTAssertEqual(try decodeTask(body + #","maxRetries":2"#).maxRetries, 2)
@@ -154,13 +162,11 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(plan.mode, .checkpointChallenge)
     }
 
-    func testSkillsUseWireValuesAndAreOmittedWhenAbsent() throws {
+    func testRandomPracticeSendsNoSkills() throws {
         let capabilities = PlanRequest.Capabilities(audioPlayback: true, microphone: true)
-        let focused = try PracticeFixtures.json(PlanRequest(mode: .randomPractice, capabilities: capabilities, skills: [.listening, .spelling])) as? [String: Any]
-        XCTAssertEqual(focused?["skills"] as? [String], ["listening", "spelling"])
-        XCTAssertNil(focused?["skill"])
         let mixed = try PracticeFixtures.json(PlanRequest(mode: .randomPractice, capabilities: capabilities)) as? [String: Any]
         XCTAssertNil(mixed?["skills"])
+        XCTAssertNil(mixed?["skill"])
     }
 
     func testDecodesLearnCardPartOfSpeech() throws {
@@ -210,20 +216,29 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(meaning.meaning.examples?.first?.text, "Please clarify.")
     }
 
-    func testDecodesWordDetailSkillsAndMemory() throws {
+    func testDecodesWordDetailSpeakingAndMemory() throws {
         let json = #"""
         {"wordId":"w","lemma":"clarify","needsPractice":true,"meanings":[{"meaningId":"m",
          "meaning":{"partOfSpeech":"verb","text":"làm rõ"},"learnedAt":"2026-10-30T10:00:00.000Z","nextReviewAt":"2026-10-31T10:00:00Z",
          "memory":{"stabilityDays":3.2,"retrievability":0.87,"nextReviewAt":"2026-10-31T10:00:00Z"},
-         "needsPractice":true,"skills":{"spelling":{"status":"demonstrated","needsPractice":true,"issue":"assisted"}}}]}
+         "speaking":{"status":"fluent","lastScore":88.5,"bestScore":93,"lastAssessedAt":"2026-11-19T10:00:00.000Z"},
+         "skills":null,"needsPractice":true},
+         {"meaningId":"m2","meaning":{"partOfSpeech":"verb","text":"giải thích"},"learnedAt":null,"nextReviewAt":null,
+          "memory":null,"speaking":{"status":"not_tried","lastScore":null,"bestScore":null,"lastAssessedAt":null},"skills":null,"needsPractice":false},
+         {"meaningId":"m3","meaning":{"partOfSpeech":"verb","text":"x"},"learnedAt":null,"nextReviewAt":null,
+          "speaking":{"status":"mastered"},"needsPractice":false}]}
         """#
-        let meaning = try APIClient.decoder.decode(WordDetail.self, from: Data(json.utf8)).meanings[0]
+        let meanings = try APIClient.decoder.decode(WordDetail.self, from: Data(json.utf8)).meanings
+        let meaning = meanings[0]
         XCTAssertEqual(meaning.meaning.text, "làm rõ")
-        XCTAssertNil(meaning.skills.listening)
-        XCTAssertEqual(meaning.skills.spelling.status, .demonstrated)
-        XCTAssertEqual(meaning.skills.spelling.issue, .assisted)
+        XCTAssertEqual(meaning.speaking?.status, .fluent)
+        XCTAssertEqual(meaning.speaking?.bestScore, 93)
+        XCTAssertNotNil(meaning.speaking?.lastAssessedAt)
+        XCTAssertEqual(meaning.needsPractice, true)
         XCTAssertEqual(meaning.memory?.retrievability, 0.87)
         XCTAssertEqual(meaning.memory?.stabilityDays, 3.2)
+        XCTAssertEqual(meanings[1].speaking, MeaningSpeaking(status: .notTried))
+        XCTAssertEqual(meanings[2].speaking?.status, .unknown)
     }
 
     func testDecodesWordDetailFromAnOlderBackend() throws {
@@ -235,7 +250,13 @@ final class PlanDecodingTests: XCTestCase {
         """#
         let meaning = try APIClient.decoder.decode(WordDetail.self, from: Data(json.utf8)).meanings[0]
         XCTAssertNil(meaning.memory)
-        XCTAssertEqual(meaning.skills.spelling.status, .demonstrated)
+        XCTAssertNil(meaning.speaking)
+    }
+
+    func testDecodesWordStatsWithAndWithoutFluentWords() throws {
+        let stats = try APIClient.decoder.decode(WordStats.self, from: Data(#"{"learnedWords":4,"needPracticeWords":1,"fluentWords":2}"#.utf8))
+        XCTAssertEqual(stats.fluentWords, 2)
+        XCTAssertNil(try APIClient.decoder.decode(WordStats.self, from: Data(#"{"learnedWords":4,"needPracticeWords":1}"#.utf8)).fluentWords)
     }
 
     // MARK: Commit summary for the results screen
@@ -281,25 +302,45 @@ final class PlanDecodingTests: XCTestCase {
         XCTAssertEqual(newWords.groups[.known], [])
     }
 
-    func testPracticeSummaryDecodesWithUnknownSkillsAndStatuses() throws {
+    func testPracticeSummaryDecodesWithUnknownSkills() throws {
         let summary = try decodeSummary(#"""
         {"review":null,"newWords":null,
-         "practice":{"total":1,"excluded":{"count":2,"reasons":["weak_template","something_new"]},
-            "groups":{"clean":[{"meaningId":"m1","lemma":"vivid","skill":"grammar","hadIssue":false}]}},
-         "skillChanges":{"leveledUp":[{"meaningId":"m1","skill":"reading","from":"demonstrated","to":"mastered"}],
-            "pendingConfirm":[{"meaningId":"m2","skill":"listening","confirmableAt":"2026-11-14T03:00:00Z"}]},
+         "practice":{"total":1,"excluded":{"count":2,"reasons":["invalid_recording","something_new"]},
+            "groups":{"clean":[{"meaningId":"m1","lemma":"vivid","skill":"grammar"},{"meaningId":"m2","lemma":"budget","skill":null}]}},
+         "speaking":null,"skillChanges":null,
          "needPractice":{"before":3,"after":null},
          "countedAsReview":[{"meaningId":"m1","lemma":"vivid","nextReviewAt":"2026-11-22T13:00:00Z"}]}
         """#)
         let practice = try XCTUnwrap(summary.practice)
         XCTAssertEqual(practice.excluded?.count, 2)
         XCTAssertEqual(practice.groups[.clean].first?.skill, .unknown)
-        XCTAssertEqual(practice.groups[.clean].first?.hadIssue, false)
-        let changes = try XCTUnwrap(summary.skillChanges)
-        XCTAssertEqual(changes[.leveledUp].first?.to, .unknown)
-        XCTAssertNotNil(changes[.pendingConfirm].first?.confirmableAt)
-        XCTAssertEqual(changes[.cleared], [])
+        XCTAssertNil(practice.groups[.clean].last?.skill)
+        XCTAssertNil(summary.speaking)
         XCTAssertEqual(summary.needPractice, NeedPracticeCount(before: 3, after: nil))
         XCTAssertEqual(summary.countedAsReview?.count, 1)
+    }
+
+    func testSpeakingSummaryDecodes() throws {
+        let summary = try decodeSummary(#"""
+        {"review":null,"newWords":null,
+         "speaking":{"total":3,"passed":2,
+            "becameFluent":[{"meaningId":"m1","wordId":"w1","lemma":"vivid","gloss":"sống động","status":"fluent","score":91}],
+            "slipped":[{"meaningId":"m2","lemma":"budget","gloss":"ngân sách","status":"practicing","score":null}]}}
+        """#)
+        let speaking = try XCTUnwrap(summary.speaking)
+        XCTAssertEqual(speaking.total, 3)
+        XCTAssertEqual(speaking.passed, 2)
+        XCTAssertEqual(speaking.becameFluent.first?.status, .fluent)
+        XCTAssertEqual(speaking.becameFluent.first?.score, 91)
+        XCTAssertEqual(speaking.slipped.first?.status, .practicing)
+        XCTAssertNil(speaking.slipped.first?.score)
+    }
+
+    func testEncodesTheSpeakingPracticeMode() throws {
+        let capabilities = PlanRequest.Capabilities(audioPlayback: true, microphone: true)
+        let body = try JSONEncoder().encode(PlanRequest(mode: .speakingPractice, capabilities: capabilities))
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        XCTAssertEqual(json["mode"] as? String, "speaking_practice")
+        XCTAssertEqual(TaskPhase(rawValue: "speaking_practice"), .speakingPractice)
     }
 }

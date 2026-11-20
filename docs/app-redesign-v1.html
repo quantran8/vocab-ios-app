@@ -682,16 +682,6 @@ function recordingTask() {
   });
 }
 
-/* A learned word's recording (meaningCue): an unscored try from the meaning, then the read-aloud above. */
-function recordingCueTask() {
-  return taskScreen({
-    question: 'Từ tiếng Anh nào có nghĩa này? Hãy thử nói trước khi xem từ.',
-    prompt: textPrompt('trân trọng', 30),
-    content: `<p class="mt-8 text-center text-[15px] text-ink-600">Hãy nói thành tiếng, rồi xem từ để kiểm tra.</p>`,
-    panelHtml: panel('custom', { html: '<button class="btn btn-ink">Xem từ</button><button class="btn btn-line3d mt-3">Không thể nói lúc này</button>' }),
-  });
-}
-
 /* ===================== PRODUCT SCREENS (inspired by Brilliant) ===================== */
 /* done: every new word of the collection is learned (scope exhausted, all topics chosen, no added words left). */
 function home(done = false) {
@@ -735,19 +725,22 @@ function home(done = false) {
   </div>${tabbar('Trang chủ')}`;
 }
 
-function myWords() {
+/* `noWeak`: no word needs practice, so the Weak row says so and has no button. */
+function myWords(noWeak = false) {
   const words = [['resilient', '/rɪˈzɪliənt/', 2, 3], ['meticulous', '/məˈtɪkjələs/', 1, 1], ['ambiguous', '/æmˈbɪɡjuəs/', 1, 2], ['commute', '/kəˈmjuːt/', 2, 2], ['negotiate', '/nɪˈɡoʊʃieɪt/', 1, 1], ['thrive', '/θraɪv/', 1, 1]];
   return `${status()}
   <div class="flex-1 overflow-hidden px-5">
     <div class="flex items-center justify-between pt-6"><h1 class="h-display">Từ của tôi</h1><button class="btn btn-line btn-sm">${ic('plus', 'w-4 h-4')}Thêm từ</button></div>
-    <div class="mt-6 card grid grid-cols-2">
+    <div class="mt-6 card grid grid-cols-3">
       <div class="p-4"><div class="text-[30px] font-extrabold tracking-tight tabular-nums">248</div><div class="text-[13px] text-ink-500 font-semibold">Từ đã học</div></div>
-      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums text-coral-600">12</div><div class="text-[13px] text-ink-500 font-semibold">Cần luyện thêm</div></div>
+      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums ${noWeak ? 'text-ink-400' : 'text-coral-600'}">${noWeak ? 0 : 12}</div><div class="text-[13px] text-ink-500 font-semibold">Cần luyện thêm</div></div>
+      <div class="p-4 border-l-[1.5px] border-ink-100"><div class="text-[30px] font-extrabold tracking-tight tabular-nums text-green-800">31</div><div class="text-[13px] text-ink-500 font-semibold">Nói thành thạo</div></div>
     </div>
     <div class="mt-9">${sectionTitle('Luyện tập')}
       <div class="card">
-        <div class="flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('shuffle')}</span><div class="flex-1"><div class="font-bold">Luyện tập ngẫu nhiên</div><div class="text-[13px] text-ink-500">Tổng hợp hoặc theo kỹ năng</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
-        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-coral-50 text-coral-600">${ic('target')}</span><div class="flex-1"><div class="font-bold">Từ còn yếu</div><div class="text-[13px] text-ink-500">Luyện lại kỹ năng đang yếu</div></div><button class="btn btn-blue btn-sm">Luyện ngay</button></div>
+        <div class="flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('shuffle')}</span><div class="flex-1"><div class="font-bold">Luyện tập ngẫu nhiên</div><div class="text-[13px] text-ink-500">Chọn bộ từ hoặc chủ đề để luyện</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
+        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-coral-50 text-coral-600">${ic('target')}</span><div class="flex-1"><div class="font-bold">Từ còn yếu</div><div class="text-[13px] text-ink-500">${noWeak ? 'Không có từ nào cần luyện' : 'Những từ bạn hay sai'}</div></div>${noWeak ? '' : '<button class="btn btn-blue btn-sm">Luyện ngay</button>'}</div>
+        <div class="flex items-center gap-3 p-4 border-t-[1.5px] border-ink-100"><span class="ico bg-green-50 text-green-700">${ic('mic')}</span><div class="flex-1"><div class="font-bold">Luyện nói</div><div class="text-[13px] text-ink-500">Đọc to các từ của bạn</div></div><button class="btn btn-blue btn-sm">Luyện ngay</button></div>
       </div>
     </div>
     <div class="mt-9">${sectionTitle('Tất cả từ', '<span class="link">Quản lý từ đã thêm</span>')}
@@ -764,7 +757,6 @@ function myWords() {
 
 /* Word detail. IPA and audio belong to a Meaning: when every meaning sounds the same the hero carries them,
    otherwise (heteronyms like lead /liːd/ · /led/) each meaning card does, already in its collapsed row. */
-const WD_SKILLS = [['Đọc', 'Đã xác minh', 'bg-green-50 text-green-800'], ['Viết', 'Cần luyện lại', 'bg-coral-50 text-coral-800'], ['Nghe', 'Đã thể hiện', 'bg-blue-50 text-blue-700'], ['Nói', 'Chưa xác minh', 'bg-ink-100 text-ink-600']];
 const wdHl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
 function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
   const pill = learned ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã học</span>` : '<span class="pill bg-ink-100 text-ink-600">Chưa học</span>';
@@ -775,7 +767,10 @@ function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
     ${open ? `<div class="px-4 pb-4 pl-11 space-y-4"><div><div class="eyebrow mb-1.5">Định nghĩa</div><p class="text-[15px] leading-snug">${def}</p></div>
       <div><div class="eyebrow mb-1.5">Ví dụ</div><p class="text-[15px] leading-snug">${ex}</p>
         <p class="mt-1.5 text-[13px] text-ink-500 flex gap-1.5">${ic('translate', 'w-4 h-4 mt-px')}${tr}</p></div>
-      ${learned ? `<div><div class="eyebrow mb-2">Kỹ năng</div><div class="grid grid-cols-2 gap-2">${WD_SKILLS.map(([s, v, t]) => `<div class="rounded-xl ${t} px-3 py-2"><div class="text-[13px] font-bold">${s}</div><div class="text-[12px] opacity-90">${v}</div></div>`).join('')}</div></div>
+      ${learned ? `<div><div class="eyebrow mb-2">Trí nhớ</div><p class="text-[15px]">87% khả năng còn nhớ lúc này</p>
+        <div class="mt-1.5 h-1 rounded-full bg-ink-100"><div class="h-1 w-[87%] rounded-full bg-blue-600"></div></div>
+        <p class="mt-1 text-[13px] text-ink-500">Ôn tiếp 28 thg 11</p><span class="mt-2 pill bg-coral-50 text-coral-800">Cần luyện lại</span></div>
+      <div><div class="eyebrow mb-2">Phát âm</div><div class="rounded-xl bg-green-50 text-green-800 px-3 py-2"><div class="text-[13px] font-bold flex items-center gap-1">Thành thạo${ic('check', 'w-3 h-3')}</div><div class="text-[12px] opacity-90">Điểm gần nhất 88 · cao nhất 93</div></div></div>
       <div class="text-[13px] text-ink-500">Đã học ${date}</div>` : ''}</div>` : ''}</div>`;
 }
 const wdHero = (w, ipa) => `<div class="text-center"><div class="text-[38px] font-extrabold tracking-[-1.2px]">${w}</div>
@@ -798,23 +793,9 @@ function wordDetailHeteronym() {
       ${wdMeaning({ n: 1, m: 'chì (kim loại)', ipa: '/led/', learned: true })}${wdMeaning({ n: 2, m: 'vị trí dẫn đầu', ipa: '/liːd/', learned: false })}`);
 }
 
-function randomPractice() {
-  const skills = [['book', 'Đọc', true], ['pen', 'Viết', true], ['headphones', 'Nghe', false], ['mic', 'Nói', true]];
-  return `${status()}${backHeader}
-  <div class="flex-1 overflow-hidden px-5">
-    <h1 class="h-display mt-2">Chọn kỹ năng</h1>
-    <div class="mt-8">${sectionTitle('Kỹ năng', '<span class="link">Chọn tất cả</span>')}
-      <div class="grid grid-cols-2 gap-3">${skills.map(([i, s, on]) => `<div class="rounded-[20px] border-2 p-4 ${on ? 'border-blue-500 bg-blue-50' : 'border-ink-200'}">
-        <div class="flex items-start justify-between"><span class="ico ${on ? 'bg-white text-blue-600' : 'bg-ink-50 text-ink-700'}">${ic(i)}</span>
-        ${on ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300"></span>'}</div>
-        <div class="mt-4 font-bold text-[17px] ${on ? 'text-blue-800' : ''}">${s}</div></div>`).join('')}</div></div>
-    <div class="mt-8">${sectionTitle('Nguồn từ')}
-      <div class="card flex items-center gap-3 p-4"><span class="ico bg-ink-50 text-ink-700">${ic('layers')}</span><div class="flex-1"><div class="font-bold">Tất cả từ đã học</div><div class="text-[13px] text-ink-500">248 từ đã học</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div></div>
-  </div>
-  <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Bắt đầu</button></div>`;
-}
-
-function wordSource() {
+/* Random Practice: the word sources sit on the screen itself (no sheet). Picking a collection unfolds its
+   topics right under that row, inside the same card; `pickCollection` shows that state. */
+function randomPractice(pickCollection = false) {
   const radio = sel => sel ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300 shrink-0"></span>';
   const opt = (title, sub, sel, dot, first) => `<div class="flex items-center gap-3 p-4 ${first ? '' : 'border-t-[1.5px] border-ink-100'}">
     ${dot ? `<i class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${dot}"></i>` : `<span class="text-ink-700">${ic('layers', 'w-[18px] h-[18px]')}</span>`}
@@ -823,20 +804,20 @@ function wordSource() {
     <div class="flex items-center justify-between pt-3 pb-2.5"><span class="eyebrow">Chủ đề · 2/6</span><span class="link text-[14px]">Chọn tất cả</span></div>
     <div class="flex flex-wrap gap-2"><span class="chip on bg-white">${ic('bubble', 'w-4 h-4')}Daily conversation</span><span class="chip on bg-white">${ic('cart', 'w-4 h-4')}Shopping</span><span class="chip bg-white">${ic('plane', 'w-4 h-4')}Travel</span><span class="chip bg-white">${ic('utensils', 'w-4 h-4')}Food</span><span class="chip bg-white">${ic('heart', 'w-4 h-4')}Feelings</span><span class="chip bg-white">${ic('home', 'w-4 h-4')}Home</span></div>
   </div>`;
-  return sheetOver(randomPractice(), `
-    <div class="flex justify-end px-5 pt-2"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
-    <div class="flex-1 overflow-hidden px-5">
-      <h2 class="h-sheet">Nguồn từ</h2>
-      <div class="mt-6 card overflow-hidden">
-        ${opt('Tất cả từ đã học', '248 từ đã học', false, null, true)}
-        ${opt('Everyday', '180 từ đã học', true, MARK.everyday)}${topics}
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display mt-2">Luyện tập ngẫu nhiên</h1>
+    <div class="mt-8">${sectionTitle('Nguồn từ')}
+      <div class="card overflow-hidden">
+        ${opt('Tất cả từ đã học', '248 từ đã học', !pickCollection, null, true)}
+        ${opt('Everyday', '180 từ đã học', pickCollection, MARK.everyday)}${pickCollection ? topics : ''}
         ${opt('IELTS', '50 từ đã học', false, MARK.ielts)}
         ${opt('Business', '24 từ đã học', false, MARK.business)}
         ${opt('TOEIC', '12 từ đã học', false, MARK.toeic)}
         ${opt('Từ bạn đã thêm', '18 từ', false, MARK.mine)}
-      </div>
-    </div>
-    <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Xong</button></div>`, 110);
+      </div></div>
+  </div>
+  <div class="px-5 pt-3 pb-10"><button class="btn btn-ink">Bắt đầu</button></div>`;
 }
 
 /* The learner's added words: one row per word (its added meanings joined by "; "); ⋯ opens the actions sheet. */
@@ -1009,7 +990,7 @@ function addLoading() {
     </div>`);
 }
 
-/* Lookup result: every sense is a selectable card (tick like Chọn kỹ năng), several can be added at once.
+/* Lookup result: every sense is a selectable card (tick like Nguồn từ), several can be added at once.
    The open card shows the details and its own "Sửa"; the button counts the selection. */
 const tick = on => on ? `<span class="w-6 h-6 rounded-full bg-blue-500 text-white grid place-items-center shrink-0">${ic('check', 'w-3.5 h-3.5')}</span>` : '<span class="w-6 h-6 rounded-full border-2 border-ink-300 shrink-0"></span>';
 const hlWord = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
@@ -1198,16 +1179,6 @@ const obHeader = step => `<div class="flex items-center gap-4 px-5 pt-2 h-12"><s
 const obTitle = (t, sub) => `<h1 class="text-[28px] font-extrabold tracking-[-0.8px] leading-[1.15] mt-6">${t}</h1>${sub ? `<p class="mt-2 text-[15px] text-ink-600 leading-snug">${sub}</p>` : ''}`;
 const obAction = (label, enabled = true, cls = 'btn-ink') => `<div class="px-5 pt-3 pb-10">${enabled ? `<button class="btn ${cls}">${label}</button>` : disabledBtn(label)}</div>`;
 
-function obLanguage() {
-  const row = (name, sub, on) => `<div class="row py-3">${obRadio(on)}<div class="flex-1"><div class="font-bold ${on ? 'text-blue-800' : ''}">${name}</div><div class="text-[13px] text-ink-500">${sub}</div></div></div>`;
-  return `${status()}
-  <div class="flex-1 overflow-hidden px-5">
-    <img src="${SYLLIE}" alt="" class="w-16 mt-8">
-    ${obTitle('Chọn ngôn ngữ', 'Ngôn ngữ của app và của nghĩa từ. Đổi lại được trong Cài đặt.')}
-    <div class="mt-7 card">${row('Tiếng Việt', 'Vietnamese', true)}${row('English', 'Tiếng Anh', false)}</div>
-  </div>${obAction('Tiếp tục')}`;
-}
-
 function obWelcome() {
   return `${status()}
   <div class="flex-1 flex flex-col items-center justify-center px-8 text-center -mt-6">
@@ -1313,7 +1284,7 @@ function obReady() {
 }
 
 document.getElementById('flows').innerHTML = [
-  flow('flow-auth', 'Luồng 0 · Đăng nhập & đăng ký', 'Màn đầu tiên khi chưa đăng nhập. Vùng sản phẩm: gọn, một hành động chính mỗi màn. Đăng nhập lần đầu xong thì sang Chọn ngôn ngữ rồi Onboarding (Luồng 0b).', [
+  flow('flow-auth', 'Luồng 0 · Đăng nhập & đăng ký', 'Màn đầu tiên khi chưa đăng nhập. Vùng sản phẩm: gọn, một hành động chính mỗi màn. Đăng nhập lần đầu xong thì sang Onboarding (Luồng 0b). Ngôn ngữ app tự theo ngôn ngữ máy (đổi trong Cài đặt), không có màn chọn ngôn ngữ.', [
     frame('0.1', 'Đăng nhập', login(false), [
       'Syllie và chữ "Syll" thay thanh thương hiệu nhỏ ở góc.',
       'Nhãn nằm trên ô nhập; ô viền 2pt, focus Blue; nút mắt để hiện mật khẩu.',
@@ -1338,12 +1309,7 @@ document.getElementById('flows').innerHTML = [
       '"Gửi lại mã" là link ngay dưới ô mã; mật khẩu mới có danh sách quy tắc như lúc đăng ký.',
     ]),
   ]),
-  flow('flow-onboarding', 'Luồng 0b · Onboarding', 'Sau lần đăng nhập đầu tiên: Chọn ngôn ngữ → Chào → Trình độ (có thể qua bài kiểm tra) → Bộ từ → Chủ đề → Lịch học → Sẵn sàng. Vùng sản phẩm, riêng bài kiểm tra trình độ là vùng luyện tập vì người học đang trả lời. Mỗi màn một câu hỏi, một hành động chính.', [
-    frame('0b.1', 'Chọn ngôn ngữ', obLanguage(), [
-      'Lựa chọn là các dòng trong một card với dấu tick tròn, cùng kiểu Nguồn từ / Chọn kỹ năng (thay các ô viền rời).',
-      'Màn tự đổi sang ngôn ngữ đang chọn để đọc được trước khi xác nhận (giữ như app). Phụ đề nói rõ ngôn ngữ áp dụng cho gì.',
-    ]),
-    go('Tiếp tục'),
+  flow('flow-onboarding', 'Luồng 0b · Onboarding', 'Sau lần đăng nhập đầu tiên: Chào → Trình độ (có thể qua bài kiểm tra) → Bộ từ → Chủ đề → Lịch học → Sẵn sàng. Vùng sản phẩm, riêng bài kiểm tra trình độ là vùng luyện tập vì người học đang trả lời. Mỗi màn một câu hỏi, một hành động chính.', [
     frame('0b.2', 'Chào', obWelcome(), [
       'Syllie thay hình ô chữ F·L·O·W và câu "Make words stick" (tên cũ "Flow" không còn là thương hiệu).',
       'Một câu nói rõ việc sắp làm và lợi ích: bốn câu hỏi → bài học vừa sức. Nút "Bắt đầu".',
@@ -1467,7 +1433,7 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Tiếp tục'),
     frame('1.12b', 'Tổng kết', results(), [
       'Số liệu chuyển sang màn thứ hai, tiêu đề "Tổng kết"; Syllie và chip "Hoàn thành buổi học" bỏ khỏi đây vì 1.12 đã nói điều đó.',
-      'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn.',
+      'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn. Có ghi âm được chấm (Daily bật nói, Ngẫu nhiên, Luyện nói) thì thêm tile Phát âm: số "nói đúng" trên số từ đã ghi âm. Từ còn yếu có tile Còn phải luyện; không còn tile Kỹ năng.',
       'Bỏ các dòng nhóm yếu hơn ("1 chưa chắc", "+1 đã biết"…) khỏi tile: thay bằng một link "Xem chi tiết ›" mở sheet chi tiết, nơi các nhóm đã được liệt kê đủ.',
       'Card LP có chip chia theo nguồn. Chuỗi "Xem chi tiết" là chuỗi mới, cần thêm bản vi/en.',
     ]),
@@ -1475,6 +1441,7 @@ document.getElementById('flows').innerHTML = [
     frame('1.13', 'Chi tiết buổi học (sheet)', resultDetail(), [
       'Mỗi khối có thanh tỷ lệ 3 mức (Blue 600 / Blue 300 / sọc) và các nhóm có ô màu tương ứng.',
       'Nhóm mạnh (Nhớ chắc, Nắm ngay) thu gọn sẵn; mỗi từ có nguyên nhân (Blue 700) và kỹ năng/ngày học.',
+      'Khối Phát âm (cuối sheet): dòng "Nói đúng: 2/3 từ", rồi nhóm Cần luyện lại (từ thành thạo bị trượt) và Đã nói thành thạo, mỗi từ kèm điểm khi chấm Azure. Không có thanh tỷ lệ.',
     ]),
     go('Hết bài, buổi học dùng hết từ mới của Collection'),
     frame('1.12a', 'Ăn mừng · học hết Collection', celebrate({ kind: 'collection' }), [
@@ -1487,7 +1454,7 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Tiếp tục'),
     frame('1.12c', 'Tổng kết · học hết Collection', results(true), [
       'Tổng kết như 1.12b, thêm card "Tiếp theo với Everyday" dưới card LP: một dòng nói rõ điều gì xảy ra tiếp.',
-      'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở Nguồn từ (2.4) trên tab Hồ sơ; "Để sau" (viền phẳng, không cạnh dày) về Trang chủ.',
+      'Nút của card thay nút "Xong" để màn chỉ có một hành động chính: "Chọn bộ từ khác" (Ink) mở màn chọn Collection/Topic trên tab Hồ sơ; "Để sau" (viền phẳng, không cạnh dày) về Trang chủ.',
       'Chỉ hết một Topic (Collection chưa xong): không có card này, màn như 1.12b.',
     ]),
     go('Để sau'),
@@ -1546,17 +1513,21 @@ document.getElementById('flows').innerHTML = [
     frame('T5', 'Nối cặp (match)', matchTask(), ['Không có nút Kiểm tra: cặp đúng khóa màu Green, đang chọn màu Blue; panel đếm số cặp đã ghép.']),
     frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.', 'Phím cao 46pt, chữ 20pt (gần bàn phím iOS); card bàn phím đệm ngang 8pt để phím rộng nhất có thể.']),
     frame('T7', 'Đọc to (recording)', recordingTask(), ['Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
-    frame('T7a', 'Đọc to · gợi nghĩa', recordingCueTask(), ['Chỉ có ở recording của từ đã học (từ ôn trong Daily, Ngẫu nhiên, Từ còn yếu; backend gửi <code>meaningCue</code>). Từ mới vào thẳng T7.', 'Bước này không chấm, không ghi âm, không gửi event: không có micro. Tiêu đề và nghĩa lấy từ backend; nghĩa cỡ 30pt như đề của Gõ từ.', '"Xem từ" (Ink) chuyển sang T7 với chính từ đó; "Không thể nói lúc này" bỏ qua cả bài như ở T7.']),
   ]),
-  flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (cần chọn kỹ năng), từ còn yếu (bắt đầu ngay), quản lý từ đã thêm.', [
+  flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (chọn nguồn từ), từ còn yếu và luyện nói (bắt đầu ngay), quản lý từ đã thêm.', [
     frame('2.1', 'Từ của tôi', myWords(), [
-      'Hai con số thống kê nằm chung một card để có điểm tựa; chỉ để xem, không chạm được.',
-      'Luyện tập là hai dòng trong một card, không còn hai thẻ lệch nhau. Ngẫu nhiên có › vì cần thêm một bước; Từ còn yếu có nút "Luyện ngay".',
+      'Các con số thống kê nằm chung một card để có điểm tựa; chỉ để xem, không chạm được. "Nói thành thạo" chỉ hiện khi server gửi fluentWords.',
+      'Luyện tập là các dòng trong một card. Ngẫu nhiên có › vì cần thêm bước chọn nguồn từ (câu phụ nói rõ bước đó); Từ còn yếu và Luyện nói có nút "Luyện ngay". Từ còn yếu là từ trả lời sai gần đây (lần gần nhất vẫn sai); Luyện nói là mỗi từ một bài ghi âm, từ nói trượt lần trước lên đầu.',
       'IPA nằm dưới từ, chỉ khi mọi nghĩa của từ (kể cả nghĩa chưa học) đọc giống nhau; đọc khác nhau thì dòng từ không có IPA.',
+    ], 1130),
+    go('Không còn từ yếu'),
+    frame('2.1a', 'Từ của tôi · không có từ yếu', myWords(true), [
+      'Cần luyện thêm = 0: số chuyển Ink 400; dòng Từ còn yếu ghi "Không có từ nào cần luyện" và không có nút, chạm vào không làm gì (không mở phiên rỗng).',
+      'Luyện nói luôn có nút: chưa học từ nào thì cả khối Luyện tập ẩn (Từ của tôi hiện màn trống).',
     ], 1130),
     go('Chạm một từ'),
     frame('2.2', 'Chi tiết từ (sheet)', wordDetail(), [
-      'Mỗi nghĩa là card mở/đóng, mở được nhiều card cùng lúc (mở sẵn nghĩa đang xem hoặc nghĩa đã học đầu tiên; loa ở đầu trang theo card vừa mở gần nhất): Định nghĩa, Ví dụ, Kỹ năng đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch, kỹ năng dạng lưới 2×2 có màu trạng thái, ngày học.',
+      'Mỗi nghĩa là card mở/đóng, mở được nhiều card cùng lúc (mở sẵn nghĩa đang xem hoặc nghĩa đã học đầu tiên; loa ở đầu trang theo card vừa mở gần nhất): Định nghĩa, Ví dụ, Trí nhớ, Phát âm đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch. Trí nhớ có pill "Cần luyện lại" khi từ nằm trong Từ còn yếu. Phát âm là một ô màu theo trạng thái (Chưa thử / Đang luyện / Thành thạo), có điểm khi chấm bằng Azure; vắng khi nghĩa không có phát âm. Không còn lưới kỹ năng.',
       'IPA và audio thuộc từng nghĩa. Mọi nghĩa đọc giống nhau thì IPA + loa nằm dưới từ (một lần), card không lặp lại.',
     ]),
     go('Từ có nhiều cách đọc'),
@@ -1567,12 +1538,16 @@ document.getElementById('flows').innerHTML = [
       'Một nghĩa thiếu IPA thì dòng đó chỉ có loa (đọc bằng giọng máy). Mỗi nghĩa hiện một cách đọc, theo accent của người học (MVP: en-US).',
     ], 1010),
     go('Từ 2.1: Luyện tập ngẫu nhiên'),
-    frame('2.3', 'Chọn kỹ năng', randomPractice(), [
+    frame('2.3', 'Luyện tập ngẫu nhiên', randomPractice(), [
       'Thanh điều hướng iOS chỉ có nút quay lại; một tiêu đề lớn trong nội dung.',
-      'Thẻ kỹ năng đã chọn: viền và nền Blue, dấu tick tròn.',
+      'Màn chỉ có một lựa chọn nên các nguồn từ nằm thẳng trên màn, không qua sheet: một card, mỗi nguồn một dòng với dấu tick tròn. Mặc định Tất cả từ đã học; chỉ hiện Collection đã học ít nhất một từ, Từ bạn đã thêm ở cuối.',
+      'Chọn nguồn rồi Bắt đầu (ghim dưới): hai lần chạm. Không còn chọn kỹ năng: phát âm có Luyện nói riêng, chính tả và nghe không còn được theo dõi.',
     ]),
-    go('Chạm Nguồn từ'),
-    frame('2.4', 'Nguồn từ (sheet)', wordSource(), ['Chọn một Collection thì Topic mở ra ngay dưới dòng đó, trong cùng card (nền Blue 50 nhạt): danh sách Collection dài bao nhiêu thì Topic vẫn nằm sát chỗ vừa chạm.', 'Nhãn "Chủ đề · 2/6" cho biết đang chọn bao nhiêu Topic; Collection khác thu gọn.']),
+    go('Chạm một Collection'),
+    frame('2.4', 'Luyện tập ngẫu nhiên · chọn Collection', randomPractice(true), [
+      'Topic mở ra ngay dưới dòng Collection, trong cùng card (nền Blue 50 nhạt), mặc định chọn hết; Collection khác thu gọn. Chạm lại Collection đang chọn không đổi Topic.',
+      'Nhãn "Chủ đề · 2/6" cho biết đang chọn bao nhiêu Topic. Bỏ hết Topic thì Bắt đầu mờ, kèm "Chọn ít nhất một chủ đề".',
+    ]),
     go('Từ 2.1: Quản lý từ đã thêm'),
     frame('2.5', 'Từ bạn đã thêm', sheetOver(blankUnder, customWordList()), [
       'Mỗi từ một dòng: từ đậm, các nghĩa đã thêm nối bằng "; " ở dòng dưới. Một từ thêm nhiều nghĩa vẫn là một dòng.',
@@ -1601,7 +1576,7 @@ document.getElementById('flows').innerHTML = [
     frame('3.2', 'Đang tra', addLoading(), ['Syllie (hoạt ảnh tải) thay vòng quay hệ thống.']),
     go('Tìm thấy'),
     frame('3.3', 'Kết quả · chọn nhiều nghĩa', addResult(), [
-      'Thêm được nhiều nghĩa một lần: mỗi nghĩa là một card chọn được (dấu tick tròn như Chọn kỹ năng); đang chọn thì viền Blue 500, nền Blue 50.',
+      'Thêm được nhiều nghĩa một lần: mỗi nghĩa là một card chọn được (dấu tick tròn như Nguồn từ); đang chọn thì viền Blue 500, nền Blue 50.',
       'Chạm dấu tick để chọn/bỏ; chạm phần còn lại của card để mở xem Định nghĩa, Ví dụ và link "Sửa nghĩa này". Nghĩa đã sửa có pill "Đã sửa".',
       'Nhóm theo loại từ (eyebrow). Nhãn nguồn ("Do AI tạo") ghi một lần cạnh tiêu đề, không lặp trên từng card.',
       'Nghĩa đầu tiên được chọn sẵn. Nghĩa đã có trong lộ trình hoặc đã học: không có dấu tick, pill "Đã có trong lộ trình" / "Đã học" (Ink 100), không chọn được.',

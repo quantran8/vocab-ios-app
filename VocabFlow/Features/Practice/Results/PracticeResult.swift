@@ -3,28 +3,26 @@ import Foundation
 /// Everything the results screen shows. Built from the last commit, with a daily chain's review merged in.
 struct PracticeResult: Equatable, Decodable {
     enum Kind: String, Decodable {
-        case daily, randomPractice, weakPractice, checkpoint
+        case daily, randomPractice, weakPractice, speakingPractice, checkpoint
     }
 
     var kind: Kind
     var summary: CommitSummary
-    /// Random practice on chosen skills groups its answers by skill first.
-    var chosenSkills: [PracticeSkill]? = nil
 
-    init(kind: Kind, summary: CommitSummary, chosenSkills: [PracticeSkill]? = nil) {
+    init(kind: Kind, summary: CommitSummary) {
         self.kind = kind
         self.summary = summary
-        self.chosenSkills = chosenSkills
     }
 
-    init(mode: SessionMode, summary: CommitSummary, chosenSkills: [PracticeSkill]?) {
+    init(mode: SessionMode, summary: CommitSummary) {
         let kind: Kind = switch mode {
         case .daily: .daily
         case .randomPractice: .randomPractice
         case .weakWordsPractice: .weakPractice
+        case .speakingPractice: .speakingPractice
         case .checkpointChallenge: .checkpoint
         }
-        self.init(kind: kind, summary: summary, chosenSkills: chosenSkills)
+        self.init(kind: kind, summary: summary)
     }
 
     /// The tiles with something to show (an empty one is left out), or nil when this commit has no result groups
@@ -34,13 +32,13 @@ struct PracticeResult: Equatable, Decodable {
 
 /// A part of the detail sheet; tapping a tile scrolls to it.
 enum ResultSection: Hashable {
-    case review, newWords, practice, skills
+    case review, newWords, practice, weak, speaking
 }
 
 /// What a tile shows, as data, so the rules can be tested without SwiftUI.
 struct ResultTile: Equatable, Identifiable {
     enum Kind: Hashable {
-        case review, newWords, practice, skillsLeveledUp, weakRemaining
+        case review, newWords, practice, weakRemaining, speaking
     }
 
     enum Number: Equatable {
@@ -56,17 +54,17 @@ struct ResultTile: Equatable, Identifiable {
         case remembered, noReviews
         case pickedUp, noNewWords
         case practiceClean, noSkillMeasured
-        case skillsLeveledUp
         case weakRemaining, noWeakWordsLeft
+        case saidRight
     }
 
     enum Line: Equatable {
         case relearn(Int), shaky(Int)
         case neededRetry(Int), sawAnswer(Int), alreadyKnew(Int)
         case missed(Int), helped(Int)
-        case regressed(Int)
         /// Signed change in weak words since before the session.
-        case weakDelta(Int), weakPending(Int)
+        case weakDelta(Int)
+        case becameFluent(Int), slipped(Int)
     }
 
     let kind: Kind
@@ -86,7 +84,8 @@ struct ResultTile: Equatable, Identifiable {
         case .review: .review
         case .newWords: .newWords
         case .practice: .practice
-        case .skillsLeveledUp, .weakRemaining: .skills
+        case .weakRemaining: .weak
+        case .speaking: .speaking
         }
     }
 }
@@ -99,13 +98,15 @@ enum ResultTiles {
         switch result.kind {
         case .daily:
             guard summary.review != nil || summary.newWords != nil else { return nil }
-            tiles = [reviewTile(summary.review), newWordsTile(summary.newWords)]
+            tiles = [reviewTile(summary.review), newWordsTile(summary.newWords), speakingTile(summary.speaking)]
         case .randomPractice:
             guard summary.practice != nil else { return nil }
-            tiles = [practiceTile(summary.practice), skillsTile(summary.skillChanges)]
+            tiles = [practiceTile(summary.practice), speakingTile(summary.speaking)]
         case .weakPractice:
             guard summary.practice != nil else { return nil }
-            tiles = [practiceTile(summary.practice), weakTile(summary.needPractice, changes: summary.skillChanges)]
+            tiles = [practiceTile(summary.practice), weakTile(summary.needPractice)]
+        case .speakingPractice:
+            tiles = [speakingTile(summary.speaking)]
         case .checkpoint:
             return nil
         }
@@ -145,25 +146,23 @@ enum ResultTiles {
                           lines: parts(.helped(helped), helped, .missed(missed), missed))
     }
 
-    static func skillsTile(_ changes: ResultGroups<SkillChangeGroup>?) -> ResultTile {
-        let changes = changes ?? ResultGroups()
-        let leveled = changes.count(.leveledUp)
-        let regressed = changes.count(.regressed)
-        let lines: [ResultTile.Line] = regressed > 0 ? [.regressed(regressed)] : []
-        return ResultTile(kind: .skillsLeveledUp, number: leveled > 0 ? .plus(leveled) : .count(0), caption: .skillsLeveledUp, lines: lines)
-    }
-
     /// Shows what is left, not what was cleared: the delta line says what this session did.
-    static func weakTile(_ count: NeedPracticeCount?, changes: ResultGroups<SkillChangeGroup>?) -> ResultTile {
+    static func weakTile(_ count: NeedPracticeCount?) -> ResultTile {
         guard let after = count?.after else { return ResultTile(kind: .weakRemaining, number: .none, caption: .weakRemaining, isEmpty: true) }
         var lines: [ResultTile.Line] = []
         if let before = count?.before, before != after {
             lines.append(.weakDelta(after - before))
         }
-        let pending = changes?.count(.pendingConfirm) ?? 0
-        if pending > 0 { lines.append(.weakPending(pending)) }
         return ResultTile(kind: .weakRemaining, number: .count(after), caption: after == 0 ? .noWeakWordsLeft : .weakRemaining,
                           lines: lines, celebrates: after == 0)
+    }
+
+    /// Recordings said right (first take on the device, first score on Azure) out of those scored.
+    static func speakingTile(_ speaking: SpeakingSummary?) -> ResultTile {
+        guard let speaking, speaking.total > 0 else { return ResultTile(kind: .speaking, number: .none, caption: .saidRight, isEmpty: true) }
+        let (fluent, slipped) = (speaking.becameFluent.count, speaking.slipped.count)
+        return ResultTile(kind: .speaking, number: .fraction(speaking.passed, of: speaking.total), caption: .saidRight,
+                          lines: (fluent > 0 ? [.becameFluent(fluent)] : []) + (slipped > 0 ? [.slipped(slipped)] : []))
     }
 
     /// The weaker groups, by name and count; an empty one gets no line.

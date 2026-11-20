@@ -22,8 +22,9 @@ final class AppLanguageTests: XCTestCase {
         AppSettingsStore(feedback: SettingsAwareFeedback(base: NoOpFeedback()), defaults: defaults)
     }
 
-    func testNoLanguageIsChosenAtFirst() {
-        XCTAssertNil(makeSettings().language)
+    func testTheDeviceLanguageIsUsedUntilOneIsChosen() {
+        XCTAssertEqual(makeSettings().language, .device)
+        XCTAssertNil(defaults.string(forKey: "settings.language"))
     }
 
     func testAChoiceSurvivesARelaunch() {

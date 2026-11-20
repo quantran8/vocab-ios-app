@@ -57,18 +57,15 @@ struct PracticeSessionView: View {
     }
 
     private var emptyMessage: Text {
-        if store.isWeakPractice { return Text("Skills you need to practice again will show up here.") }
+        if store.isWeakPractice { return Text("Words you keep missing will show up here.") }
+        if store.isSpeakingPractice {
+            return store.canRecord
+                ? Text("Learned words with a pronunciation will show up here.")
+                : Text("Allow microphone access in Settings to practice speaking.")
+        }
         if store.isReviewOnly { return Text("No words are waiting for review right now.") }
         if store.practiceFilter != nil { return Text("You haven’t learned any words from this source yet.") }
         // No checkpoint gate any more: an old pending review never shows Daily as blocked.
-        // The backend drops skills the device can't train, so only audio-bound choices can come back empty for that reason.
-        let skills = Set(store.practiceSkills ?? [])
-        if skills == [.speaking], !store.canRecord {
-            return Text("Allow microphone access in Settings to practice speaking.")
-        }
-        if skills.contains(.listening), skills.isSubset(of: [.listening, .speaking]) {
-            return Text("Listening practice needs sound and only uses words with audio. Check back after learning more words.")
-        }
         return Text("Check back after learning more words.")
     }
 

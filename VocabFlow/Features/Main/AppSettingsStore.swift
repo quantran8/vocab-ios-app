@@ -17,8 +17,8 @@ final class AppSettingsStore {
         didSet { defaults?.set(reduceMotion, forKey: Keys.reduceMotion) }
     }
 
-    /// `nil` until the learner has chosen, which is what puts the language step on screen.
-    private(set) var language: AppLanguage?
+    /// The device's language until the learner picks one in Settings.
+    private(set) var language: AppLanguage
 
     @ObservationIgnored let feedback: SettingsAwareFeedback
     @ObservationIgnored private let defaults: UserDefaults?
@@ -38,9 +38,9 @@ final class AppSettingsStore {
         self.defaults = defaults
         hapticsEnabled = defaults?.object(forKey: Keys.haptics) as? Bool ?? true
         reduceMotion = defaults?.bool(forKey: Keys.reduceMotion) ?? false
+        language = Self.savedLanguage(in: defaults) ?? .device
         feedback.isEnabled = hapticsEnabled
-        language = Self.savedLanguage(in: defaults)
-        if let language { AppLanguage.active = language }
+        AppLanguage.active = language
     }
 
     /// Applies at once, and from the next launch on for what only reads the language at launch.

@@ -3,7 +3,7 @@ import Foundation
 /// What the detail sheet lists, as data: blocks of groups, the groups needing attention first.
 struct ResultSheetBlock: Equatable, Identifiable {
     enum Title: Equatable {
-        case review, newWords, answers, answersFor(ResultSkill), skillChanges, weakWords, frequentMistakes
+        case review, newWords, answers, speaking
     }
 
     let section: ResultSection
@@ -13,6 +13,13 @@ struct ResultSheetBlock: Equatable, Identifiable {
     var excluded: PracticeSummary.Excluded? = nil
     /// Random: due words this practice counted as their review.
     var countedAsReview: [ResultItem] = []
+    /// Speaking: how many recordings were said right, out of those scored.
+    var spoken: SpokenTally? = nil
+
+    struct SpokenTally: Equatable {
+        let passed: Int
+        let total: Int
+    }
 
     var id: String { "\(section)-\(title)" }
 
@@ -29,15 +36,12 @@ struct ResultSheetGroup: Equatable, Identifiable {
         case relearn, shaky, solid
         case revealed, retried, smooth, known
         case missed, helped, clean
-        case regressed, leveledUp
-        case stillNeedsPractice, waitingToConfirm, settled
+        case becameFluent, slipped
     }
 
     let kind: Kind
     let items: [ResultItem]
     var collapsedByDefault = false
-    /// Weak practice: a pair without a skill issue is only "a frequent mistake lately".
-    var marksFrequentMistakes = false
 
     var id: String { "\(kind)" }
     /// Which part of the block's bar this group is; its header carries that part's swatch.
@@ -47,13 +51,13 @@ struct ResultSheetGroup: Equatable, Identifiable {
 }
 
 extension ResultSheetGroup.Kind {
-    /// 0 strong, 1 mid, 2 weak; nil for groups that are not a share of the block (known words, skill changes).
+    /// 0 strong, 1 mid, 2 weak; nil for groups that are not a share of the block (known words, speaking changes).
     var barLevel: Int? {
         switch self {
         case .solid, .smooth, .clean: 0
         case .shaky, .retried, .helped: 1
         case .relearn, .revealed, .missed: 2
-        case .known, .regressed, .leveledUp, .stillNeedsPractice, .waitingToConfirm, .settled: nil
+        case .known, .becameFluent, .slipped: nil
         }
     }
 }
@@ -61,9 +65,10 @@ extension ResultSheetGroup.Kind {
 enum ResultSheetModel {
     static func blocks(for result: PracticeResult) -> [ResultSheetBlock] {
         let summary = result.summary
+        var blocks: [ResultSheetBlock]
         switch result.kind {
         case .daily:
-            var blocks: [ResultSheetBlock] = []
+            blocks = []
             if let review = summary.review {
                 let g = review.groups
                 blocks.append(ResultSheetBlock(section: .review, title: .review, groups: collapsing(.solid, in: [
@@ -81,86 +86,52 @@ enum ResultSheetModel {
                     ResultSheetGroup(kind: .known, items: g[.known]),
                 ])))
             }
-            return blocks.filter { !$0.groups.isEmpty }
+            blocks = blocks.filter { !$0.groups.isEmpty }
         case .randomPractice:
-            return randomBlocks(summary, chosenSkills: result.chosenSkills)
+            blocks = randomBlocks(summary)
         case .weakPractice:
-            return weakBlocks(summary)
+            blocks = answerBlocks(summary.practice ?? PracticeSummary())
+        case .speakingPractice:
+            blocks = []
         case .checkpoint:
             return []
         }
+        if let speaking = speakingBlock(summary.speaking) { blocks.append(speaking) }
+        return blocks
     }
 
-    private static func randomBlocks(_ summary: CommitSummary, chosenSkills: [PracticeSkill]?) -> [ResultSheetBlock] {
-        let practice = summary.practice ?? PracticeSummary()
-        let answers = practiceGroups(practice.groups) { _ in true }
-        var blocks: [ResultSheetBlock] = []
-        if let chosenSkills, !chosenSkills.isEmpty {
-            // Chosen skills: the answers are grouped by skill first.
-            let skills = chosenSkills.compactMap { ResultSkill(rawValue: $0.rawValue) }
-            for skill in skills {
-                let groups = practiceGroups(practice.groups) { $0.skill == skill }
-                if !groups.isEmpty { blocks.append(ResultSheetBlock(section: .practice, title: .answersFor(skill), groups: groups)) }
-            }
-            if !blocks.isEmpty {
-                blocks[blocks.count - 1].excluded = practice.excluded
-            }
-        } else if !answers.isEmpty {
-            blocks.append(ResultSheetBlock(section: .practice, title: .answers, groups: answers, excluded: practice.excluded))
-        }
-        if blocks.isEmpty, let excluded = practice.excluded, excluded.count > 0 {
-            blocks.append(ResultSheetBlock(section: .practice, title: .answers, groups: [], excluded: excluded))
-        }
-        let changes = summary.skillChanges ?? ResultGroups()
-        let skillGroups = nonEmpty([
-            ResultSheetGroup(kind: .regressed, items: changes[.regressed]),
-            ResultSheetGroup(kind: .leveledUp, items: changes[.leveledUp]),
-        ])
+    private static func randomBlocks(_ summary: CommitSummary) -> [ResultSheetBlock] {
+        var blocks = answerBlocks(summary.practice ?? PracticeSummary())
         let counted = summary.countedAsReview ?? []
-        if !skillGroups.isEmpty || !counted.isEmpty {
-            blocks.append(ResultSheetBlock(section: .skills, title: .skillChanges, groups: skillGroups, countedAsReview: counted))
+        if !counted.isEmpty {
+            if blocks.isEmpty { blocks.append(ResultSheetBlock(section: .practice, title: .answers, groups: [])) }
+            blocks[blocks.count - 1].countedAsReview = counted
         }
         return blocks
     }
 
-    private static func weakBlocks(_ summary: CommitSummary) -> [ResultSheetBlock] {
-        let practice = summary.practice ?? PracticeSummary()
-        let changes = summary.skillChanges ?? ResultGroups()
-        let pairs = Set((changes[.pendingConfirm] + changes[.cleared]).map { "\($0.meaningId)|\($0.skill?.rawValue ?? "")" })
-        let hadIssue = { (item: ResultItem) in item.hadIssue != false }
-        let stillNeeds = (practice.groups[.missed] + practice.groups[.helped])
-            .filter { hadIssue($0) && !pairs.contains("\($0.meaningId)|\($0.skill?.rawValue ?? "")") }
-        let weak = nonEmpty([
-            ResultSheetGroup(kind: .stillNeedsPractice, items: stillNeeds),
-            ResultSheetGroup(kind: .waitingToConfirm, items: changes[.pendingConfirm]),
-            ResultSheetGroup(kind: .settled, items: changes[.cleared]),
+    /// Every answer in one block; a block with only uncounted answers still says why they didn't count.
+    private static func answerBlocks(_ practice: PracticeSummary) -> [ResultSheetBlock] {
+        let groups = practiceGroups(practice.groups)
+        guard !groups.isEmpty || (practice.excluded?.count ?? 0) > 0 else { return [] }
+        return [ResultSheetBlock(section: .practice, title: .answers, groups: groups, excluded: practice.excluded)]
+    }
+
+    /// Present whenever a recording was scored, so the speaking tile always has a block to open.
+    private static func speakingBlock(_ speaking: SpeakingSummary?) -> ResultSheetBlock? {
+        guard let speaking, speaking.total > 0 else { return nil }
+        let groups = nonEmpty([
+            ResultSheetGroup(kind: .slipped, items: speaking.slipped),
+            ResultSheetGroup(kind: .becameFluent, items: speaking.becameFluent),
         ])
-        var blocks: [ResultSheetBlock] = []
-        if !weak.isEmpty {
-            let collapsed = weak.map { group in
-                var group = group
-                group.collapsedByDefault = group.kind == .settled && weak.count > 1
-                return group
-            }
-            blocks.append(ResultSheetBlock(section: .skills, title: .weakWords, groups: collapsed))
-        }
-        // Words picked for frequent mistakes, not for a skill issue: only how the answers went.
-        let frequent = practiceGroups(practice.groups) { !hadIssue($0) }.map { group in
-            var group = group
-            group.marksFrequentMistakes = true
-            return group
-        }
-        if !frequent.isEmpty || (practice.excluded?.count ?? 0) > 0 {
-            blocks.append(ResultSheetBlock(section: .practice, title: .frequentMistakes, groups: frequent, excluded: practice.excluded))
-        }
-        return blocks
+        return ResultSheetBlock(section: .speaking, title: .speaking, groups: groups, spoken: .init(passed: speaking.passed, total: speaking.total))
     }
 
-    private static func practiceGroups(_ groups: ResultGroups<PracticeGroup>, where keep: (ResultItem) -> Bool) -> [ResultSheetGroup] {
+    private static func practiceGroups(_ groups: ResultGroups<PracticeGroup>) -> [ResultSheetGroup] {
         collapsing(.clean, in: [
-            ResultSheetGroup(kind: .missed, items: groups[.missed].filter(keep)),
-            ResultSheetGroup(kind: .helped, items: groups[.helped].filter(keep)),
-            ResultSheetGroup(kind: .clean, items: groups[.clean].filter(keep)),
+            ResultSheetGroup(kind: .missed, items: groups[.missed]),
+            ResultSheetGroup(kind: .helped, items: groups[.helped]),
+            ResultSheetGroup(kind: .clean, items: groups[.clean]),
         ])
     }
 

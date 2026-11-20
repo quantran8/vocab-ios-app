@@ -335,7 +335,6 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
 | Nối cặp            | Hai cột thẻ cao bằng nhau; cặp đúng khóa màu Green, đang chọn màu Blue                                                                         |
 | Sửa lỗi chính tả   | Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; phím cao 50pt, chữ 20pt, card đệm ngang 8pt để phím rộng nhất có thể                     |
 | Đọc to             | Nút giữa bài tập (5.6) với icon micro; nút phụ "Không thể nói lúc này"                                                                         |
-| Đọc to · gợi nghĩa | Chỉ với từ đã học (`meaningCue`): bước đầu không chấm, không ghi âm. Tiêu đề là câu hỏi của backend, nghĩa ở giữa (30pt như đề của Gõ từ), dòng "Hãy nói thành tiếng, rồi xem từ để kiểm tra.", nút Ink "Xem từ" + nút phụ "Không thể nói lúc này". "Xem từ" chuyển sang bước Đọc to ở trên |
 
 ### 6.6 Kết quả
 
@@ -369,7 +368,7 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Lỗi hiện ngay dưới ô nhập (viền Coral, chữ coral-700 kèm icon), không dùng alert.
   - Tạo tài khoản và đặt lại mật khẩu là trang con có nút quay lại của iOS. Quy tắc mật khẩu hiện trực tiếp (tick Green khi đạt). Ô mã dùng chữ số đơn cách và tự điền mã của iOS.
   - Màn "Kiểm tra email của bạn": Syllie kèm icon thư, email in đậm.
-- **Onboarding** (sau lần đăng nhập đầu): Chọn ngôn ngữ → Chào → Trình độ (có thể qua bài kiểm tra) → Bộ từ → Chủ đề → Lịch học → Sẵn sàng.
+- **Onboarding** (sau lần đăng nhập đầu): Chào → Trình độ (có thể qua bài kiểm tra) → Bộ từ → Chủ đề → Lịch học → Sẵn sàng.
   - Mỗi màn một câu hỏi, một hành động chính; nút vô hiệu tới khi đã chọn.
   - Bốn bước giữa có header chung: nút quay lại tròn và thanh 4 đoạn blue-500, không có chữ "Bước n/4".
   - Lựa chọn một (ngôn ngữ, trình độ, bộ từ) là các dòng trong một card với dấu tick tròn; chủ đề là chip có icon.
@@ -385,13 +384,13 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Khối "Đang học": tiến độ Collection và các Topic; mọi thanh tiến độ dùng màu dấu của Collection. Dòng tên Collection chỉ có chấm màu và tên (tên dài thu nhỏ tới 80% rồi cắt "…"); số từ "128 / 600 từ" nằm dưới thanh.
 - **Từ của tôi:**
   - Hai số thống kê trong một card.
-  - Khối Luyện tập là hai dòng trong một card: Luyện tập ngẫu nhiên có › vì còn bước chọn kỹ năng; Từ còn yếu có nút "Luyện ngay".
+  - Khối Luyện tập là ba dòng trong một card: Luyện tập ngẫu nhiên có › vì còn bước chọn nguồn từ; Từ còn yếu và Luyện nói có nút "Luyện ngay". Không có từ để luyện thì dòng đó nói rõ ("Không có từ nào cần luyện") và không có nút.
   - Danh sách từ: từ đậm, IPA ở dòng dưới (chỉ khi mọi nghĩa của từ, kể cả nghĩa chưa học, đọc giống nhau), chấm xanh lá cho số nghĩa đã học.
   - **Từ bạn đã thêm** (sheet): mỗi từ một dòng, các nghĩa đã thêm nối bằng "; ". Chạm dòng mở Chi tiết từ; nút ⋯ với từ một nghĩa mở thẳng Menu gốc của iOS (Sửa, Khôi phục bản gốc, Xóa); với từ nhiều nghĩa mở sheet hành động: một card, mỗi nghĩa là một dòng (pill "Đã sửa" nếu đã sửa) với nút ⋯ là Menu đó. Xóa hỏi bằng ConfirmSheet: "Xóa nghĩa này?" khi từ còn nghĩa khác, "Xóa từ này?" khi là nghĩa cuối.
 - **Chi tiết từ:** mỗi nghĩa là một card mở/đóng, mở được nhiều card cùng lúc (loa dưới từ theo card vừa mở gần nhất), có nhãn Định nghĩa, Ví dụ (kèm bản dịch), Kỹ năng (lưới 2×2 có màu trạng thái) và ngày học.
   - IPA và audio thuộc từng nghĩa. Mọi nghĩa đọc giống nhau thì IPA và loa nằm dưới từ, một lần.
   - Các nghĩa đọc khác nhau (lead /liːd/, /led/) thì dưới từ không có IPA hay loa. Mỗi card có IPA và loa tròn blue-50 ngay dưới nghĩa, hiện cả khi thu gọn. Loa là nút riêng, chạm vào không mở/đóng card.
-- **Nguồn từ:** chọn một Collection thì Topic mở ra ngay dưới dòng đó, trong cùng card, kèm nhãn "Chủ đề · 2/6".
+- **Luyện tập ngẫu nhiên:** các nguồn từ nằm thẳng trên màn (không sheet), một card với dấu tick tròn, mặc định Tất cả từ đã học. Chọn một Collection thì Topic mở ra ngay dưới dòng đó, trong cùng card, kèm nhãn "Chủ đề · 2/6".
 - **Hồ sơ:** Tier, LP và tiến độ lên Tier kế gộp trong một card dưới tên.
 - **Cài đặt:** nhóm thành card; chỉ giữ dòng phụ có nghĩa; bỏ dòng không chọn được.
 - **Xếp hạng:**

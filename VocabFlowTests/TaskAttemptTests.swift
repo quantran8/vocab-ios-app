@@ -36,16 +36,6 @@ final class TaskAttemptTests: XCTestCase {
         XCTAssertNil(untimed["elapsedMs"])
     }
 
-    func testSkillStateDecodesIssue() throws {
-        let decode = { (json: String) in try JSONDecoder().decode(SkillState.self, from: Data(json.utf8)) }
-        let assisted = try decode(#"{"status":"demonstrated","needsPractice":true,"issue":"assisted"}"#)
-        XCTAssertEqual(assisted.status, .demonstrated)
-        XCTAssertEqual(try decode(#"{"status":"verified","needsPractice":false,"issue":null}"#).status, .demonstrated)
-        XCTAssertTrue(assisted.needsPractice)
-        XCTAssertEqual(assisted.issue, .assisted)
-        XCTAssertNil(try decode(#"{"status":"demonstrated","needsPractice":false,"issue":null}"#).issue)
-    }
-
     func testNormalizeMatchesTheBackend() {
         XCTAssertEqual(PracticeAnswer.normalize("  New \t\n  York "), "new york")
         XCTAssertEqual(PracticeAnswer.normalize("cafe\u{301}"), "caf\u{E9}")

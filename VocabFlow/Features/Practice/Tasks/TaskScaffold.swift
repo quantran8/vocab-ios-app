@@ -31,7 +31,17 @@ struct TaskScaffold<Content: View, Action: View>: View {
                     if let question = attempt.task.question {
                         ExerciseHeading(title: Text(verbatim: question))
                     }
-                    TaskPromptView(attempt: attempt)
+                    VStack(spacing: Spacing.xs) {
+                        TaskPromptView(attempt: attempt)
+                        // Recording: which of the word's sounds to read.
+                        if let ipa = attempt.task.ipa {
+                            Text(verbatim: ipa)
+                                .font(Typography.body)
+                                .foregroundStyle(Color.mutedInk)
+                                .multilineTextAlignment(.center)
+                                .accessibilityLabel(Text("IPA: \(ipa)"))
+                        }
+                    }
                 }
 
                 // While a wrong answer is shown, the exercise waits for "Try again" or "Continue".

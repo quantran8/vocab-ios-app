@@ -1,0 +1,1586 @@
+{
+  ".mcp.json": {
+    "mtime": 1794039713.1942267,
+    "seen": 1795318426.397575,
+    "ast_hash": "3b7966c6ebfdb00b7fa229f3e41ae8a7",
+    "semantic_hash": "3b7966c6ebfdb00b7fa229f3e41ae8a7"
+  },
+  ".vscode/settings.json": {
+    "mtime": 1794835358.927573,
+    "seen": 1795318426.397579,
+    "ast_hash": "952ee4d0a4e8c748d191d7fd0902fc7b",
+    "semantic_hash": "952ee4d0a4e8c748d191d7fd0902fc7b"
+  },
+  "VocabFlow/App/AppRootView.swift": {
+    "mtime": 1795180824.054142,
+    "seen": 1795318426.397582,
+    "ast_hash": "d5f3e2bf8f18f5cd51607595c7cbe370",
+    "semantic_hash": "d5f3e2bf8f18f5cd51607595c7cbe370"
+  },
+  "VocabFlow/App/VocabFlowApp.swift": {
+    "mtime": 1795233291.8853295,
+    "seen": 1795318426.397582,
+    "ast_hash": "98354a66789fd5204e99ed9db73217c0",
+    "semantic_hash": "98354a66789fd5204e99ed9db73217c0"
+  },
+  "VocabFlow/DesignSystem/Components/AudioPlayButton.swift": {
+    "mtime": 1794752113.7535257,
+    "seen": 1795318426.397584,
+    "ast_hash": "91548eeeaa441349bf39eeff2af2df45",
+    "semantic_hash": "91548eeeaa441349bf39eeff2af2df45"
+  },
+  "VocabFlow/DesignSystem/Components/CelebrationBadge.swift": {
+    "mtime": 1793885914.5936174,
+    "seen": 1795318426.397584,
+    "ast_hash": "025b11ce016bb6600de1df99901c9c3a",
+    "semantic_hash": "025b11ce016bb6600de1df99901c9c3a"
+  },
+  "VocabFlow/DesignSystem/Components/ConfirmSheet.swift": {
+    "mtime": 1795094474.0949118,
+    "seen": 1795318426.397585,
+    "ast_hash": "6ba6ca79d4f49f0efbf94d21ffa109d5",
+    "semantic_hash": "6ba6ca79d4f49f0efbf94d21ffa109d5"
+  },
+  "VocabFlow/DesignSystem/Components/Controls.swift": {
+    "mtime": 1795098334.0135741,
+    "seen": 1795318426.3975859,
+    "ast_hash": "3ee7ae773c5cfaa6c6c67305447bb81a",
+    "semantic_hash": "3ee7ae773c5cfaa6c6c67305447bb81a"
+  },
+  "VocabFlow/DesignSystem/Components/Decorations.swift": {
+    "mtime": 1794621793.002788,
+    "seen": 1795318426.397587,
+    "ast_hash": "c9f0e0de59ba98a62e068ea8d45e2aef",
+    "semantic_hash": "c9f0e0de59ba98a62e068ea8d45e2aef"
+  },
+  "VocabFlow/DesignSystem/Components/DropSlot.swift": {
+    "mtime": 1793885914.5897124,
+    "seen": 1795318426.397588,
+    "ast_hash": "f8e35fb20e2563f5f4bfd0e27f4b4e48",
+    "semantic_hash": "f8e35fb20e2563f5f4bfd0e27f4b4e48"
+  },
+  "VocabFlow/DesignSystem/Components/ExerciseHeading.swift": {
+    "mtime": 1794630105.0213768,
+    "seen": 1795318426.397588,
+    "ast_hash": "37d1578bfcfd0014067e69b66a215b7d",
+    "semantic_hash": "37d1578bfcfd0014067e69b66a215b7d"
+  },
+  "VocabFlow/DesignSystem/Components/FeedbackBanner.swift": {
+    "mtime": 1795229081.9906008,
+    "seen": 1795318426.397589,
+    "ast_hash": "40114c6db8b7d85acf3b68bee2fefa47",
+    "semantic_hash": "40114c6db8b7d85acf3b68bee2fefa47"
+  },
+  "VocabFlow/DesignSystem/Components/FlowHeader.swift": {
+    "mtime": 1795097048.2521338,
+    "seen": 1795318426.39759,
+    "ast_hash": "738a6a05580dc524fe23e9b535f9391c",
+    "semantic_hash": "738a6a05580dc524fe23e9b535f9391c"
+  },
+  "VocabFlow/DesignSystem/Components/FlowLayout.swift": {
+    "mtime": 1793885914.5900917,
+    "seen": 1795318426.397591,
+    "ast_hash": "1521b0d194b4b3deb0d63f6d19e4c742",
+    "semantic_hash": "1521b0d194b4b3deb0d63f6d19e4c742"
+  },
+  "VocabFlow/DesignSystem/Components/FormFields.swift": {
+    "mtime": 1794835358.9294868,
+    "seen": 1795318426.397592,
+    "ast_hash": "01176ed91dbc3192bb7acf66a0859c01",
+    "semantic_hash": "01176ed91dbc3192bb7acf66a0859c01"
+  },
+  "VocabFlow/DesignSystem/Components/HighlightedSentence.swift": {
+    "mtime": 1795316527.9485583,
+    "seen": 1795318426.397593,
+    "ast_hash": "49d25cb5400869f668ebaf3a645606d4",
+    "semantic_hash": "49d25cb5400869f668ebaf3a645606d4"
+  },
+  "VocabFlow/DesignSystem/Components/HintControl.swift": {
+    "mtime": 1794630105.0215032,
+    "seen": 1795318426.397593,
+    "ast_hash": "6e4def6a4d951ff0dea0e0959e2a7643",
+    "semantic_hash": "6e4def6a4d951ff0dea0e0959e2a7643"
+  },
+  "VocabFlow/DesignSystem/Components/HomeSyllieView.swift": {
+    "mtime": 1795316153.0981395,
+    "seen": 1795318426.3975942,
+    "ast_hash": "893f53f6448e0ae97dbea26ac9ef9255",
+    "semantic_hash": "893f53f6448e0ae97dbea26ac9ef9255"
+  },
+  "VocabFlow/DesignSystem/Components/PrimaryButton.swift": {
+    "mtime": 1795180824.0545144,
+    "seen": 1795318426.397595,
+    "ast_hash": "ad6becd1531ffab4744c172d7fd7482f",
+    "semantic_hash": "ad6becd1531ffab4744c172d7fd7482f"
+  },
+  "VocabFlow/DesignSystem/Components/ProgressTrack.swift": {
+    "mtime": 1794630105.020624,
+    "seen": 1795318426.397596,
+    "ast_hash": "91a13caf1670d8bfd3094dd850a8c631",
+    "semantic_hash": "91a13caf1670d8bfd3094dd850a8c631"
+  },
+  "VocabFlow/DesignSystem/Components/RecallInput.swift": {
+    "mtime": 1793885914.5858586,
+    "seen": 1795318426.397596,
+    "ast_hash": "1cb9b22990cc9148ffc28c3569c4d399",
+    "semantic_hash": "1cb9b22990cc9148ffc28c3569c4d399"
+  },
+  "VocabFlow/DesignSystem/Components/SelectionControls.swift": {
+    "mtime": 1794835358.9297302,
+    "seen": 1795318426.3975968,
+    "ast_hash": "e5e79fbdf8630d3af114bd17ea45f17d",
+    "semantic_hash": "e5e79fbdf8630d3af114bd17ea45f17d"
+  },
+  "VocabFlow/DesignSystem/Components/SpeakerWaveIcon.swift": {
+    "mtime": 1794752048.4311383,
+    "seen": 1795318426.397598,
+    "ast_hash": "ca56eab72ad83915af3ccd89b2d443ae",
+    "semantic_hash": "ca56eab72ad83915af3ccd89b2d443ae"
+  },
+  "VocabFlow/DesignSystem/Components/SwipeBack.swift": {
+    "mtime": 1794631053.5018787,
+    "seen": 1795318426.397599,
+    "ast_hash": "9e753da86e9e75b33c02ebc96f0e5652",
+    "semantic_hash": "9e753da86e9e75b33c02ebc96f0e5652"
+  },
+  "VocabFlow/DesignSystem/Components/SyllieArtboardView.swift": {
+    "mtime": 1794136957.669063,
+    "seen": 1795318426.3976,
+    "ast_hash": "d417e19af34a590b7842ba6c781431ee",
+    "semantic_hash": "d417e19af34a590b7842ba6c781431ee"
+  },
+  "VocabFlow/DesignSystem/Components/SyllieCelebrationView.swift": {
+    "mtime": 1795316153.1015565,
+    "seen": 1795318426.3976,
+    "ast_hash": "be37bdf1c614d1c26cdc0b76e4c778f9",
+    "semantic_hash": "be37bdf1c614d1c26cdc0b76e4c778f9"
+  },
+  "VocabFlow/DesignSystem/Components/SyllieLoadingView.swift": {
+    "mtime": 1795316153.1048052,
+    "seen": 1795318426.3976011,
+    "ast_hash": "25e23258047df85b1951152f17ca27e8",
+    "semantic_hash": "25e23258047df85b1951152f17ca27e8"
+  },
+  "VocabFlow/DesignSystem/Components/SyllieReactionView.swift": {
+    "mtime": 1794110391.1441991,
+    "seen": 1795318426.397602,
+    "ast_hash": "9cc4d77cced509ba5cbc09c355f248f7",
+    "semantic_hash": "9cc4d77cced509ba5cbc09c355f248f7"
+  },
+  "VocabFlow/DesignSystem/Components/SyllieView.swift": {
+    "mtime": 1795316153.1079276,
+    "seen": 1795318426.397603,
+    "ast_hash": "0c8db5fd74daebc9e121646961fbc40b",
+    "semantic_hash": "0c8db5fd74daebc9e121646961fbc40b"
+  },
+  "VocabFlow/DesignSystem/Components/SystemBackButton.swift": {
+    "mtime": 1793974838.3100417,
+    "seen": 1795318426.397603,
+    "ast_hash": "56c22a2934f1343d5f6e0b7b3a0481be",
+    "semantic_hash": "56c22a2934f1343d5f6e0b7b3a0481be"
+  },
+  "VocabFlow/DesignSystem/Components/WordTile.swift": {
+    "mtime": 1794630105.020884,
+    "seen": 1795318426.397604,
+    "ast_hash": "cf64a271a6e47253a5923125af1bf35d",
+    "semantic_hash": "cf64a271a6e47253a5923125af1bf35d"
+  },
+  "VocabFlow/DesignSystem/Motion/FeedbackHaptics.swift": {
+    "mtime": 1795014152.3877473,
+    "seen": 1795318426.3976052,
+    "ast_hash": "645e4a1d48346a114d3a32dca5e5e1af",
+    "semantic_hash": "645e4a1d48346a114d3a32dca5e5e1af"
+  },
+  "VocabFlow/DesignSystem/Motion/MotionCoordinator.swift": {
+    "mtime": 1793886130.6400533,
+    "seen": 1795318426.397606,
+    "ast_hash": "f534cb35e5c4c6a3b22a861e6f984ed3",
+    "semantic_hash": "f534cb35e5c4c6a3b22a861e6f984ed3"
+  },
+  "VocabFlow/DesignSystem/Motion/ShakeEffect.swift": {
+    "mtime": 1793885914.584986,
+    "seen": 1795318426.397606,
+    "ast_hash": "e0b69c99c557a61a9d8d48c38a136e88",
+    "semantic_hash": "e0b69c99c557a61a9d8d48c38a136e88"
+  },
+  "VocabFlow/DesignSystem/Motion/SymbolMotion.swift": {
+    "mtime": 1794835358.9298375,
+    "seen": 1795318426.3976068,
+    "ast_hash": "80c623718a5b40bdbb169faccfa95601",
+    "semantic_hash": "80c623718a5b40bdbb169faccfa95601"
+  },
+  "VocabFlow/DesignSystem/Tokens/Borders.swift": {
+    "mtime": 1794629949.727634,
+    "seen": 1795318426.397608,
+    "ast_hash": "f199c22f4a458231eeac1b20fb9a9329",
+    "semantic_hash": "f199c22f4a458231eeac1b20fb9a9329"
+  },
+  "VocabFlow/DesignSystem/Tokens/ChallengeMotionTokens.swift": {
+    "mtime": 1794412053.5164049,
+    "seen": 1795318426.397609,
+    "ast_hash": "191fdca47d8db29c525d1b99f410da52",
+    "semantic_hash": "191fdca47d8db29c525d1b99f410da52"
+  },
+  "VocabFlow/DesignSystem/Tokens/Colors.swift": {
+    "mtime": 1794633369.9757626,
+    "seen": 1795318426.397609,
+    "ast_hash": "33c56a23fea9bbe57973b24fad41c9eb",
+    "semantic_hash": "33c56a23fea9bbe57973b24fad41c9eb"
+  },
+  "VocabFlow/DesignSystem/Tokens/MotionTokens.swift": {
+    "mtime": 1795317032.0679178,
+    "seen": 1795318426.39761,
+    "ast_hash": "d04707c2e144bccc398e57b27ec4a75e",
+    "semantic_hash": "d04707c2e144bccc398e57b27ec4a75e"
+  },
+  "VocabFlow/DesignSystem/Tokens/Radii.swift": {
+    "mtime": 1795097078.3890755,
+    "seen": 1795318426.397611,
+    "ast_hash": "83055bc642dd3f35532332ee94fca613",
+    "semantic_hash": "83055bc642dd3f35532332ee94fca613"
+  },
+  "VocabFlow/DesignSystem/Tokens/Spacing.swift": {
+    "mtime": 1794705267.485228,
+    "seen": 1795318426.397611,
+    "ast_hash": "5995a14f344c6320fc396e0c4fb88227",
+    "semantic_hash": "5995a14f344c6320fc396e0c4fb88227"
+  },
+  "VocabFlow/DesignSystem/Tokens/Typography.swift": {
+    "mtime": 1795229204.0454335,
+    "seen": 1795318426.397612,
+    "ast_hash": "b79ba87d1370878bdba79597cfa81cee",
+    "semantic_hash": "b79ba87d1370878bdba79597cfa81cee"
+  },
+  "VocabFlow/Domain/Challenge/ChallengeBoardOrdering.swift": {
+    "mtime": 1794411994.872395,
+    "seen": 1795318426.397613,
+    "ast_hash": "81e3b640317125f511ae780f537f26a8",
+    "semantic_hash": "81e3b640317125f511ae780f537f26a8"
+  },
+  "VocabFlow/Domain/Challenge/ChallengeBoardSlots.swift": {
+    "mtime": 1794412053.5167017,
+    "seen": 1795318426.397614,
+    "ast_hash": "1099c825faa8debf3ef00c2437312242",
+    "semantic_hash": "1099c825faa8debf3ef00c2437312242"
+  },
+  "VocabFlow/Domain/Challenge/ChallengeFixtures.swift": {
+    "mtime": 1794323515.835184,
+    "seen": 1795318426.3976152,
+    "ast_hash": "dd6cd4b68ac69e8d57af2848b0e5959c",
+    "semantic_hash": "dd6cd4b68ac69e8d57af2848b0e5959c"
+  },
+  "VocabFlow/Domain/Challenge/ChallengeMapModels.swift": {
+    "mtime": 1794412053.551734,
+    "seen": 1795318426.3976161,
+    "ast_hash": "6f1e7c99cbbca1dd6b4c421ab9871760",
+    "semantic_hash": "6f1e7c99cbbca1dd6b4c421ab9871760"
+  },
+  "VocabFlow/Domain/Challenge/ChallengeRunModels.swift": {
+    "mtime": 1794412053.5170298,
+    "seen": 1795318426.3976161,
+    "ast_hash": "11e428959fd9555ee8a9bcdb774f9026",
+    "semantic_hash": "11e428959fd9555ee8a9bcdb774f9026"
+  },
+  "VocabFlow/Domain/Challenge/MatchMadnessEngine.swift": {
+    "mtime": 1794412053.5172033,
+    "seen": 1795318426.3976169,
+    "ast_hash": "df3e5ab7873ed103a5ab0e80623a97c4",
+    "semantic_hash": "df3e5ab7873ed103a5ab0e80623a97c4"
+  },
+  "VocabFlow/Domain/Content/ContentValidator.swift": {
+    "mtime": 1793885914.6010904,
+    "seen": 1795318426.3976178,
+    "ast_hash": "093aac42b696d2045f5b3d2d7e0997ee",
+    "semantic_hash": "093aac42b696d2045f5b3d2d7e0997ee"
+  },
+  "VocabFlow/Domain/Content/DemoContent.swift": {
+    "mtime": 1793885914.6025383,
+    "seen": 1795318426.3976178,
+    "ast_hash": "35c9a2d9bdac693098e44538d083c0f2",
+    "semantic_hash": "35c9a2d9bdac693098e44538d083c0f2"
+  },
+  "VocabFlow/Domain/Content/DemoContentRepository.swift": {
+    "mtime": 1793885914.600399,
+    "seen": 1795318426.397619,
+    "ast_hash": "b4e4057ce6560f20590a2856ee10ff6b",
+    "semantic_hash": "b4e4057ce6560f20590a2856ee10ff6b"
+  },
+  "VocabFlow/Domain/Content/DemoSeed.swift": {
+    "mtime": 1793885914.601898,
+    "seen": 1795318426.39762,
+    "ast_hash": "c545028aa7f99ae7a40bfba1cd11e2db",
+    "semantic_hash": "c545028aa7f99ae7a40bfba1cd11e2db"
+  },
+  "VocabFlow/Domain/Content/ResultLabFixtures.swift": {
+    "mtime": 1794579459.955613,
+    "seen": 1795318426.39762,
+    "ast_hash": "2ee998ead4c08e4f148049ce735ca452",
+    "semantic_hash": "2ee998ead4c08e4f148049ce735ca452"
+  },
+  "VocabFlow/Domain/Content/TopicCatalog.swift": {
+    "mtime": 1795014152.3882184,
+    "seen": 1795318426.397621,
+    "ast_hash": "938617316ad6ffc8153eca00aa5c85c4",
+    "semantic_hash": "938617316ad6ffc8153eca00aa5c85c4"
+  },
+  "VocabFlow/Domain/CustomWords/CustomWord.swift": {
+    "mtime": 1795014152.388774,
+    "seen": 1795318426.397622,
+    "ast_hash": "1f1e026804f0f06f14b3d2ca617d354f",
+    "semantic_hash": "1f1e026804f0f06f14b3d2ca617d354f"
+  },
+  "VocabFlow/Domain/Journey/Journey.swift": {
+    "mtime": 1794412053.5520713,
+    "seen": 1795318426.397623,
+    "ast_hash": "cd853d653179450ab88b7c158a781356",
+    "semantic_hash": "cd853d653179450ab88b7c158a781356"
+  },
+  "VocabFlow/Domain/Learning/AnswerEvaluator.swift": {
+    "mtime": 1793885914.5976758,
+    "seen": 1795318426.397623,
+    "ast_hash": "f238e8059b262c0a366d9d9e9f6597d7",
+    "semantic_hash": "f238e8059b262c0a366d9d9e9f6597d7"
+  },
+  "VocabFlow/Domain/Learning/HintSequence.swift": {
+    "mtime": 1793885914.59725,
+    "seen": 1795318426.397624,
+    "ast_hash": "36756c197951afb511da78d66b0a874b",
+    "semantic_hash": "36756c197951afb511da78d66b0a874b"
+  },
+  "VocabFlow/Domain/Learning/SessionReducer.swift": {
+    "mtime": 1793885914.5984979,
+    "seen": 1795318426.397625,
+    "ast_hash": "8287b2c09ad3467fa778392745508dab",
+    "semantic_hash": "8287b2c09ad3467fa778392745508dab"
+  },
+  "VocabFlow/Domain/Models/Attempt.swift": {
+    "mtime": 1793885914.60345,
+    "seen": 1795318426.397625,
+    "ast_hash": "354e218a776e6a8508d0533bcbe7f31f",
+    "semantic_hash": "354e218a776e6a8508d0533bcbe7f31f"
+  },
+  "VocabFlow/Domain/Models/BuildChallenge.swift": {
+    "mtime": 1793885914.6064746,
+    "seen": 1795318426.3976262,
+    "ast_hash": "3381a58f3e5da8962e49571dd9d25916",
+    "semantic_hash": "3381a58f3e5da8962e49571dd9d25916"
+  },
+  "VocabFlow/Domain/Models/IntroductionPresentation.swift": {
+    "mtime": 1793885914.6045213,
+    "seen": 1795318426.3976269,
+    "ast_hash": "8a7c857fe8175a2fbbc08816925a586d",
+    "semantic_hash": "8a7c857fe8175a2fbbc08816925a586d"
+  },
+  "VocabFlow/Domain/Models/LabTemplate.swift": {
+    "mtime": 1793885914.605568,
+    "seen": 1795318426.3976278,
+    "ast_hash": "930adecadb6124ce8d2a6ff43ec6d75f",
+    "semantic_hash": "930adecadb6124ce8d2a6ff43ec6d75f"
+  },
+  "VocabFlow/Domain/Models/LearningPreferences.swift": {
+    "mtime": 1795097580.2229779,
+    "seen": 1795318426.3976278,
+    "ast_hash": "749ebd1cb7c949fa2606c41ca66d0881",
+    "semantic_hash": "749ebd1cb7c949fa2606c41ca66d0881"
+  },
+  "VocabFlow/Domain/Models/LearningProgress.swift": {
+    "mtime": 1793885914.6030447,
+    "seen": 1795318426.397629,
+    "ast_hash": "9021da5f81d6e5aed1a30bd577456798",
+    "semantic_hash": "9021da5f81d6e5aed1a30bd577456798"
+  },
+  "VocabFlow/Domain/Models/RecallPrompt.swift": {
+    "mtime": 1793885914.603951,
+    "seen": 1795318426.39763,
+    "ast_hash": "77264d92d05c33cb74b3c7efa4ae916e",
+    "semantic_hash": "77264d92d05c33cb74b3c7efa4ae916e"
+  },
+  "VocabFlow/Domain/Models/SessionResult.swift": {
+    "mtime": 1793885914.6070976,
+    "seen": 1795318426.397631,
+    "ast_hash": "b2367cbbfb5a7fa45157211f3e7d69e3",
+    "semantic_hash": "b2367cbbfb5a7fa45157211f3e7d69e3"
+  },
+  "VocabFlow/Domain/Models/VocabularyItem.swift": {
+    "mtime": 1793974838.3104074,
+    "seen": 1795318426.397631,
+    "ast_hash": "cbcb51d0c90916b6d75da5a687ba8754",
+    "semantic_hash": "cbcb51d0c90916b6d75da5a687ba8754"
+  },
+  "VocabFlow/Domain/Practice/PracticeTask.swift": {
+    "mtime": 1795229058.8682306,
+    "seen": 1795318426.397632,
+    "ast_hash": "452fe2078c00f6c01eba081b30058922",
+    "semantic_hash": "452fe2078c00f6c01eba081b30058922"
+  },
+  "VocabFlow/Domain/Practice/PronunciationScore.swift": {
+    "mtime": 1795229052.0314841,
+    "seen": 1795318426.397633,
+    "ast_hash": "ba5eeb8b453dbf81d5674682a692be82",
+    "semantic_hash": "ba5eeb8b453dbf81d5674682a692be82"
+  },
+  "VocabFlow/Domain/Practice/RecordingScoring.swift": {
+    "mtime": 1793885914.6074705,
+    "seen": 1795318426.397634,
+    "ast_hash": "a511adf7f9d31fa88a94433dea342d06",
+    "semantic_hash": "a511adf7f9d31fa88a94433dea342d06"
+  },
+  "VocabFlow/Domain/Practice/ResultSummaryModels.swift": {
+    "mtime": 1795315581.0683522,
+    "seen": 1795318426.397634,
+    "ast_hash": "a7c4db95b5132bf2f1e7cfe2202be175",
+    "semantic_hash": "a7c4db95b5132bf2f1e7cfe2202be175"
+  },
+  "VocabFlow/Domain/Practice/TaskAttempt.swift": {
+    "mtime": 1794713058.6349766,
+    "seen": 1795318426.397635,
+    "ast_hash": "c0866777f1af24cc4f46d55879c55b50",
+    "semantic_hash": "c0866777f1af24cc4f46d55879c55b50"
+  },
+  "VocabFlow/Domain/Practice/TaskEvent.swift": {
+    "mtime": 1794713058.6344454,
+    "seen": 1795318426.3976362,
+    "ast_hash": "7d663f57e242f4e1b4f28bb355520436",
+    "semantic_hash": "7d663f57e242f4e1b4f28bb355520436"
+  },
+  "VocabFlow/Domain/Ranking/RankingModels.swift": {
+    "mtime": 1794577898.4309118,
+    "seen": 1795318426.3976371,
+    "ast_hash": "9ae8f81220ad099507da538784299924",
+    "semantic_hash": "9ae8f81220ad099507da538784299924"
+  },
+  "VocabFlow/Features/Auth/AuthComponents.swift": {
+    "mtime": 1794633965.8125854,
+    "seen": 1795318426.3976371,
+    "ast_hash": "b34d4068978b76dac620374f7fcf216d",
+    "semantic_hash": "b34d4068978b76dac620374f7fcf216d"
+  },
+  "VocabFlow/Features/Auth/AuthStore.swift": {
+    "mtime": 1794136946.28702,
+    "seen": 1795318426.3976378,
+    "ast_hash": "238cb0f78f6df91584c423b060ab7685",
+    "semantic_hash": "238cb0f78f6df91584c423b060ab7685"
+  },
+  "VocabFlow/Features/Auth/AuthView.swift": {
+    "mtime": 1794633966.6136515,
+    "seen": 1795318426.3976388,
+    "ast_hash": "dd3aa43bfc4f7c5fff48e25c8cb79255",
+    "semantic_hash": "dd3aa43bfc4f7c5fff48e25c8cb79255"
+  },
+  "VocabFlow/Features/Auth/PasswordPolicy.swift": {
+    "mtime": 1794633918.8489513,
+    "seen": 1795318426.39764,
+    "ast_hash": "b56cecf9d2b3d9092312987f57f243e6",
+    "semantic_hash": "b56cecf9d2b3d9092312987f57f243e6"
+  },
+  "VocabFlow/Features/Auth/SignUpView.swift": {
+    "mtime": 1794835358.9313502,
+    "seen": 1795318426.397641,
+    "ast_hash": "777bf082a5022e86881b8ce545a016b6",
+    "semantic_hash": "777bf082a5022e86881b8ce545a016b6"
+  },
+  "VocabFlow/Features/Auth/SocialSignIn.swift": {
+    "mtime": 1794107757.3318295,
+    "seen": 1795318426.397641,
+    "ast_hash": "fc03260b4450132e693238885d8b03ae",
+    "semantic_hash": "fc03260b4450132e693238885d8b03ae"
+  },
+  "VocabFlow/Features/Auth/SocialSignInButtons.swift": {
+    "mtime": 1794633985.649696,
+    "seen": 1795318426.397642,
+    "ast_hash": "c6ba414929372d31a13900f5e49c3dcc",
+    "semantic_hash": "c6ba414929372d31a13900f5e49c3dcc"
+  },
+  "VocabFlow/Features/Build/BuildInteractionState.swift": {
+    "mtime": 1793885914.6232965,
+    "seen": 1795318426.397643,
+    "ast_hash": "96bbeddd904b34c8c711648eed805c1e",
+    "semantic_hash": "96bbeddd904b34c8c711648eed805c1e"
+  },
+  "VocabFlow/Features/Build/BuildView.swift": {
+    "mtime": 1793885914.623672,
+    "seen": 1795318426.397643,
+    "ast_hash": "9a39daef0c2abe6f0503bc8c6dd85fa9",
+    "semantic_hash": "9a39daef0c2abe6f0503bc8c6dd85fa9"
+  },
+  "VocabFlow/Features/Build/DraggableWordTile.swift": {
+    "mtime": 1793885914.6242616,
+    "seen": 1795318426.397644,
+    "ast_hash": "91f366082f283a66faf93de4f6c9426a",
+    "semantic_hash": "91f366082f283a66faf93de4f6c9426a"
+  },
+  "VocabFlow/Features/Build/WordStackBoard.swift": {
+    "mtime": 1793885914.625055,
+    "seen": 1795318426.397645,
+    "ast_hash": "1165b54f60c66748198a35ba925fae5e",
+    "semantic_hash": "1165b54f60c66748198a35ba925fae5e"
+  },
+  "VocabFlow/Features/Challenge/ChallengeComponents.swift": {
+    "mtime": 1794412053.5180314,
+    "seen": 1795318426.3976462,
+    "ast_hash": "90bad912277345dc23ca2ecceea15505",
+    "semantic_hash": "90bad912277345dc23ca2ecceea15505"
+  },
+  "VocabFlow/Features/Challenge/ChallengeHomeCard.swift": {
+    "mtime": 1794630666.3987887,
+    "seen": 1795318426.3976471,
+    "ast_hash": "f792598f119cc862ac538d2d4bc909e1",
+    "semantic_hash": "f792598f119cc862ac538d2d4bc909e1"
+  },
+  "VocabFlow/Features/Challenge/ChallengeLevelSheet.swift": {
+    "mtime": 1794412053.5181983,
+    "seen": 1795318426.3976479,
+    "ast_hash": "4260b9a66071a6930fff5b7fa6b93cc4",
+    "semantic_hash": "4260b9a66071a6930fff5b7fa6b93cc4"
+  },
+  "VocabFlow/Features/Challenge/ChallengeMapStore.swift": {
+    "mtime": 1794322061.576233,
+    "seen": 1795318426.3976479,
+    "ast_hash": "e8601a00c98cae663f0033fdad894443",
+    "semantic_hash": "e8601a00c98cae663f0033fdad894443"
+  },
+  "VocabFlow/Features/Challenge/ChallengeMapView.swift": {
+    "mtime": 1794412053.5183952,
+    "seen": 1795318426.3976488,
+    "ast_hash": "c6d3666c4fd5c0676714abe2de1c1277",
+    "semantic_hash": "c6d3666c4fd5c0676714abe2de1c1277"
+  },
+  "VocabFlow/Features/Challenge/ChallengeResultsView.swift": {
+    "mtime": 1794835358.9317422,
+    "seen": 1795318426.39765,
+    "ast_hash": "4b68531c03abee77bdf2132e05c12429",
+    "semantic_hash": "4b68531c03abee77bdf2132e05c12429"
+  },
+  "VocabFlow/Features/Challenge/ChallengeRunStore.swift": {
+    "mtime": 1794412064.401674,
+    "seen": 1795318426.397651,
+    "ast_hash": "8f111f0276d14e2566d7bb702fc78b83",
+    "semantic_hash": "8f111f0276d14e2566d7bb702fc78b83"
+  },
+  "VocabFlow/Features/Challenge/MatchMadnessGameView.swift": {
+    "mtime": 1794835358.9321156,
+    "seen": 1795318426.397651,
+    "ast_hash": "e3130481b6f20e50ed3161d0bfd7ce21",
+    "semantic_hash": "e3130481b6f20e50ed3161d0bfd7ce21"
+  },
+  "VocabFlow/Features/CustomWords/AddWordView.swift": {
+    "mtime": 1795097434.6822307,
+    "seen": 1795318426.397652,
+    "ast_hash": "5d8ee63de4e228579f21fb3ca39d3dd6",
+    "semantic_hash": "5d8ee63de4e228579f21fb3ca39d3dd6"
+  },
+  "VocabFlow/Features/CustomWords/CustomWordEditView.swift": {
+    "mtime": 1795097439.0725553,
+    "seen": 1795318426.397653,
+    "ast_hash": "9ef4cdeb62a60eedc276af1a4c535ce3",
+    "semantic_hash": "9ef4cdeb62a60eedc276af1a4c535ce3"
+  },
+  "VocabFlow/Features/CustomWords/CustomWordStore.swift": {
+    "mtime": 1794751996.197544,
+    "seen": 1795318426.397654,
+    "ast_hash": "b3cc9dc1fe60963869709a52c5de2424",
+    "semantic_hash": "b3cc9dc1fe60963869709a52c5de2424"
+  },
+  "VocabFlow/Features/CustomWords/CustomWordsView.swift": {
+    "mtime": 1795014152.3901765,
+    "seen": 1795318426.397655,
+    "ast_hash": "1de1e529dcbc46298bdef8c4939e225c",
+    "semantic_hash": "1de1e529dcbc46298bdef8c4939e225c"
+  },
+  "VocabFlow/Features/Home/HomeComponents.swift": {
+    "mtime": 1795014152.3906858,
+    "seen": 1795318426.397655,
+    "ast_hash": "eb26cb0fd2ce594e5815005d439f4423",
+    "semantic_hash": "eb26cb0fd2ce594e5815005d439f4423"
+  },
+  "VocabFlow/Features/Home/HomeView.swift": {
+    "mtime": 1795096864.7909622,
+    "seen": 1795318426.397656,
+    "ast_hash": "4f120c3be6bd4d916566b2d0169e2a41",
+    "semantic_hash": "4f120c3be6bd4d916566b2d0169e2a41"
+  },
+  "VocabFlow/Features/Home/ReviewLoadChoiceSheet.swift": {
+    "mtime": 1794835358.9333467,
+    "seen": 1795318426.3976572,
+    "ast_hash": "053c984bd5c9a89e72aeb8fc60b0165c",
+    "semantic_hash": "053c984bd5c9a89e72aeb8fc60b0165c"
+  },
+  "VocabFlow/Features/Journey/JourneyNodeView.swift": {
+    "mtime": 1794213434.7289186,
+    "seen": 1795318426.3976572,
+    "ast_hash": "b089b6ec9e07d66b688f478361bb3227",
+    "semantic_hash": "b089b6ec9e07d66b688f478361bb3227"
+  },
+  "VocabFlow/Features/Journey/JourneySegmentStrip.swift": {
+    "mtime": 1794217418.492734,
+    "seen": 1795318426.397658,
+    "ast_hash": "5a616d8b0bead35f2301461bd83ddce3",
+    "semantic_hash": "5a616d8b0bead35f2301461bd83ddce3"
+  },
+  "VocabFlow/Features/Journey/JourneySnakeLayout.swift": {
+    "mtime": 1794217260.4823537,
+    "seen": 1795318426.3976588,
+    "ast_hash": "9aa0c4484a551e1bb8bda51b2a7be57f",
+    "semantic_hash": "9aa0c4484a551e1bb8bda51b2a7be57f"
+  },
+  "VocabFlow/Features/Journey/JourneyView.swift": {
+    "mtime": 1794213618.6587062,
+    "seen": 1795318426.39766,
+    "ast_hash": "9dcd000fa6ece99b5bc3625d724e514d",
+    "semantic_hash": "9dcd000fa6ece99b5bc3625d724e514d"
+  },
+  "VocabFlow/Features/Launch/SplashView.swift": {
+    "mtime": 1795316153.1119225,
+    "seen": 1795318426.39766,
+    "ast_hash": "0f2a68a0640dffda93ca0af0960550b1",
+    "semantic_hash": "0f2a68a0640dffda93ca0af0960550b1"
+  },
+  "VocabFlow/Features/Learn/IntroMotionHost.swift": {
+    "mtime": 1794630987.4304588,
+    "seen": 1795318426.397661,
+    "ast_hash": "e146cbd11b39177835f6cdb8c5646638",
+    "semantic_hash": "e146cbd11b39177835f6cdb8c5646638"
+  },
+  "VocabFlow/Features/Learn/LearnView.swift": {
+    "mtime": 1793885914.6119192,
+    "seen": 1795318426.397662,
+    "ast_hash": "7376697c2ee988e4e5b91d1c1ce4a04a",
+    "semantic_hash": "7376697c2ee988e4e5b91d1c1ce4a04a"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/ChunkMergeView.swift": {
+    "mtime": 1793885914.6303952,
+    "seen": 1795318426.3976629,
+    "ast_hash": "a32630c6623aa14e3f6c9871ad323149",
+    "semantic_hash": "a32630c6623aa14e3f6c9871ad323149"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/FlipLettersView.swift": {
+    "mtime": 1793885914.629966,
+    "seen": 1795318426.3976629,
+    "ast_hash": "f2e2ac97441e5ad69b393a4fcf1e9ba0",
+    "semantic_hash": "f2e2ac97441e5ad69b393a4fcf1e9ba0"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/IntroGlyphRow.swift": {
+    "mtime": 1793885914.6287875,
+    "seen": 1795318426.397664,
+    "ast_hash": "a640dc8339b7f0a7ef163fedd4b5dfe7",
+    "semantic_hash": "a640dc8339b7f0a7ef163fedd4b5dfe7"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/LetterCascadeView.swift": {
+    "mtime": 1793885914.629149,
+    "seen": 1795318426.397665,
+    "ast_hash": "23309858e8547650fcd13eafa1e281d3",
+    "semantic_hash": "23309858e8547650fcd13eafa1e281d3"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/LetterWaveView.swift": {
+    "mtime": 1793885914.6294594,
+    "seen": 1795318426.397665,
+    "ast_hash": "66bbc23fb7a78bb76f7fb2e1b78e7d83",
+    "semantic_hash": "66bbc23fb7a78bb76f7fb2e1b78e7d83"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/SwipeRevealView.swift": {
+    "mtime": 1793885914.6309717,
+    "seen": 1795318426.397666,
+    "ast_hash": "3c9950ce2343149663926a1e92cbbf1b",
+    "semantic_hash": "3c9950ce2343149663926a1e92cbbf1b"
+  },
+  "VocabFlow/Features/Learn/MotionTemplates/WordAssembleView.swift": {
+    "mtime": 1793885914.6314292,
+    "seen": 1795318426.3976672,
+    "ast_hash": "8a0c9d8e89430750cf33689c267f3a7f",
+    "semantic_hash": "8a0c9d8e89430750cf33689c267f3a7f"
+  },
+  "VocabFlow/Features/Learn/WordIntroContent.swift": {
+    "mtime": 1795097084.6957872,
+    "seen": 1795318426.3976672,
+    "ast_hash": "9cdbf7d7a353d5585fd619c0b7ea420c",
+    "semantic_hash": "9cdbf7d7a353d5585fd619c0b7ea420c"
+  },
+  "VocabFlow/Features/Main/AppSettingsStore.swift": {
+    "mtime": 1795180824.056848,
+    "seen": 1795318426.3976681,
+    "ast_hash": "ac86f487521909a4a5193c5f3e846222",
+    "semantic_hash": "ac86f487521909a4a5193c5f3e846222"
+  },
+  "VocabFlow/Features/Main/LearnerStore.swift": {
+    "mtime": 1795098177.5104191,
+    "seen": 1795318426.397669,
+    "ast_hash": "d7bc701f45f98a243256e4a150d8d960",
+    "semantic_hash": "d7bc701f45f98a243256e4a150d8d960"
+  },
+  "VocabFlow/Features/Main/MainShellView.swift": {
+    "mtime": 1794835358.9340503,
+    "seen": 1795318426.397669,
+    "ast_hash": "cdc5a3e83c71896998c5070c7faecb81",
+    "semantic_hash": "cdc5a3e83c71896998c5070c7faecb81"
+  },
+  "VocabFlow/Features/Main/ProgressStore.swift": {
+    "mtime": 1793885914.6280656,
+    "seen": 1795318426.3976698,
+    "ast_hash": "fee9f3e87f37e38e6500077b184e690d",
+    "semantic_hash": "fee9f3e87f37e38e6500077b184e690d"
+  },
+  "VocabFlow/Features/Onboarding/OnboardingStore.swift": {
+    "mtime": 1795097580.2242734,
+    "seen": 1795318426.397671,
+    "ast_hash": "b6b67e66b3044bcf181859e1db2cc0dc",
+    "semantic_hash": "b6b67e66b3044bcf181859e1db2cc0dc"
+  },
+  "VocabFlow/Features/Onboarding/OnboardingView.swift": {
+    "mtime": 1795097593.1137447,
+    "seen": 1795318426.397671,
+    "ast_hash": "bf40bb5a6c3031d9d81faf05a7efef02",
+    "semantic_hash": "bf40bb5a6c3031d9d81faf05a7efef02"
+  },
+  "VocabFlow/Features/PlacementTest/PlacementTestStore.swift": {
+    "mtime": 1793885914.6229024,
+    "seen": 1795318426.397672,
+    "ast_hash": "1838eff9f51d30a2aec33c7a47c49d4c",
+    "semantic_hash": "1838eff9f51d30a2aec33c7a47c49d4c"
+  },
+  "VocabFlow/Features/PlacementTest/PlacementTestView.swift": {
+    "mtime": 1795094474.0972404,
+    "seen": 1795318426.397673,
+    "ast_hash": "ad9b827fe94f414b4757a77c83f23f9b",
+    "semantic_hash": "ad9b827fe94f414b4757a77c83f23f9b"
+  },
+  "VocabFlow/Features/Plan/LearningPlanStore.swift": {
+    "mtime": 1795097580.2234259,
+    "seen": 1795318426.397674,
+    "ast_hash": "d75ed467b69e5b402204bfd22293b411",
+    "semantic_hash": "d75ed467b69e5b402204bfd22293b411"
+  },
+  "VocabFlow/Features/Plan/PlanControls.swift": {
+    "mtime": 1795098334.014832,
+    "seen": 1795318426.397674,
+    "ast_hash": "ea81efcb066ae97a12510e79cbb4e546",
+    "semantic_hash": "ea81efcb066ae97a12510e79cbb4e546"
+  },
+  "VocabFlow/Features/Practice/PracticeAudio.swift": {
+    "mtime": 1795014152.3913903,
+    "seen": 1795318426.397675,
+    "ast_hash": "0d795dca2748bce55f36b5da6c84810b",
+    "semantic_hash": "0d795dca2748bce55f36b5da6c84810b"
+  },
+  "VocabFlow/Features/Practice/PracticeSessionStore.swift": {
+    "mtime": 1795233291.8795893,
+    "seen": 1795318426.397676,
+    "ast_hash": "414adaea69839590fa92b066fb19e361",
+    "semantic_hash": "414adaea69839590fa92b066fb19e361"
+  },
+  "VocabFlow/Features/Practice/PracticeSessionView.swift": {
+    "mtime": 1795316872.9829707,
+    "seen": 1795318426.397676,
+    "ast_hash": "80c8c7f063b55122d9c1342f2fc01ee2",
+    "semantic_hash": "80c8c7f063b55122d9c1342f2fc01ee2"
+  },
+  "VocabFlow/Features/Practice/Results/PracticeResult.swift": {
+    "mtime": 1795180824.0585415,
+    "seen": 1795318426.397677,
+    "ast_hash": "b628ba87eb974b8152413c1889e61d7d",
+    "semantic_hash": "b628ba87eb974b8152413c1889e61d7d"
+  },
+  "VocabFlow/Features/Practice/Results/PracticeResultsView.swift": {
+    "mtime": 1795315499.124108,
+    "seen": 1795318426.3976781,
+    "ast_hash": "babdac4d2122369db2d15ecec13545d1",
+    "semantic_hash": "babdac4d2122369db2d15ecec13545d1"
+  },
+  "VocabFlow/Features/Practice/Results/ResultEffortCard.swift": {
+    "mtime": 1794835358.9364297,
+    "seen": 1795318426.397679,
+    "ast_hash": "0facf9e17772a8ccde0c862194913819",
+    "semantic_hash": "0facf9e17772a8ccde0c862194913819"
+  },
+  "VocabFlow/Features/Practice/Results/ResultSheetModel.swift": {
+    "mtime": 1795315607.0597312,
+    "seen": 1795318426.397679,
+    "ast_hash": "2fee7d9bf3e1d035f67d05407be698a3",
+    "semantic_hash": "2fee7d9bf3e1d035f67d05407be698a3"
+  },
+  "VocabFlow/Features/Practice/Results/ResultTileView.swift": {
+    "mtime": 1795315499.0248559,
+    "seen": 1795318426.39768,
+    "ast_hash": "22f223af7de18cc7727f0c4ed5bf8621",
+    "semantic_hash": "22f223af7de18cc7727f0c4ed5bf8621"
+  },
+  "VocabFlow/Features/Practice/Results/SessionCelebrationView.swift": {
+    "mtime": 1795316153.1160593,
+    "seen": 1795318426.397681,
+    "ast_hash": "01aec1e65444b53b934f3aa56d8e36c5",
+    "semantic_hash": "01aec1e65444b53b934f3aa56d8e36c5"
+  },
+  "VocabFlow/Features/Practice/Results/SessionResultDetailSheet.swift": {
+    "mtime": 1795315615.4784517,
+    "seen": 1795318426.397681,
+    "ast_hash": "027afe9237502010212a46f19bcaec3b",
+    "semantic_hash": "027afe9237502010212a46f19bcaec3b"
+  },
+  "VocabFlow/Features/Practice/StepActionBar.swift": {
+    "mtime": 1794630588.3547165,
+    "seen": 1795318426.397682,
+    "ast_hash": "878e35f89770ee7417db2b9816762f46",
+    "semantic_hash": "878e35f89770ee7417db2b9816762f46"
+  },
+  "VocabFlow/Features/Practice/Tasks/ChoiceTaskView.swift": {
+    "mtime": 1794633695.6109076,
+    "seen": 1795318426.397683,
+    "ast_hash": "3bd2b0773208b87edee4e40364e3be86",
+    "semantic_hash": "3bd2b0773208b87edee4e40364e3be86"
+  },
+  "VocabFlow/Features/Practice/Tasks/ClozeTaskView.swift": {
+    "mtime": 1794630776.6671147,
+    "seen": 1795318426.3976839,
+    "ast_hash": "61f37d3e360400a9707c2e7fcd7a515d",
+    "semantic_hash": "61f37d3e360400a9707c2e7fcd7a515d"
+  },
+  "VocabFlow/Features/Practice/Tasks/MatchTaskView.swift": {
+    "mtime": 1794412053.5206208,
+    "seen": 1795318426.3976839,
+    "ast_hash": "93b38dac24b5015b85badab1f8ea0791",
+    "semantic_hash": "93b38dac24b5015b85badab1f8ea0791"
+  },
+  "VocabFlow/Features/Practice/Tasks/PronunciationResultViews.swift": {
+    "mtime": 1795317032.0961256,
+    "seen": 1795318426.397685,
+    "ast_hash": "9f1707494282f47dffbc82d3a52a936d",
+    "semantic_hash": "9f1707494282f47dffbc82d3a52a936d"
+  },
+  "VocabFlow/Features/Practice/Tasks/RecordingTaskView.swift": {
+    "mtime": 1795316331.0469267,
+    "seen": 1795318426.397686,
+    "ast_hash": "9940bb9cfe18a33f9ad86b532d6b2fe4",
+    "semantic_hash": "9940bb9cfe18a33f9ad86b532d6b2fe4"
+  },
+  "VocabFlow/Features/Practice/Tasks/ReorderTaskView.swift": {
+    "mtime": 1794631702.7266767,
+    "seen": 1795318426.397686,
+    "ast_hash": "5f8b9158278d540309ab18f2c6a5532c",
+    "semantic_hash": "5f8b9158278d540309ab18f2c6a5532c"
+  },
+  "VocabFlow/Features/Practice/Tasks/SurgeryTaskView.swift": {
+    "mtime": 1795014152.3919833,
+    "seen": 1795318426.397687,
+    "ast_hash": "1a0fd62caa76a3d950ab2569f7753a0f",
+    "semantic_hash": "1a0fd62caa76a3d950ab2569f7753a0f"
+  },
+  "VocabFlow/Features/Practice/Tasks/TaskScaffold.swift": {
+    "mtime": 1795229092.5029476,
+    "seen": 1795318426.3976882,
+    "ast_hash": "22aa16a7f8ba4fff08f50466348c6234",
+    "semantic_hash": "22aa16a7f8ba4fff08f50466348c6234"
+  },
+  "VocabFlow/Features/Practice/Tasks/TypingTaskView.swift": {
+    "mtime": 1794630783.4677837,
+    "seen": 1795318426.397689,
+    "ast_hash": "335f614ad2b0d4bd97451cd042c2e3ad",
+    "semantic_hash": "335f614ad2b0d4bd97451cd042c2e3ad"
+  },
+  "VocabFlow/Features/PracticeLab/LabTaskView.swift": {
+    "mtime": 1794136888.7182252,
+    "seen": 1795318426.397689,
+    "ast_hash": "25268446cf46e79162429c56f3a78fb6",
+    "semantic_hash": "25268446cf46e79162429c56f3a78fb6"
+  },
+  "VocabFlow/Features/PracticeLab/PracticeLabView.swift": {
+    "mtime": 1794630123.9374583,
+    "seen": 1795318426.39769,
+    "ast_hash": "a0a14362a9c0d2dd9c9dfbf9e124ef68",
+    "semantic_hash": "a0a14362a9c0d2dd9c9dfbf9e124ef68"
+  },
+  "VocabFlow/Features/PracticeLab/SpeechPlayer.swift": {
+    "mtime": 1794752113.7553596,
+    "seen": 1795318426.3976908,
+    "ast_hash": "02d35e9907b14865ec530201a1a62337",
+    "semantic_hash": "02d35e9907b14865ec530201a1a62337"
+  },
+  "VocabFlow/Features/PracticeLab/TemplateSandboxStore.swift": {
+    "mtime": 1793885914.6179428,
+    "seen": 1795318426.397692,
+    "ast_hash": "0e67c6cc941601e0752391e0318059b6",
+    "semantic_hash": "0e67c6cc941601e0752391e0318059b6"
+  },
+  "VocabFlow/Features/Profile/EditFocusView.swift": {
+    "mtime": 1794835358.9369025,
+    "seen": 1795318426.397693,
+    "ast_hash": "a32098a58fbe29e3f31afe56f6f18e99",
+    "semantic_hash": "a32098a58fbe29e3f31afe56f6f18e99"
+  },
+  "VocabFlow/Features/Profile/EditLevelView.swift": {
+    "mtime": 1794835358.937094,
+    "seen": 1795318426.397693,
+    "ast_hash": "9102f25131f347b1ee953f9c6ccee8ce",
+    "semantic_hash": "9102f25131f347b1ee953f9c6ccee8ce"
+  },
+  "VocabFlow/Features/Profile/EditRoutineView.swift": {
+    "mtime": 1795098177.5111918,
+    "seen": 1795318426.3976939,
+    "ast_hash": "fc7b1dfa07ffebbf6d079d689a46d4aa",
+    "semantic_hash": "fc7b1dfa07ffebbf6d079d689a46d4aa"
+  },
+  "VocabFlow/Features/Profile/ProfileView.swift": {
+    "mtime": 1795098334.014217,
+    "seen": 1795318426.397721,
+    "ast_hash": "f21b8dc429eec878e26ca390c3320eca",
+    "semantic_hash": "f21b8dc429eec878e26ca390c3320eca"
+  },
+  "VocabFlow/Features/Ranking/EditPublicProfileSheet.swift": {
+    "mtime": 1794630668.1109984,
+    "seen": 1795318426.397722,
+    "ast_hash": "1d301127447d0bbab65990dbd453992c",
+    "semantic_hash": "1d301127447d0bbab65990dbd453992c"
+  },
+  "VocabFlow/Features/Ranking/RankingComponents.swift": {
+    "mtime": 1794748507.3615363,
+    "seen": 1795318426.397724,
+    "ast_hash": "d695e9acaac8a9096748b16d4c90e2ec",
+    "semantic_hash": "d695e9acaac8a9096748b16d4c90e2ec"
+  },
+  "VocabFlow/Features/Ranking/RankingStore.swift": {
+    "mtime": 1794577898.4322622,
+    "seen": 1795318426.3977249,
+    "ast_hash": "63abdf300fcb728e43bf0691239a0d5f",
+    "semantic_hash": "63abdf300fcb728e43bf0691239a0d5f"
+  },
+  "VocabFlow/Features/Ranking/RankingView.swift": {
+    "mtime": 1795014152.3926873,
+    "seen": 1795318426.397726,
+    "ast_hash": "610981f1480106cb9d34153128b10c85",
+    "semantic_hash": "610981f1480106cb9d34153128b10c85"
+  },
+  "VocabFlow/Features/Ranking/SessionEffortCard.swift": {
+    "mtime": 1794630611.1962678,
+    "seen": 1795318426.397727,
+    "ast_hash": "8db697cd2c50b1127f161a758f1f6628",
+    "semantic_hash": "8db697cd2c50b1127f161a758f1f6628"
+  },
+  "VocabFlow/Features/Recall/RecallView.swift": {
+    "mtime": 1793885914.6197062,
+    "seen": 1795318426.397727,
+    "ast_hash": "afa96b3bc3344b3b02c48b45918c700a",
+    "semantic_hash": "afa96b3bc3344b3b02c48b45918c700a"
+  },
+  "VocabFlow/Features/Results/ResultsView.swift": {
+    "mtime": 1793885914.620202,
+    "seen": 1795318426.397728,
+    "ast_hash": "83ccb3d9158a66b5204247d04d3ceda3",
+    "semantic_hash": "83ccb3d9158a66b5204247d04d3ceda3"
+  },
+  "VocabFlow/Features/SessionFeedbackCopy.swift": {
+    "mtime": 1793885914.584541,
+    "seen": 1795318426.397729,
+    "ast_hash": "559fd156d3c2c8d4e6d8fac75d45f4e5",
+    "semantic_hash": "559fd156d3c2c8d4e6d8fac75d45f4e5"
+  },
+  "VocabFlow/Features/SessionFlowView.swift": {
+    "mtime": 1793885914.5840702,
+    "seen": 1795318426.39773,
+    "ast_hash": "565dcb8324ca1b3f22a8c96017161e50",
+    "semantic_hash": "565dcb8324ca1b3f22a8c96017161e50"
+  },
+  "VocabFlow/Features/SessionStore.swift": {
+    "mtime": 1793885914.5835564,
+    "seen": 1795318426.39773,
+    "ast_hash": "f1bccdedc0ae5ca77722c456e9361e76",
+    "semantic_hash": "f1bccdedc0ae5ca77722c456e9361e76"
+  },
+  "VocabFlow/Features/Settings/AppLanguage.swift": {
+    "mtime": 1795014152.3928988,
+    "seen": 1795318426.397731,
+    "ast_hash": "bc1b312357c9a84334842d8117e91193",
+    "semantic_hash": "bc1b312357c9a84334842d8117e91193"
+  },
+  "VocabFlow/Features/Settings/AppSettingsView.swift": {
+    "mtime": 1795180824.06166,
+    "seen": 1795318426.397732,
+    "ast_hash": "866a44c42bb60a2cc3b385b1ca272002",
+    "semantic_hash": "866a44c42bb60a2cc3b385b1ca272002"
+  },
+  "VocabFlow/Features/Settings/ChangePasswordSheet.swift": {
+    "mtime": 1794634272.7306664,
+    "seen": 1795318426.397732,
+    "ast_hash": "c411fd40a5d42d346e3710e61963f556",
+    "semantic_hash": "c411fd40a5d42d346e3710e61963f556"
+  },
+  "VocabFlow/Features/Settings/LanguageSheet.swift": {
+    "mtime": 1795180824.0622854,
+    "seen": 1795318426.3977332,
+    "ast_hash": "6d4cde8525f577197e1856ed26c70a7b",
+    "semantic_hash": "6d4cde8525f577197e1856ed26c70a7b"
+  },
+  "VocabFlow/Features/Settings/SylliePreviewView.swift": {
+    "mtime": 1794928029.0308871,
+    "seen": 1795318426.397734,
+    "ast_hash": "ef4dd28c6bb32cdf5d6513b3ab25f842",
+    "semantic_hash": "ef4dd28c6bb32cdf5d6513b3ab25f842"
+  },
+  "VocabFlow/Features/Templates/TemplateParts.swift": {
+    "mtime": 1793974838.3123467,
+    "seen": 1795318426.3977349,
+    "ast_hash": "e101e088f7ad65a50d2a2b0ef536e3a8",
+    "semantic_hash": "e101e088f7ad65a50d2a2b0ef536e3a8"
+  },
+  "VocabFlow/Features/Words/MyWordsView.swift": {
+    "mtime": 1795180824.0629044,
+    "seen": 1795318426.3977349,
+    "ast_hash": "7c04fdcda2b538f68b713f3634aff174",
+    "semantic_hash": "7c04fdcda2b538f68b713f3634aff174"
+  },
+  "VocabFlow/Features/Words/RandomPracticeView.swift": {
+    "mtime": 1795180824.0632772,
+    "seen": 1795318426.397738,
+    "ast_hash": "4fcd37c2deb5c8a258a6c5744f6d654b",
+    "semantic_hash": "4fcd37c2deb5c8a258a6c5744f6d654b"
+  },
+  "VocabFlow/Features/Words/WordMeaningViews.swift": {
+    "mtime": 1795180824.06361,
+    "seen": 1795318426.397739,
+    "ast_hash": "f095b19dc2ff594981469b17f3f7e43c",
+    "semantic_hash": "f095b19dc2ff594981469b17f3f7e43c"
+  },
+  "VocabFlow/Networking/APIClient.swift": {
+    "mtime": 1794323300.338711,
+    "seen": 1795318426.3977401,
+    "ast_hash": "99e548c00b4df1c22fbc55997707cd9d",
+    "semantic_hash": "99e548c00b4df1c22fbc55997707cd9d"
+  },
+  "VocabFlow/Networking/APIConfiguration.swift": {
+    "mtime": 1793885914.5809174,
+    "seen": 1795318426.3977401,
+    "ast_hash": "4a6becb0aef7c01606fbeddf7313f137",
+    "semantic_hash": "4a6becb0aef7c01606fbeddf7313f137"
+  },
+  "VocabFlow/Networking/APIError.swift": {
+    "mtime": 1794490187.9657583,
+    "seen": 1795318426.397741,
+    "ast_hash": "3ddac322bd7139f522babc3a60838196",
+    "semantic_hash": "3ddac322bd7139f522babc3a60838196"
+  },
+  "VocabFlow/Networking/TokenStore.swift": {
+    "mtime": 1793885914.5827599,
+    "seen": 1795318426.397742,
+    "ast_hash": "d578298b6303a53f7e2d46ab24b9c656",
+    "semantic_hash": "d578298b6303a53f7e2d46ab24b9c656"
+  },
+  "VocabFlow/Networking/VocabAPI.swift": {
+    "mtime": 1795180824.0639687,
+    "seen": 1795318426.397742,
+    "ast_hash": "7ffaa46b3314673c803c06be67bf0b73",
+    "semantic_hash": "7ffaa46b3314673c803c06be67bf0b73"
+  },
+  "VocabFlow/Resources/Assets.xcassets/AccentColor.colorset/Contents.json": {
+    "mtime": 1793173300.7952673,
+    "seen": 1795318426.397743,
+    "ast_hash": "a9d0bd62d3257c9d3d779b75d9af706a",
+    "semantic_hash": "a9d0bd62d3257c9d3d779b75d9af706a"
+  },
+  "VocabFlow/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1794040103.1838067,
+    "seen": 1795318426.3977442,
+    "ast_hash": "c5d5aeafe79232c2195e36ca041e38c5",
+    "semantic_hash": "c5d5aeafe79232c2195e36ca041e38c5"
+  },
+  "VocabFlow/Resources/Assets.xcassets/BrandIcon.imageset/Contents.json": {
+    "mtime": 1794106658.001936,
+    "seen": 1795318426.397745,
+    "ast_hash": "2be6414828b7c69f7065dcd531b4ec48",
+    "semantic_hash": "2be6414828b7c69f7065dcd531b4ec48"
+  },
+  "VocabFlow/Resources/Assets.xcassets/Contents.json": {
+    "mtime": 1793173300.7955067,
+    "seen": 1795318426.397745,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": "9deb2ada1cc834bbebf8bbad9c8978a1"
+  },
+  "VocabFlow/Resources/Assets.xcassets/LaunchBackground.colorset/Contents.json": {
+    "mtime": 1794040199.425791,
+    "seen": 1795318426.3977458,
+    "ast_hash": "83c85f1b51e0d7de3f8048e72f2a6113",
+    "semantic_hash": "83c85f1b51e0d7de3f8048e72f2a6113"
+  },
+  "VocabFlow/Resources/Assets.xcassets/LaunchSyllieV2.imageset/Contents.json": {
+    "mtime": 1794112644.7211418,
+    "seen": 1795318426.397747,
+    "ast_hash": "fca2d1e96fb3cef1d541cb64d198266d",
+    "semantic_hash": "fca2d1e96fb3cef1d541cb64d198266d"
+  },
+  "VocabFlow/Resources/demo_words.json": {
+    "mtime": 1793175872.1609747,
+    "seen": 1795318426.397748,
+    "ast_hash": "b383de9d71d0360c2efd5caceb3e5ed2",
+    "semantic_hash": "b383de9d71d0360c2efd5caceb3e5ed2"
+  },
+  "VocabFlow/Resources/practice_lab.json": {
+    "mtime": 1795097600.1524396,
+    "seen": 1795318426.397748,
+    "ast_hash": "6a9b671fcf7a2a6f5803379766b42a1a",
+    "semantic_hash": "6a9b671fcf7a2a6f5803379766b42a1a"
+  },
+  "VocabFlow/Resources/results_lab.json": {
+    "mtime": 1795315625.9005837,
+    "seen": 1795318426.397749,
+    "ast_hash": "2e4de4edc872148beff35f40090cb97f",
+    "semantic_hash": "2e4de4edc872148beff35f40090cb97f"
+  },
+  "VocabFlowTests/APIClientTests.swift": {
+    "mtime": 1793526452.8612761,
+    "seen": 1795318426.39775,
+    "ast_hash": "a19ad30c7294ba40af796e73fe2578cc",
+    "semantic_hash": "a19ad30c7294ba40af796e73fe2578cc"
+  },
+  "VocabFlowTests/AccountDeletionTests.swift": {
+    "mtime": 1793716407.7920675,
+    "seen": 1795318426.39775,
+    "ast_hash": "0fc39d4bf30edea93b03c7a492e52bba",
+    "semantic_hash": "0fc39d4bf30edea93b03c7a492e52bba"
+  },
+  "VocabFlowTests/AnswerEvaluatorTests.swift": {
+    "mtime": 1793173300.7959278,
+    "seen": 1795318426.397751,
+    "ast_hash": "f172b2e8a8d6236ae5a0745598af2f76",
+    "semantic_hash": "f172b2e8a8d6236ae5a0745598af2f76"
+  },
+  "VocabFlowTests/AppLanguageTests.swift": {
+    "mtime": 1795180824.0682597,
+    "seen": 1795318426.397752,
+    "ast_hash": "f6646e9ee6b2636ead9008d0a8b83f1a",
+    "semantic_hash": "f6646e9ee6b2636ead9008d0a8b83f1a"
+  },
+  "VocabFlowTests/CatalogAppearanceTests.swift": {
+    "mtime": 1795014152.3970783,
+    "seen": 1795318426.397752,
+    "ast_hash": "5be95d10103927d8fd0af7cadc45815b",
+    "semantic_hash": "5be95d10103927d8fd0af7cadc45815b"
+  },
+  "VocabFlowTests/ChallengeBoardSlotsTests.swift": {
+    "mtime": 1794412053.522586,
+    "seen": 1795318426.397753,
+    "ast_hash": "73b89a63e85a97f199ff45163ff062cd",
+    "semantic_hash": "73b89a63e85a97f199ff45163ff062cd"
+  },
+  "VocabFlowTests/ChallengeRunStoreTests.swift": {
+    "mtime": 1794323659.044505,
+    "seen": 1795318426.3977542,
+    "ast_hash": "4a5f4ebd4e40cb115758171807e0dc6a",
+    "semantic_hash": "4a5f4ebd4e40cb115758171807e0dc6a"
+  },
+  "VocabFlowTests/ContentValidationTests.swift": {
+    "mtime": 1793173300.7960434,
+    "seen": 1795318426.3977542,
+    "ast_hash": "7c65f51ff1c1e438045898c92ebae3d4",
+    "semantic_hash": "7c65f51ff1c1e438045898c92ebae3d4"
+  },
+  "VocabFlowTests/CustomWordTests.swift": {
+    "mtime": 1794752074.9549215,
+    "seen": 1795318426.397755,
+    "ast_hash": "0bcc5e340fc72107ea1f8356e57d243d",
+    "semantic_hash": "0bcc5e340fc72107ea1f8356e57d243d"
+  },
+  "VocabFlowTests/HighlightedSentenceTests.swift": {
+    "mtime": 1795316528.0236518,
+    "seen": 1795318426.3977559,
+    "ast_hash": "eb80785fe85291202143f83e49531bdc",
+    "semantic_hash": "eb80785fe85291202143f83e49531bdc"
+  },
+  "VocabFlowTests/IntroductionPresentationTests.swift": {
+    "mtime": 1793176076.0336661,
+    "seen": 1795318426.3977559,
+    "ast_hash": "44f7ef70365a09ff347a98a1c14b93dc",
+    "semantic_hash": "44f7ef70365a09ff347a98a1c14b93dc"
+  },
+  "VocabFlowTests/JourneyTests.swift": {
+    "mtime": 1794217260.4827876,
+    "seen": 1795318426.3977568,
+    "ast_hash": "cad17269527d48deb267b6d6035d0430",
+    "semantic_hash": "cad17269527d48deb267b6d6035d0430"
+  },
+  "VocabFlowTests/LabLibraryTests.swift": {
+    "mtime": 1793710274.0030086,
+    "seen": 1795318426.397758,
+    "ast_hash": "f51f182488bb6fcfba9c597aab624918",
+    "semantic_hash": "f51f182488bb6fcfba9c597aab624918"
+  },
+  "VocabFlowTests/LearnerWordsTests.swift": {
+    "mtime": 1793883594.1638672,
+    "seen": 1795318426.397758,
+    "ast_hash": "95bd2ea4acb1ba3c6b1f0663da066f56",
+    "semantic_hash": "95bd2ea4acb1ba3c6b1f0663da066f56"
+  },
+  "VocabFlowTests/MatchMadnessBackendParityTests.swift": {
+    "mtime": 1794412053.5227926,
+    "seen": 1795318426.397759,
+    "ast_hash": "1495504c4b24a83f415cff7ee1b10dd7",
+    "semantic_hash": "1495504c4b24a83f415cff7ee1b10dd7"
+  },
+  "VocabFlowTests/MatchMadnessEngineTests.swift": {
+    "mtime": 1794412053.5230112,
+    "seen": 1795318426.39776,
+    "ast_hash": "6d5d0b3ad78535f9c2155bece968c075",
+    "semantic_hash": "6d5d0b3ad78535f9c2155bece968c075"
+  },
+  "VocabFlowTests/OnboardingStoreTests.swift": {
+    "mtime": 1793885738.8010175,
+    "seen": 1795318426.397761,
+    "ast_hash": "85779206fe7c9f23f68a2c7224b7bfa2",
+    "semantic_hash": "85779206fe7c9f23f68a2c7224b7bfa2"
+  },
+  "VocabFlowTests/PlacementTestStoreTests.swift": {
+    "mtime": 1793884558.5884838,
+    "seen": 1795318426.397761,
+    "ast_hash": "33a7983e8d9abd9a574596f975b388fc",
+    "semantic_hash": "33a7983e8d9abd9a574596f975b388fc"
+  },
+  "VocabFlowTests/PlanDecodingTests.swift": {
+    "mtime": 1795180824.0699525,
+    "seen": 1795318426.397762,
+    "ast_hash": "b06e172904d56a9f38df2fea147203af",
+    "semantic_hash": "b06e172904d56a9f38df2fea147203af"
+  },
+  "VocabFlowTests/PracticeFixtures.swift": {
+    "mtime": 1794490187.9671717,
+    "seen": 1795318426.397763,
+    "ast_hash": "1c1b3ac915c676c823820c806b060bc7",
+    "semantic_hash": "1c1b3ac915c676c823820c806b060bc7"
+  },
+  "VocabFlowTests/PracticeSessionStoreTests.swift": {
+    "mtime": 1795180824.070292,
+    "seen": 1795318426.397763,
+    "ast_hash": "5d3820e4a11f00d744c6987b2e636030",
+    "semantic_hash": "5d3820e4a11f00d744c6987b2e636030"
+  },
+  "VocabFlowTests/PronunciationScoreTests.swift": {
+    "mtime": 1795229271.3392951,
+    "seen": 1795318426.3977642,
+    "ast_hash": "587bfba3158bc752dfd337e12ede9dac",
+    "semantic_hash": "587bfba3158bc752dfd337e12ede9dac"
+  },
+  "VocabFlowTests/RankingTests.swift": {
+    "mtime": 1794577898.4334342,
+    "seen": 1795318426.3977652,
+    "ast_hash": "0c6b3f165d9849986cf79e32ec42f959",
+    "semantic_hash": "0c6b3f165d9849986cf79e32ec42f959"
+  },
+  "VocabFlowTests/ResultTileTests.swift": {
+    "mtime": 1795315638.1580954,
+    "seen": 1795318426.3977668,
+    "ast_hash": "c79ce9b38847f6d62dcd39a819ef857c",
+    "semantic_hash": "c79ce9b38847f6d62dcd39a819ef857c"
+  },
+  "VocabFlowTests/ScopeReviewLoadTests.swift": {
+    "mtime": 1795180824.0709722,
+    "seen": 1795318426.3977668,
+    "ast_hash": "8147cd97fec0269702951f8bb979762d",
+    "semantic_hash": "8147cd97fec0269702951f8bb979762d"
+  },
+  "VocabFlowTests/SessionReducerTests.swift": {
+    "mtime": 1793177674.3243856,
+    "seen": 1795318426.397768,
+    "ast_hash": "afaaf15d7e769267ae7ff96f973b73cb",
+    "semantic_hash": "afaaf15d7e769267ae7ff96f973b73cb"
+  },
+  "VocabFlowTests/TaskAttemptTests.swift": {
+    "mtime": 1795180824.0714226,
+    "seen": 1795318426.397769,
+    "ast_hash": "0ed19100140d8ca1a3bacd5e607a3036",
+    "semantic_hash": "0ed19100140d8ca1a3bacd5e607a3036"
+  },
+  "VocabFlowTests/TestSupport.swift": {
+    "mtime": 1793173300.7963016,
+    "seen": 1795318426.39777,
+    "ast_hash": "8ab72cff019adc1faaf40fbe26d8ea85",
+    "semantic_hash": "8ab72cff019adc1faaf40fbe26d8ea85"
+  },
+  "VocabFlowTests/TodayStatusTests.swift": {
+    "mtime": 1793282057.6055615,
+    "seen": 1795318426.39777,
+    "ast_hash": "d8ebc76dcbecc0b1d2200cecdeb9a8f9",
+    "semantic_hash": "d8ebc76dcbecc0b1d2200cecdeb9a8f9"
+  },
+  "VocabFlowTests/TranscriptMatcherTests.swift": {
+    "mtime": 1793712524.495602,
+    "seen": 1795318426.3977711,
+    "ast_hash": "d9536be5234301d5f76760e35eddedde",
+    "semantic_hash": "d9536be5234301d5f76760e35eddedde"
+  },
+  "VocabFlowTests/WordSourceTests.swift": {
+    "mtime": 1794621355.0816092,
+    "seen": 1795318426.397772,
+    "ast_hash": "8b896f6118c1d5372d706d7022e61ac0",
+    "semantic_hash": "8b896f6118c1d5372d706d7022e61ac0"
+  },
+  "design/inky/generate_svg.py": {
+    "mtime": 1794039963.6435668,
+    "seen": 1795318426.397772,
+    "ast_hash": "ea8f6ddf19b16cd40bc43d8c3d1c71e9",
+    "semantic_hash": "ea8f6ddf19b16cd40bc43d8c3d1c71e9"
+  },
+  "design/sounds/celebration/generate.py": {
+    "mtime": 1794928338.1767602,
+    "seen": 1795318426.397773,
+    "ast_hash": "9b0ccb455bcbfca81a4879943f811a2b",
+    "semantic_hash": "9b0ccb455bcbfca81a4879943f811a2b"
+  },
+  "docs/syllie-riv.js": {
+    "mtime": 1795183591.213073,
+    "seen": 1795318426.397774,
+    "ast_hash": "0db914dd244e2784576d47e837f8f587",
+    "semantic_hash": "0db914dd244e2784576d47e837f8f587"
+  },
+  "CLAUDE.md": {
+    "mtime": 1795316213.5796387,
+    "seen": 1795318426.397774,
+    "ast_hash": "ee4be001ae017adde224d49e34e0dffe",
+    "semantic_hash": "ee4be001ae017adde224d49e34e0dffe"
+  },
+  "docs/AUTH_SETUP.md": {
+    "mtime": 1794108206.5992012,
+    "seen": 1795318426.3977752,
+    "ast_hash": "f858ed958de437af39044821f59cd2d3",
+    "semantic_hash": "f858ed958de437af39044821f59cd2d3"
+  },
+  "docs/DESIGN_SYSTEM.md": {
+    "mtime": 1795317032.1116574,
+    "seen": 1795318426.397776,
+    "ast_hash": "123ed197611c11ddc4f64c375f994f70",
+    "semantic_hash": "123ed197611c11ddc4f64c375f994f70"
+  },
+  "docs/LOCALIZATION_MARKETS.md": {
+    "mtime": 1795014152.3977466,
+    "seen": 1795318426.3977768,
+    "ast_hash": "3ab625dc8d468d7a75183e864b90b262",
+    "semantic_hash": "3ab625dc8d468d7a75183e864b90b262"
+  },
+  "docs/app-redesign-v1.html": {
+    "mtime": 1795316173.5391731,
+    "seen": 1795318426.3977768,
+    "ast_hash": "ac86f211ec9f3ff7cd3755f2b9df6ce3",
+    "semantic_hash": "ac86f211ec9f3ff7cd3755f2b9df6ce3"
+  },
+  "docs/color-palette-v2.html": {
+    "mtime": 1794628869.061349,
+    "seen": 1795318426.397778,
+    "ast_hash": "9e81f0038e963082a2e69ab93771a9ff",
+    "semantic_hash": "9e81f0038e963082a2e69ab93771a9ff"
+  },
+  "docs/syll/01_APP_CONCEPT.md": {
+    "mtime": 1794412053.5239055,
+    "seen": 1795318426.397779,
+    "ast_hash": "37fbf0bdf4ede8acca84d661ae6aa718",
+    "semantic_hash": "37fbf0bdf4ede8acca84d661ae6aa718"
+  },
+  "docs/syll/02_FRONTEND.md": {
+    "mtime": 1795180824.0735075,
+    "seen": 1795318426.397779,
+    "ast_hash": "df0c439ec007c7f0c87afeb3dbf47dec",
+    "semantic_hash": "df0c439ec007c7f0c87afeb3dbf47dec"
+  },
+  "docs/syll/03_BACKEND.md": {
+    "mtime": 1794412053.5566275,
+    "seen": 1795318426.39778,
+    "ast_hash": "8fa3d574d712f3ba29873c6fdc4bcd3a",
+    "semantic_hash": "8fa3d574d712f3ba29873c6fdc4bcd3a"
+  },
+  "docs/syll/04_CHALLENGE_IOS_NOTES.md": {
+    "mtime": 1794412053.524641,
+    "seen": 1795318426.39778,
+    "ast_hash": "606dcc1584f1eea159d8d93c3e257c18",
+    "semantic_hash": "606dcc1584f1eea159d8d93c3e257c18"
+  },
+  "docs/syll/README.md": {
+    "mtime": 1794411994.882104,
+    "seen": 1795318426.397781,
+    "ast_hash": "74258fee1aa731d987e4b51cf4b91b98",
+    "semantic_hash": "74258fee1aa731d987e4b51cf4b91b98"
+  },
+  "landing/assets/shots/README.md": {
+    "mtime": 1794143893.485818,
+    "seen": 1795318426.397782,
+    "ast_hash": "805ab00832814edb1c996cdc22534ad5",
+    "semantic_hash": "805ab00832814edb1c996cdc22534ad5"
+  },
+  "landing/index.html": {
+    "mtime": 1794113515.9130394,
+    "seen": 1795318426.397783,
+    "ast_hash": "cde8d8d9c8616c88eb1c8447ec6b3452",
+    "semantic_hash": "cde8d8d9c8616c88eb1c8447ec6b3452"
+  },
+  "landing/v2.html": {
+    "mtime": 1794114811.3472877,
+    "seen": 1795318426.397783,
+    "ast_hash": "b0e5ccfac0618c2a9df0aecce2dfebd0",
+    "semantic_hash": "b0e5ccfac0618c2a9df0aecce2dfebd0"
+  },
+  "landing/v3.html": {
+    "mtime": 1795318096.9130554,
+    "seen": 1795318426.397784,
+    "ast_hash": "11f83ae53ba445218cd4af3c94b8c67e",
+    "semantic_hash": "11f83ae53ba445218cd4af3c94b8c67e"
+  },
+  "VocabFlow/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png": {
+    "mtime": 1795316168.4424808,
+    "seen": 1795318426.3977852,
+    "ast_hash": "1ad94bca6dfcb1e48a8f0f3e036b5f45",
+    "semantic_hash": "1ad94bca6dfcb1e48a8f0f3e036b5f45"
+  },
+  "VocabFlow/Resources/Assets.xcassets/BrandIcon.imageset/BrandIcon@3x.png": {
+    "mtime": 1794111697.3763263,
+    "seen": 1795318426.3977861,
+    "ast_hash": "7d7ddffa78f7fdaf6bce853b34514a8c",
+    "semantic_hash": "7d7ddffa78f7fdaf6bce853b34514a8c"
+  },
+  "VocabFlow/Resources/Assets.xcassets/LaunchSyllieV2.imageset/LaunchSyllieV2@3x.png": {
+    "mtime": 1794111099.9070585,
+    "seen": 1795318426.3977861,
+    "ast_hash": "776566b5facb484ef9057592bb9ba63b",
+    "semantic_hash": "776566b5facb484ef9057592bb9ba63b"
+  },
+  "design/inky/app-icon.svg": {
+    "mtime": 1794111697.409111,
+    "seen": 1795318426.3977869,
+    "ast_hash": "7e6fce7ab389747a9594a4e29a0b92c3",
+    "semantic_hash": "7e6fce7ab389747a9594a4e29a0b92c3"
+  },
+  "design/inky/inky-idle-v2.svg": {
+    "mtime": 1794110640.8569343,
+    "seen": 1795318426.3977878,
+    "ast_hash": "88ed810c45165022e73c537a8b8c3aea",
+    "semantic_hash": "88ed810c45165022e73c537a8b8c3aea"
+  },
+  "design/inky/inky-idle.svg": {
+    "mtime": 1794039963.6903024,
+    "seen": 1795318426.397789,
+    "ast_hash": "3bf7bc2d1af215bc354bf73d0d00daf4",
+    "semantic_hash": "3bf7bc2d1af215bc354bf73d0d00daf4"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_bounce_boing.wav": {
+    "mtime": 1794928272.255935,
+    "seen": 1795318426.397789,
+    "ast_hash": "e7e9d0e7ab4d27d8008a062851d13342",
+    "semantic_hash": "e7e9d0e7ab4d27d8008a062851d13342"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_bounce_land.wav": {
+    "mtime": 1794928259.6555154,
+    "seen": 1795318426.39779,
+    "ast_hash": "9127ce7599594c264adaedf312b1d96f",
+    "semantic_hash": "9127ce7599594c264adaedf312b1d96f"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_bounce_launch.wav": {
+    "mtime": 1794928259.6999664,
+    "seen": 1795318426.397791,
+    "ast_hash": "565cc50607828a2a08c34dd2a4898b80",
+    "semantic_hash": "565cc50607828a2a08c34dd2a4898b80"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_fireworks_finale.wav": {
+    "mtime": 1794928259.747099,
+    "seen": 1795318426.397791,
+    "ast_hash": "25b7da2ab63a947084181f043a93a0e7",
+    "semantic_hash": "25b7da2ab63a947084181f043a93a0e7"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_fireworks_rise.wav": {
+    "mtime": 1794928272.2665584,
+    "seen": 1795318426.397792,
+    "ast_hash": "c3c02acc574f3f89740235f5601f5a83",
+    "semantic_hash": "c3c02acc574f3f89740235f5601f5a83"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_flip_jump.wav": {
+    "mtime": 1794928272.270291,
+    "seen": 1795318426.397793,
+    "ast_hash": "7cc5ed995095d9edaef3d2b8023aac9c",
+    "semantic_hash": "7cc5ed995095d9edaef3d2b8023aac9c"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_flip_land.wav": {
+    "mtime": 1794928259.8786283,
+    "seen": 1795318426.397794,
+    "ast_hash": "59d6f04318d1c6b5785a84d9682d767e",
+    "semantic_hash": "59d6f04318d1c6b5785a84d9682d767e"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_flip_spin.wav": {
+    "mtime": 1794928272.2761087,
+    "seen": 1795318426.397795,
+    "ast_hash": "7e3484b05f66d22d7bd27dd10b1209d5",
+    "semantic_hash": "7e3484b05f66d22d7bd27dd10b1209d5"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_loop_sparkle.wav": {
+    "mtime": 1794928272.2826579,
+    "seen": 1795318426.397795,
+    "ast_hash": "5b87b1948223a79b7a87dec91fd9a4e3",
+    "semantic_hash": "5b87b1948223a79b7a87dec91fd9a4e3"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_loop_swoosh.wav": {
+    "mtime": 1794928260.2827287,
+    "seen": 1795318426.3977962,
+    "ast_hash": "ea4b2f90c373f85d1db97d3ef3ffd40f",
+    "semantic_hash": "ea4b2f90c373f85d1db97d3ef3ffd40f"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_puff_inhale.wav": {
+    "mtime": 1794928260.353794,
+    "seen": 1795318426.3977962,
+    "ast_hash": "b4099199ab7541d69ce1a13aa21e480c",
+    "semantic_hash": "b4099199ab7541d69ce1a13aa21e480c"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_puff_land.wav": {
+    "mtime": 1794928260.417292,
+    "seen": 1795318426.397797,
+    "ast_hash": "96b5475d494aa6c7a12fbb9ad8ed258a",
+    "semantic_hash": "96b5475d494aa6c7a12fbb9ad8ed258a"
+  },
+  "VocabFlow/Resources/Sounds/celebrate_puff_pop.wav": {
+    "mtime": 1794928260.4697962,
+    "seen": 1795318426.3977978,
+    "ast_hash": "01ae3b898a9549c64e7e017ea2306744",
+    "semantic_hash": "01ae3b898a9549c64e7e017ea2306744"
+  },
+  "VocabFlow/Resources/Sounds/click1.wav": {
+    "mtime": 1793632925.7269258,
+    "seen": 1795318426.3977978,
+    "ast_hash": "15c6ca5c1da84f6a7ba3cf01578305ff",
+    "semantic_hash": "15c6ca5c1da84f6a7ba3cf01578305ff"
+  },
+  "VocabFlow/Resources/Sounds/click2.wav": {
+    "mtime": 1793632823.9006298,
+    "seen": 1795318426.397799,
+    "ast_hash": "661943f4c15be13abd9b5793279a5c56",
+    "semantic_hash": "661943f4c15be13abd9b5793279a5c56"
+  },
+  "VocabFlow/Resources/Sounds/vocab_correct.wav": {
+    "mtime": 1793632798.332138,
+    "seen": 1795318426.3978,
+    "ast_hash": "6274c836a6528682d86647a111356edf",
+    "semantic_hash": "6274c836a6528682d86647a111356edf"
+  },
+  "VocabFlow/Resources/Sounds/vocab_wrong.wav": {
+    "mtime": 1793632798.3327897,
+    "seen": 1795318426.397801,
+    "ast_hash": "f093a11558ae8df9185186c4ef4f94ab",
+    "semantic_hash": "f093a11558ae8df9185186c4ef4f94ab"
+  },
+  "design/sounds/celebration/preview/bounce.wav": {
+    "mtime": 1794928341.8633327,
+    "seen": 1795318426.3978019,
+    "ast_hash": "8ce1a076a4bd106843c3c6d233c346ad",
+    "semantic_hash": "8ce1a076a4bd106843c3c6d233c346ad"
+  },
+  "design/sounds/celebration/preview/fireworks.wav": {
+    "mtime": 1794928341.765608,
+    "seen": 1795318426.3978019,
+    "ast_hash": "f7aa2d95602066206ad32555d9ef4dc2",
+    "semantic_hash": "f7aa2d95602066206ad32555d9ef4dc2"
+  },
+  "design/sounds/celebration/preview/flip.wav": {
+    "mtime": 1794928341.797979,
+    "seen": 1795318426.397803,
+    "ast_hash": "1e36613c3e4b8e33275398fe20bd064c",
+    "semantic_hash": "1e36613c3e4b8e33275398fe20bd064c"
+  },
+  "design/sounds/celebration/preview/loop.wav": {
+    "mtime": 1794928341.831289,
+    "seen": 1795318426.397804,
+    "ast_hash": "276b6b02943acebb1de13c6305d83c96",
+    "semantic_hash": "276b6b02943acebb1de13c6305d83c96"
+  },
+  "design/sounds/celebration/preview/puff.wav": {
+    "mtime": 1794928341.7281399,
+    "seen": 1795318426.397805,
+    "ast_hash": "87edab4b61c189e9503da1a4c78d5c37",
+    "semantic_hash": "87edab4b61c189e9503da1a4c78d5c37"
+  }
+}

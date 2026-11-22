@@ -48,8 +48,17 @@
           "speaking": {
             "total": 3,
             "passed": 2,
+            "groups": {
+              "passed": [
+                { "meaningId": "m-symptom", "lemma": "symptom", "gloss": "triệu chứng", "status": "practicing", "score": 93, "band": "excellent" },
+                { "meaningId": "m-vivid", "lemma": "vivid", "gloss": "sống động", "status": "fluent", "score": 85, "band": "good" }
+              ],
+              "notPassed": [
+                { "meaningId": "m-fatigue", "lemma": "fatigue", "gloss": "mệt mỏi", "status": "practicing", "score": 64, "band": "fair" }
+              ]
+            },
             "becameFluent": [
-              { "meaningId": "m-vivid", "lemma": "vivid", "gloss": "sống động", "status": "fluent", "score": null }
+              { "meaningId": "m-vivid", "lemma": "vivid", "gloss": "sống động", "status": "fluent", "score": 85, "band": "good" }
             ],
             "slipped": []
           }

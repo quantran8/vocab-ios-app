@@ -2,15 +2,35 @@ import SwiftUI
 
 /// Read aloud, get scored, optionally read again. The last assessment is what gets committed.
 /// `meaningCue` is decoded but not shown: a learned word's recording goes straight to the read-aloud.
+/// A take scored by the backend shows its score in the mic's place, the word coloured per syllable, and the
+/// syllables' detail in the panel; an on-device take (right or wrong, no score) keeps the plain result.
 struct RecordingTaskView: View {
     let attempt: TaskAttempt
     @Environment(PracticeSessionStore.self) private var store
 
     var body: some View {
-        TaskScaffold(attempt: attempt, feedback: feedback) {
+        TaskScaffold(
+            attempt: attempt,
+            feedback: feedback,
+            promptStyle: promptStyle,
+            feedbackShowsHeading: scored == nil,
+            feedbackDetail: feedbackDetail
+        ) {
             VStack(spacing: Spacing.m) {
-                micButton
-                status
+                if let scored {
+                    // The ring's own size, not the mic's halo box (which would add 72 pt above and below it):
+                    // the title has to stay on screen above the panel on a small phone (iPhone 14).
+                    PronunciationScoreRing(score: scored.score, band: scored.band)
+                    Text(scored.band.title)
+                        .font(Typography.sheetTitle)
+                        .tracking(Typography.tightTracking)
+                        .foregroundStyle(scored.band.titleColor)
+                        .multilineTextAlignment(.center)
+                        .accessibilityAddTraits(.isHeader)
+                } else {
+                    micButton
+                    status
+                }
             }
             .frame(maxWidth: .infinity)
         } action: {
@@ -21,6 +41,37 @@ struct RecordingTaskView: View {
     }
 
     private var isRecording: Bool { store.recording == .recording }
+
+    private struct ScoredTake {
+        let assessment: RecordingAssessment
+        let score: Double
+        let band: PronunciationBand
+    }
+
+    /// A valid take with a score from the backend. On-device and Lab takes carry no score.
+    private var scored: ScoredTake? {
+        guard case .assessed(let assessment) = store.recording,
+              let band = assessment.scoreBand, let score = assessment.accuracyScore else { return nil }
+        return ScoredTake(assessment: assessment, score: score, band: band)
+    }
+
+    private var promptStyle: RecordingPromptStyle? {
+        if store.recording == .uploading, !store.scoresOnDevice { return .scoring }
+        guard let scored, case .text(let word, nil)? = attempt.task.prompt,
+              let segments = PronunciationColoring.segments(word: word, syllables: scored.assessment.syllables ?? [])
+        else { return nil }
+        return .scored(segments)
+    }
+
+    /// Without syllables from the backend the panel holds only Syllie and the buttons.
+    /// One syllable is the whole word, already coloured in the prompt, so it gets no detail either.
+    private var feedbackDetail: AnyView? {
+        guard let scored, let syllables = scored.assessment.syllables, syllables.count > 1 else { return nil }
+        return AnyView(
+            PronunciationDetail(syllables: syllables, passed: scored.assessment.passed == true)
+                .id(scored.assessment.assessmentReceiptId)
+        )
+    }
 
     private var micButton: some View {
         RecordingPulseButton(isRecording: isRecording, isEnabled: canUseMic, level: store.inputLevel) {
@@ -36,8 +87,8 @@ struct RecordingTaskView: View {
 
     private var canUseMic: Bool {
         switch store.recording {
-        // A take's result waits for "Try again" before the mic works again.
-        case .uploading, .blocked, .assessed: false
+        // A take's result waits for "Try again" before the mic works again; a failed upload resends the same take.
+        case .uploading, .uploadFailed, .blocked, .assessed: false
         case .recording: true
         default: attempt.canRecordAgain
         }
@@ -54,7 +105,11 @@ struct RecordingTaskView: View {
                 statusText("Listening… tap to stop.")
             }
         case .uploading:
-            ProgressView()
+            if store.scoresOnDevice {
+                ProgressView()
+            } else {
+                statusText("Scoring…")
+            }
         case .assessed:
             EmptyView()
         case .uploadFailed:
@@ -68,6 +123,14 @@ struct RecordingTaskView: View {
 
     /// While a take's result is shown, the panel holds it and the mic waits for "Try again".
     private var feedback: FeedbackCopy? {
+        if store.recording == .uploadFailed {
+            // Not the learner's miss: the info panel, and the take is kept for "Try again".
+            return FeedbackCopy(
+                kind: .info,
+                title: String(localized: "Couldn’t connect", bundle: .appLanguage),
+                message: String(localized: "Your recording is still here. Try sending it again.", bundle: .appLanguage)
+            )
+        }
         guard case .assessed(let assessment) = store.recording else { return nil }
         guard assessment.isValid else {
             let title = attempt.canRecordAgain
@@ -76,6 +139,10 @@ struct RecordingTaskView: View {
             return FeedbackCopy(kind: .info, title: title, message: "")
         }
         let passed = assessment.passed == true
+        if let scored {
+            // The title and score are drawn above the panel; these feed the panel's colour and announcement.
+            return FeedbackCopy(kind: passed ? .success : .error, title: scored.band.title, message: PronunciationSummary.scoreText(scored.score))
+        }
         return FeedbackCopy(kind: passed ? .success : .error, title: resultTitle(passed: passed), message: resultMessage(assessment, passed: passed))
     }
 
@@ -141,6 +208,9 @@ private struct RecordingPulseButton: View {
     @Environment(\.motion) private var motion
 
     private static let buttonSize: CGFloat = 128
+    /// The control's box, halo room included; its layout stops at the rest disc's bottom edge (see `body`).
+    /// A scored take's ring takes only its own size.
+    static let side: CGFloat = buttonSize * 2.5
     /// The Blue 50 disc the button always sits in (w-44).
     private static let restHaloSize: CGFloat = 176
     /// The button's depth edge, a step deeper than a regular button's.
@@ -191,7 +261,10 @@ private struct RecordingPulseButton: View {
             }
             .animation(motion.animation(MotionTokens.transition), value: isRecording)
         }
-        .frame(width: Self.buttonSize * 2.5, height: Self.buttonSize * 2.5)
+        .frame(width: Self.side, height: Self.side)
+        // Lays out only down to the rest disc's edge: the halo keeps its room above (so it never covers the word),
+        // and below it draws under the status line, which then sits close to the button like the other text.
+        .frame(height: Self.side / 2 + Self.restHaloSize / 2, alignment: .top)
     }
 
     /// A slow, steady swell of the halo while a voice is heard, independent of loudness.

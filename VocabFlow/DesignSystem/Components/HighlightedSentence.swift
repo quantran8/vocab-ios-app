@@ -9,10 +9,22 @@ struct HighlightedSentence: View {
     /// The marked part of `sentence`; nil shows the sentence unmarked.
     let range: Range<String.Index>?
 
-    /// Marks the first case-insensitive match of `term`.
+    /// Marks `term` in the sentence (see `range(of:in:)`).
     init(sentence: String, term: String) {
         self.sentence = sentence
-        range = term.isEmpty ? nil : sentence.range(of: term, options: .caseInsensitive)
+        range = Self.range(of: term, in: sentence)
+    }
+
+    /// The first case-insensitive match of `term` as a whole word; failing that, at the start of a word (an inflection:
+    /// "run" in "running"); failing that, anywhere. So "in" marks "in", not the end of "train".
+    static func range(of term: String, in sentence: String) -> Range<String.Index>? {
+        let term = term.trimmingCharacters(in: .whitespaces)
+        guard !term.isEmpty else { return nil }
+        let escaped = NSRegularExpression.escapedPattern(for: term)
+        for pattern in ["\\b\(escaped)\\b", "\\b\(escaped)"] {
+            if let range = sentence.range(of: pattern, options: [.regularExpression, .caseInsensitive]) { return range }
+        }
+        return sentence.range(of: term, options: .caseInsensitive)
     }
 
     /// Marks the span the backend located (custom words), rather than searching for it.

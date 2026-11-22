@@ -40,6 +40,11 @@ tailwind.config = {
 .cel-pop { animation: celPop .42s cubic-bezier(.3,.7,.4,1) both; }
 .cel-rive { position: absolute; left: 0; top: 0; width: 390px; height: 844px; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .cel-pop { animation: none; } }
+/* T7b scoring: a light sweep over the Ink 300 word while the recording is scored. Reduce Motion: the word stays Ink 300. */
+@keyframes scoreSweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.score-sweep { color: transparent; background: linear-gradient(90deg, #C8C8D0 35%, #F7F7F9 50%, #C8C8D0 65%); background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; animation: scoreSweep 1.3s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .score-sweep { animation: none; color: #C8C8D0; background: none; } }
 @layer components {
   /* Frames */
   .frame { @apply relative w-[390px] h-[844px] bg-white overflow-hidden flex flex-col text-ink-950 shrink-0; }
@@ -470,13 +475,14 @@ function reviewPreview() {
   <div class="px-6 pt-3 pb-10 space-y-3"><button class="btn btn-ink">Tiếp tục</button><button class="btn btn-line3d">Đóng</button></div>`;
 }
 
-function reviewFinished() {
+/* The topic line names the topics of the next cards (plan `sourceTopics`), not the Focus; with 3+ topics it is left out. */
+function reviewFinished(manyTopics = false) {
   const next = [['symptom', 'triệu chứng'], ['recover', 'hồi phục'], ['immune', 'miễn dịch'], ['fatigue', 'mệt mỏi'], ['doctor', 'bác sĩ']];
   return `${status()}
   <div class="flex-1 overflow-hidden px-6 pt-8">
     <div class="text-center"><div class="text-[30px] font-extrabold tracking-[-1px]">Đã ôn xong</div>
       <img src="${SYLLIE}" alt="" class="w-[130px] mx-auto mt-4">
-      <p class="mt-5 text-[15px] text-ink-500">Giờ đến từ mới của Health và Daily conversation</p></div>
+      ${manyTopics ? '' : '<p class="mt-5 text-[15px] text-ink-500">Giờ đến từ mới của Health và Daily conversation</p>'}</div>
     <div class="mt-6 font-bold text-[17px]">Tiếp theo: 5 từ mới</div>
     <div class="mt-3 card">${next.map(([w, m]) => `<div class="row"><span class="font-bold flex-1">${w}</span><span class="text-ink-500 text-[15px]">${m}</span></div>`).join('')}</div>
   </div>
@@ -564,16 +570,17 @@ async function mountCelebrations() {
 /* collectionDone: this session used up the collection. The completion card sits under the LP card and its
    actions replace "Xong", so the screen keeps one main action. */
 function results(collectionDone = false) {
+  /* Tiles carry no link: every tile opens the same sheet, so one "Xem chi tiết buổi học" row under them says so once. */
   const tile = (title, num, cap) => `<div class="card p-4 flex-1 min-w-0">
     <div class="text-[13px] font-semibold text-ink-500">${title}</div>
     <div class="mt-1 text-[30px] font-extrabold tracking-tight tabular-nums">${num}</div>
-    <div class="text-[13px] text-ink-500 -mt-0.5">${cap}</div>
-    <div class="mt-4 pt-3 border-t-[1.5px] border-ink-100 flex items-center gap-1 text-[14px] font-semibold text-blue-600">Xem chi tiết${ic('chev', 'w-4 h-4')}</div></div>`;
+    <div class="text-[13px] text-ink-500 -mt-0.5">${cap}</div></div>`;
   return `${status()}
   <div class="flex-1 overflow-hidden px-6">
     <h1 class="h-display pt-6">Tổng kết</h1>
-    <div class="mt-6 flex gap-3">${tile('Ôn tập', '7/9', 'nhớ chắc')}${tile('Từ mới', '2/4', 'nắm ngay')}</div>
-    <div class="mt-3 card p-4">
+    <div class="mt-6 flex gap-3">${tile('Ôn tập', '7/9', 'nhớ chắc')}${tile('Từ mới', '2/4', 'nắm ngay')}${tile('Nói', '2/3', 'nói đúng')}</div>
+    <div class="mt-3 h-11 flex items-center justify-center gap-1 text-[15px] font-semibold text-blue-600">Xem chi tiết buổi học${ic('chev', 'w-4 h-4')}</div>
+    <div class="mt-1 card p-4">
       <div class="flex items-center gap-2"><span class="text-sun-500">${ic('zap', 'w-6 h-6', true)}</span><span class="text-[24px] font-extrabold tracking-tight flex-1">+45 LP</span><span class="text-[13px] text-ink-500">Tổng 1.285 LP</span></div>
       <div class="mt-3 flex gap-2"><span class="pill bg-ink-100 text-ink-700">Từ mới +30</span><span class="pill bg-ink-100 text-ink-700">Ôn tập +15</span></div>
     </div>
@@ -590,21 +597,34 @@ const segBar = (a, b, c) => `<div class="mt-2.5 h-2.5 rounded-full bg-ink-100 fl
 const group = (level, head, sub, open, rows = []) => `<div class="border-t-[1.5px] border-ink-100 first:border-0">
   <div class="flex items-center gap-2.5 px-4 py-3">${sw(level)}<div class="flex-1"><div class="font-bold text-[15px]">${head}</div><div class="text-[12px] text-ink-500">${sub}</div></div>${ic(open ? 'up' : 'down', 'w-4 h-4 text-ink-400')}</div>
   ${open ? rows.map(([w, g, tag, det]) => `<div class="flex items-start gap-3 px-4 pb-3 pl-10"><div class="flex-1"><div class="font-semibold">${w}</div><div class="text-[13px] text-ink-500">${g}</div></div><div class="text-right"><div class="text-[13px] font-semibold text-blue-700">${tag}</div><div class="text-[12px] text-ink-500">${det}</div></div></div>`).join('') : ''}</div>`;
-function resultDetail() {
-  return sheetOver(results(), `
-    <div class="flex items-center justify-between px-5 pt-3"><h2 class="text-[20px] font-extrabold tracking-tight">Chi tiết buổi học</h2><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
-    <div class="flex-1 overflow-hidden px-5 pt-4">
+/* The Speaking block, as the sheet shows it scrolled down (1.13a): passed / not passed per word, with its score and band. */
+const speakingBlock = () => `
+      <div class="eyebrow">Nói</div>${segBar(2, 0, 1)}
+      <div class="mt-3 card overflow-hidden">
+        ${group('weak', 'Chưa đạt (1)', 'Lần nói đầu tiên chưa đạt', true, [['fatigue', 'mệt mỏi', 'Điểm 64', 'Gần đúng rồi']])}
+        ${group('strong', 'Nói đúng (2)', 'Đạt ngay lần nói đầu tiên', true, [['symptom', 'triệu chứng', 'Điểm 93', 'Xuất sắc!'], ['recover', 'hồi phục', 'Điểm 85', 'Làm tốt lắm']])}
+        ${group('', 'Đã nói thành thạo (1)', 'Nói đúng nhiều lần liên tiếp', false)}
+      </div>
+      <p class="mt-2 text-[12px] text-ink-500">Phần nói không ảnh hưởng tiến độ học của từ.</p>`;
+function resultDetail(focusSpeaking = false) {
+  const review = `
       <div class="eyebrow">Ôn tập</div>${segBar(7, 1, 1)}
       <div class="mt-3 card overflow-hidden">
         ${group('weak', 'Học lại (1)', 'Chưa tự nhớ ra được · Gặp lại tối nay', true, [['chronic', 'mãn tính', 'Chọn nhầm đáp án', 'khi nghe · học Thứ Tư']])}
         ${group('mid', 'Chưa chắc (1)', 'Đúng nhưng chưa hoàn toàn tự nhớ · Gặp lại tối nay', true, [['diagnose', 'chẩn đoán', 'Dùng gợi ý', 'khi viết · học Thứ Ba']])}
         ${group('strong', 'Nhớ chắc (7)', 'Tự nhớ ra, không cần trợ giúp · Gặp lại sau 11 ngày', false)}
-      </div>
-      <div class="mt-7 eyebrow">Từ mới</div>${segBar(2, 1, 1)}
+      </div>`;
+  const newWords = (open) => `
+      <div class="eyebrow">Từ mới</div>${segBar(2, 1, 1)}
       <div class="mt-3 card overflow-hidden">
-        ${group('weak', 'Xem đáp án (1)', 'Xem đáp án hoặc hết lượt thử · Gặp lại tối nay', true, [['immune', 'miễn dịch', 'Xem đáp án', 'khi viết']])}
+        ${group('weak', 'Xem đáp án (1)', 'Xem đáp án hoặc hết lượt thử · Gặp lại tối nay', open, [['immune', 'miễn dịch', 'Xem đáp án', 'khi viết']])}
         ${group('mid', 'Cần thử lại (1)', 'Đúng sau gợi ý hoặc thử lại · Gặp lại tối nay', false)}
-      </div>
+        ${focusSpeaking ? group('strong', 'Nắm ngay (2)', 'Đúng ngay, không gợi ý · Gặp lại ngày mai', false) : ''}
+      </div>`;
+  const body = focusSpeaking ? `${newWords(false)}<div class="mt-7"></div>${speakingBlock()}` : `${review}<div class="mt-7"></div>${newWords(true)}`;
+  return sheetOver(results(), `
+    <div class="flex items-center justify-between px-5 pt-3"><h2 class="text-[20px] font-extrabold tracking-tight">Chi tiết buổi học</h2><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5 pt-4">${body}
     </div>`, 110);
 }
 
@@ -671,14 +691,71 @@ function surgeryTask() {
   });
 }
 
+/* Đọc to: the recording's IPA sits under the word (TaskScaffold: body text, muted ink). */
+const recordingPrompt = (word, ipa = '/əˈpriːʃieɪt/') => textPrompt(`<div>${word}${ipa ? `<div class="mt-1 text-[17px] font-normal tracking-normal text-ink-500">${ipa}</div>` : ''}</div>`);
 function recordingTask() {
   return taskScreen({
     question: 'Đọc to từ này.',
-    prompt: textPrompt('appreciate'),
+    prompt: recordingPrompt('appreciate'),
     content: `<div class="mt-8 flex flex-col items-center">
       ${soundCenter('mic')}
       <p class="mt-5 text-[15px] text-ink-600">Chạm vào micro và đọc to.</p></div>`,
     panelHtml: panel('custom', { html: '<button class="btn btn-line3d">Không thể nói lúc này</button>' }),
+  });
+}
+
+/* T7b: Đọc to with scoring. The word stays in the prompt and its syllables are coloured by the server's band
+   (good = Green 700, poor = Coral 600). The overall score ring + title take the mic's place; the panel holds only
+   the per-syllable detail, one compact line that expands in place. */
+const SCORE_BAND = o => o >= 85 ? ['Excellent!', '#1FA857', 'text-green-700', true] : o >= 70 ? ['Good job', '#1FA857', 'text-green-700', true]
+  : o >= 50 ? ['Almost there', '#E09A00', 'text-sun-700', false] : ['Keep practicing', '#E5432A', 'text-coral-700', false];
+const sylColor = b => b === 'good' ? 'text-green-700' : 'text-coral-600';
+function recordingScoring() {
+  return taskScreen({
+    question: 'Đọc to từ này.',
+    prompt: recordingPrompt('<span class="score-sweep">appreciate</span>'),
+    content: `<div class="mt-8 flex flex-col items-center">
+      ${soundCenter('mic', 'off')}
+      <p class="mt-5 text-[15px] text-ink-600">Đang chấm điểm…</p></div>`,
+    panelHtml: panel('custom', { html: '<div class="h-[50px]"></div>' }),
+  });
+}
+/* T7b error: the take couldn't be scored (network, server, timeout). Not the learner's fault, so the info panel;
+   "Thử lại" resends the same audio. The mic stays off until then. */
+function recordingScoreFailed() {
+  return taskScreen({
+    question: 'Đọc to từ này.',
+    prompt: recordingPrompt('appreciate'),
+    content: `<div class="mt-8 flex flex-col items-center">
+      ${soundCenter('mic', 'off')}
+      <p class="mt-5 text-[15px] text-ink-600">Chưa chấm được bản ghi.</p></div>`,
+    panelHtml: `<div class="bg-blue-50 rounded-t-[24px] px-6 pt-5 pb-10">
+      <div class="flex items-center gap-2.5 text-[19px] font-extrabold text-blue-800"><span class="w-7 h-7 rounded-full bg-blue-500 text-white grid place-items-center">${ic('info', 'w-4 h-4')}</span>Không kết nối được</div>
+      <p class="mt-1.5 text-[15px] text-blue-800">Bản ghi của bạn vẫn còn. Thử gửi lại nhé.</p>
+      <div class="mt-4 flex items-end gap-3">${syllieSm}<div class="flex-1"><button class="btn btn-ink">Thử lại</button><button class="btn btn-line3d mt-3">Bỏ qua</button></div></div></div>`,
+  });
+}
+function recordingScored(overall, syl, open = false) {
+  const [title, ring, tone, pass] = SCORE_BAND(overall);
+  const C = 2 * Math.PI * 78, poor = syl.filter(x => x[3] === 'poor').map(x => x[0]);
+  const ok = pass ? { bg: 'bg-green-50', text: 'text-green-800', line: 'border-green-100' } : { bg: 'bg-coral-50', text: 'text-coral-800', line: 'border-coral-100' };
+  const scoreRing = `<div class="relative w-44 h-44"><svg viewBox="0 0 176 176" class="w-44 h-44 -rotate-90">
+      <circle cx="88" cy="88" r="78" fill="none" stroke="#EFEFF2" stroke-width="14"/>
+      <circle cx="88" cy="88" r="78" fill="none" stroke="${ring}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - overall / 100)}"/></svg>
+      <span class="absolute inset-0 grid place-items-center text-[56px] font-extrabold tracking-[-2px] tabular-nums">${overall}</span></div>`;
+  const detail = `<div class="flex items-center gap-2 text-[15px] ${ok.text}">
+      <span class="flex-1">${poor.length ? `Cần luyện: <b>${poor.join(', ')}</b>` : 'Các âm đều tốt'}</span>
+      <span class="flex items-center gap-0.5 font-bold">Chi tiết${ic(open ? 'up' : 'down', 'w-4 h-4')}</span></div>
+    ${open ? `<div class="mt-2 border-t-[1.5px] ${ok.line}">${syl.map(([t, ipa, sc, b]) => `<div class="flex items-center h-9 text-[15px]">
+      <span class="w-14 font-bold ${sylColor(b)}">${t}</span><span class="flex-1 text-ink-500">/${ipa}/</span><span class="font-bold tabular-nums ${sylColor(b)}">${sc}</span></div>`).join('')}</div>` : ''}`;
+  const btn = pass ? '<button class="btn btn-green">Tiếp tục</button>' : '<button class="btn btn-coral">Thử lại</button><button class="btn btn-line3d mt-3">Tiếp tục</button>';
+  return taskScreen({
+    question: 'Đọc to từ này.',
+    prompt: recordingPrompt(syl.map(([t, , , b]) => `<span class="${sylColor(b)}">${t}</span>`).join('')),
+    content: `<div class="mt-8 flex flex-col items-center">${scoreRing}
+      <div class="mt-4 text-[26px] font-extrabold tracking-[-0.6px] ${tone}">${title}</div></div>`,
+    panelHtml: `<div class="${ok.bg} rounded-t-[24px] px-6 pt-5 pb-10">${detail}
+      <div class="mt-4 flex items-end gap-3">${syllieSm}<div class="flex-1">${btn}</div></div></div>`,
   });
 }
 
@@ -1399,7 +1476,12 @@ document.getElementById('flows').innerHTML = [
     go('Hết phần ôn'),
     frame('1.8', 'Đã ôn xong', reviewFinished(), [
       'Syllie ngay dưới tiêu đề; danh sách từ mới sắp học nằm trong một card.',
+      'Dòng "Giờ đến từ mới của …" nêu chủ đề Focus mà từ mới được lấy từ đó, chỉ khi Focus có 1–2 chủ đề (step từ mới không mang <code>sourceTopic</code>, nên không nêu được chủ đề của từng từ).',
       'Một nút "Học từ mới".',
+    ]),
+    frame('1.8a', 'Đã ôn xong · từ nhiều chủ đề', reviewFinished(true), [
+      'Từ sắp học thuộc 3 chủ đề trở lên: bỏ dòng chủ đề, danh sách "Tiếp theo: 5 từ mới" đã đủ nói điều sắp tới.',
+      'Không bao giờ liệt kê cả danh sách Focus.',
     ]),
     go('Học từ mới'),
     frame('1.10', 'Giới thiệu từ', wordIntro(), [
@@ -1436,15 +1518,24 @@ document.getElementById('flows').innerHTML = [
     go('Chạm Tiếp tục'),
     frame('1.12b', 'Tổng kết', results(), [
       'Số liệu chuyển sang màn thứ hai, tiêu đề "Tổng kết"; Syllie và chip "Hoàn thành buổi học" bỏ khỏi đây vì 1.12 đã nói điều đó.',
-      'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn. Có ghi âm được chấm (Daily bật nói, Ngẫu nhiên, Luyện nói) thì thêm tile Phát âm: số "nói đúng" trên số từ đã ghi âm. Từ còn yếu có tile Còn phải luyện; không còn tile Kỹ năng.',
-      'Bỏ các dòng nhóm yếu hơn ("1 chưa chắc", "+1 đã biết"…) khỏi tile: thay bằng một link "Xem chi tiết ›" mở sheet chi tiết, nơi các nhóm đã được liệt kê đủ.',
-      'Card LP có chip chia theo nguồn. Chuỗi "Xem chi tiết" là chuỗi mới, cần thêm bản vi/en.',
+      'Tile Ôn tập (nhớ chắc) và Từ mới (nắm ngay); tile trống thì ẩn. Có ghi âm được chấm (Daily bật nói, Ngẫu nhiên, Luyện nói) thì thêm tile Nói: số "nói đúng" trên số từ đã ghi âm. Từ còn yếu có tile Còn phải luyện; không còn tile Kỹ năng.',
+      'Tile chỉ có tiêu đề, số và chú thích, <b>không có link riêng</b>: mọi tile mở cùng một sheet, nên link lặp ở từng tile khiến mỗi tile trông như mở một nội dung khác.',
+      'Một hàng "Xem chi tiết buổi học ›" (link Blue 600, 15 Semibold, căn giữa, cao 44) dưới hàng tile mở sheet từ đầu. Chạm vào tile vẫn mở sheet đó, cuộn tới khối của tile.',
+      'Card LP có chip chia theo nguồn.',
     ]),
-    go('Chạm Xem chi tiết'),
+    go('Chạm Xem chi tiết buổi học'),
     frame('1.13', 'Chi tiết buổi học (sheet)', resultDetail(), [
       'Mỗi khối có thanh tỷ lệ 3 mức (Blue 600 / Blue 300 / sọc) và các nhóm có ô màu tương ứng.',
       'Nhóm mạnh (Nhớ chắc, Nắm ngay) thu gọn sẵn; mỗi từ có nguyên nhân (Blue 700) và kỹ năng/ngày học.',
-      'Khối Phát âm (cuối sheet): dòng "Nói đúng: 2/3 từ", rồi nhóm Cần luyện lại (từ thành thạo bị trượt) và Đã nói thành thạo, mỗi từ kèm điểm khi chấm Azure. Không có thanh tỷ lệ.',
+      'Khối Nói ở cuối sheet, xem 1.13a.',
+    ]),
+    go('Chạm tile Nói (sheet cuộn tới khối Nói)'),
+    frame('1.13a', 'Chi tiết buổi học · khối Nói', resultDetail(true), [
+      'Khối Nói làm như Ôn tập và Từ mới: thanh tỷ lệ hai mức (Blue 600 nói đúng / sọc chưa đạt), rồi nhóm Chưa đạt (mở sẵn) và Nói đúng, mỗi nhóm có ô màu và dòng giải thích. Bỏ dòng "Nói đúng: 2/3 từ" vì thanh và số trong tiêu đề nhóm đã nói điều đó.',
+      'Mỗi từ: lemma + nghĩa; bên phải "Điểm 64" (Blue 700) và tên band bên dưới (Xuất sắc! / Làm tốt lắm / Gần đúng rồi / Luyện thêm nhé), cùng chữ với màn chấm điểm T7b. Chấm trên máy thì không có điểm, chỉ có nhóm. Chạm từ mở trang từ.',
+      'Đã nói thành thạo / Cần luyện lại (thành thạo bị tụt) là nhóm không có ô màu, thu gọn sẵn, nằm dưới hai nhóm chính.',
+      'Dòng nhỏ cuối khối: "Phần nói không ảnh hưởng tiến độ học của từ."',
+      'Dữ liệu: <code>speaking.groups: {passed: [SItem], notPassed: [SItem]}</code>, SItem có <code>score</code> và <code>band</code> (FRONTEND_FLOW §15.3b). Backend cũ không gửi <code>groups</code>: khối chỉ có dòng "Nói đúng: 2/3 từ" và hai nhóm thay đổi trạng thái.',
     ]),
     go('Hết bài, buổi học dùng hết từ mới của Collection'),
     frame('1.12a', 'Ăn mừng · học hết Collection', celebrate({ kind: 'collection' }), [
@@ -1515,7 +1606,13 @@ document.getElementById('flows').innerHTML = [
     frame('T4', 'Xếp chữ (reorder)', reorderTask(), ['Vùng trả lời là dòng kẻ; chữ đã dùng để lại ô xám để hàng chữ không nhảy.', 'Ô chữ 54×54; từ dài thì mọi ô thu hẹp đều để cả từ nằm trên một dòng.']),
     frame('T5', 'Nối cặp (match)', matchTask(), ['Không có nút Kiểm tra: cặp đúng khóa màu Green, đang chọn màu Blue; panel đếm số cặp đã ghép.']),
     frame('T6', 'Sửa lỗi chính tả (surgery)', surgeryTask(), ['Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; nút "Kiểm tra bản sửa" mờ đến khi có ít nhất một chỗ sửa.', 'Phím cao 46pt, chữ 20pt (gần bàn phím iOS); card bàn phím đệm ngang 8pt để phím rộng nhất có thể.']),
-    frame('T7', 'Đọc to (recording)', recordingTask(), ['Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
+    frame('T7', 'Đọc to (recording)', recordingTask(), ['IPA của bản ghi (âm cần đọc, ví dụ bass /bæs/ hay /beɪs/) nằm dưới từ: 17pt Ink 500. ', 'Nút micro lớn Blue có cạnh dày, không có quầng nền; "Không thể nói lúc này" là nút phụ.', 'Cùng nút giữa bài tập với loa đề nghe (1.7). Đang ghi: icon đổi thành ■ dừng (không phải ‖ tạm dừng, vì chạm là kết thúc lượt ghi).']),
+    go('Dừng ghi'),
+    frame('T7b', 'Đọc to · đang chấm điểm', recordingScoring(), ['Chỉ khi backend chấm điểm (bản ghi chấm trên máy chỉ có đúng/sai, giữ kết quả T7 cũ). Gọi API chấm điểm: từ ở chỗ đề chuyển Ink 300 với một vệt sáng quét theo hướng đọc (Reduce Motion: đứng yên). Micro ở trạng thái off, dòng hướng dẫn thành "Đang chấm điểm…".', 'Panel không có nút; Syllie lặp thinking. Lỗi hoặc quá thời gian: trạng thái "Không chấm được" có sẵn (Thử lại / Bỏ qua).']),
+    go('Kết quả về'),
+    frame('T7b', 'Đọc to · kết quả tốt', recordingScored(92, [['ap', 'ə', 94, 'good'], ['pre', 'ˈpriː', 90, 'good'], ['ci', 'ʃi', 88, 'good'], ['ate', 'eɪt', 95, 'good']]), ['Tổng điểm là thông tin chính: vòng 176pt (cùng khung với micro) thay chỗ nút micro, số đếm lên. Dưới vòng là tiêu đề theo band của tổng điểm (server gửi): Excellent! / Good job (Green 700), Almost there (Sun 700), Keep practicing (Coral 700). Vòng cùng màu.', 'Từ giữ ở chỗ đề; sau khi vòng đếm xong, màu lan qua từng âm tiết theo hướng đọc: good Green 700, poor Coral 600 (band từng âm do server gửi). Chỉ đổi màu chữ: không ô, không điểm. IPA vẫn ở dưới từ như lúc ghi, nên từ không nhảy.', 'Panel chỉ có chi tiết: một dòng gọn ("Các âm đều tốt" hoặc "Cần luyện: …") + "Chi tiết ⌄", rồi Syllie và nút. Nền Green 50 khi đạt.']),
+    frame('T7b', 'Đọc to · cần luyện, mở chi tiết', recordingScored(64, [['ap', 'ə', 90, 'good'], ['pre', 'ˈpriː', 84, 'good'], ['ci', 'ʃi', 42, 'poor'], ['ate', 'eɪt', 48, 'poor']], true), ['"Chi tiết" mở rộng panel ngay tại chỗ (không mở sheet): mỗi âm tiết một dòng 36pt: âm (tô màu), IPA, điểm. Chạm lại để thu gọn.', 'Chưa đạt: nền Coral 50, "Thử lại" (Coral) + "Tiếp tục" (phụ). Thử lại đưa micro về chỗ vòng điểm và từ về màu Ink.', 'Backend cũ không gửi điểm theo âm tiết: không tô màu, không có dòng chi tiết.']),
+    frame('T7b', 'Đọc to · lỗi chấm điểm', recordingScoreFailed(), ['Mạng, server lỗi hoặc quá thời gian khi đang chấm: từ về Ink (hết vệt sáng), IPA giữ nguyên; micro ở trạng thái off; dòng trạng thái "Chưa chấm được bản ghi."', 'Panel info Blue 50 (không phải lỗi của người học): "Không kết nối được" + "Bản ghi của bạn vẫn còn. Thử gửi lại nhé." Syllie idle.', '"Thử lại" (Ink) gửi lại đúng bản ghi cũ và quay về đang chấm; "Bỏ qua" (phụ) sang bài tiếp. Không có nút ghi lại.']),
   ]),
   flow('flow-words', 'Luồng 2 · Từ của tôi', 'Thư viện từ, chi tiết từ, luyện ngẫu nhiên (chọn nguồn từ), từ còn yếu và luyện nói (bắt đầu ngay), quản lý từ đã thêm.', [
     frame('2.1', 'Từ của tôi', myWords(), [

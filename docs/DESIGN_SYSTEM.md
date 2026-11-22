@@ -287,7 +287,7 @@ Icon loa có 3 vạch sóng. Gợn sóng quanh nút chỉ dành cho ghi âm, vì
 1. Đang chuẩn bị (Syllie bay).
 2. **Ôn từ bạn đã học:** thẻ từ kèm tên Topic, Syllie đứng giữa lời mở đầu và danh sách. Hai nút: Tiếp tục (Ink), Đóng (viền).
 3. Các bài ôn.
-4. **Đã ôn xong:** Syllie, dòng "Giờ đến từ mới của …", danh sách từ mới sắp học trong một card, nút "Học từ mới".
+4. **Đã ôn xong:** Syllie, dòng "Giờ đến từ mới của …" (chỉ khi Focus có 1–2 chủ đề; Focus dài hơn thì bỏ dòng, không bao giờ liệt kê cả danh sách), danh sách từ mới sắp học trong một card, nút "Học từ mới".
 5. Giới thiệu từ mới và các bài tập.
 6. Đang lưu tiến độ.
 7. Kết quả.
@@ -334,12 +334,21 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
 | Xếp chữ            | Ô chữ 54×54; từ dài thì mọi ô thu hẹp đều để cả từ nằm trên một dòng. Vùng trả lời là dòng kẻ; chữ đã dùng để lại ô xám để hàng chữ không nhảy |
 | Nối cặp            | Hai cột thẻ cao bằng nhau; cặp đúng khóa màu Green, đang chọn màu Blue                                                                         |
 | Sửa lỗi chính tả   | Chạm một ô chữ để mở bàn phím "Thay bằng" trong card; phím cao 50pt, chữ 20pt, card đệm ngang 8pt để phím rộng nhất có thể                     |
-| Đọc to             | Nút giữa bài tập (5.6) với icon micro; nút phụ "Không thể nói lúc này"                                                                         |
+| Đọc to             | IPA của bản ghi dưới từ (17pt Ink 500). Nút giữa bài tập (5.6) với icon micro; nút phụ "Không thể nói lúc này"                                  |
+
+**Đọc to có chấm điểm (T7b).** Chỉ khi backend chấm điểm; bản ghi chấm trên máy (chỉ đúng/sai, không có điểm) giữ kết quả T7. Sau khi dừng ghi, app gọi API chấm điểm:
+
+- **Đang chấm:** từ ở chỗ đề chuyển Ink 300, có một vệt sáng quét theo hướng đọc (Reduce Motion: đứng yên). Micro ở trạng thái off, dòng hướng dẫn thành "Đang chấm điểm…". Panel không có nút, Syllie lặp thinking. Lỗi hoặc quá thời gian dùng trạng thái "Không chấm được" có sẵn (Thử lại / Bỏ qua).
+- **Tổng điểm là thông tin chính:** vòng 176pt (cùng khung với micro, nét 14pt, nền Ink 100) thay chỗ nút micro, số 56pt đếm lên. Dưới vòng, thay dòng hướng dẫn, là tiêu đề theo band của tổng điểm (server gửi, client không tự chia ngưỡng): Excellent! / Good job (Green 700), Almost there (Sun 700), Keep practicing (Coral 700). Vòng cùng màu với tiêu đề.
+- **Từ giữ ở chỗ đề**, âm tiết tô màu chữ theo band từng âm (server gửi): good Green 700, poor Coral 600. Màu lan theo hướng đọc sau khi vòng đếm xong. Không ô, không điểm trên từ; IPA vẫn ở dưới từ như lúc ghi. VoiceOver đọc nhóm từng âm ("ci, chưa tốt").
+- **Panel đáy chỉ có chi tiết:** một dòng gọn ("Các âm đều tốt" hoặc "Cần luyện: ci, ate") và "Chi tiết ⌄" bên phải, rồi Syllie và nút. Chạm "Chi tiết" mở rộng panel ngay tại chỗ (không mở sheet; panel cao lên như sheet iOS đổi detent: spring `panelExpand`, gần như không vượt quá, cùng một chuyển động khi mở và thu gọn; các dòng không tự trượt mà lộ ra theo mép panel): mỗi âm tiết một dòng 36pt gồm âm (tô màu), IPA, điểm; chạm lại để thu gọn. Nền panel Green 50 khi đạt ("Tiếp tục" Green), Coral 50 khi chưa đạt ("Thử lại" Coral + "Tiếp tục" phụ). Thử lại đưa micro về chỗ vòng điểm và từ về Ink.
+- **Lỗi chấm điểm** (mạng, server lỗi, quá thời gian): từ về Ink, IPA giữ nguyên, micro off, dòng trạng thái "Chưa chấm được bản ghi." Panel info Blue 50: "Không kết nối được" + "Bản ghi của bạn vẫn còn. Thử gửi lại nhé.", Syllie idle. "Thử lại" (Ink) gửi lại đúng bản ghi cũ; "Bỏ qua" (phụ). Không có nút ghi lại.
+- Backend không gửi điểm theo âm tiết: không tô màu, không có dòng chi tiết. Copy luôn giữ ý luyện nói không ảnh hưởng tiến độ.
 
 ### 6.6 Kết quả
 
 - **Đầu màn:** Syllie, chip sun-100 "Hoàn thành buổi học", tiêu đề "Làm tốt lắm".
-- **Tile cho từng phần có số liệu:** Ôn tập "7/9 · nhớ chắc", Từ mới "2/4 · nắm ngay". Tile trống thì ẩn. Mỗi tile chỉ có số và chú thích, kèm link **"Xem chi tiết ›"**. Các nhóm yếu hơn chỉ xuất hiện trong sheet chi tiết, không lặp lại trên tile.
+- **Tile cho từng phần có số liệu:** Ôn tập "7/9 · nhớ chắc", Từ mới "2/4 · nắm ngay". Tile trống thì ẩn. Có ghi âm được chấm thì thêm tile Nói "2/3 · nói đúng". Mỗi tile chỉ có số và chú thích, không có link riêng. Dưới hàng tile là **một** link "Xem chi tiết buổi học ›" (căn giữa) mở sheet; chạm tile cũng mở sheet đó, cuộn tới khối của tile. Các nhóm yếu hơn chỉ xuất hiện trong sheet chi tiết, không lặp lại trên tile.
 - **Card LP:** "+45 LP", tổng LP, các chip chia theo nguồn.
 - **Nút:** "Xong" (Ink); với Random hoặc Weak thêm "Luyện tiếp".
 - **Buổi học dùng hết từ mới của Collection:** card hoàn thành dưới card LP (icon cúp sun-50, "Bạn đã học hết mọi từ trong …"). Nút của nó thay "Xong": "Chọn bộ từ khác" (Ink) và "Để sau" (viền).
@@ -348,6 +357,7 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Mỗi nhóm có ô màu tương ứng, dòng giải thích và lịch gặp lại.
   - Mỗi từ có nguyên nhân (blue-700) và chi tiết kỹ năng hoặc ngày học.
   - Nhóm mạnh thu gọn sẵn.
+  - Khối Nói: thanh hai mức (nói đúng / chưa đạt), nhóm Chưa đạt và Nói đúng (đều mở sẵn); mỗi từ có "Điểm N" (blue-700) và tên band như màn chấm điểm. Backend cũ không gửi nhóm: thay bằng dòng "Nói đúng: 2/3 từ". Đã nói thành thạo / Cần luyện lại là nhóm không ô màu, thu gọn sẵn. Dòng cuối: "Phần nói không ảnh hưởng tiến độ học của từ."
 
 ### 6.7 Quy tắc nội dung trong bài học
 

@@ -437,9 +437,21 @@ struct RecordingAssessment: Decodable, Equatable {
     let accuracyScore: Double?
     /// On-device scoring only: the normalized transcript that was scored.
     var heard: String? = nil
+    /// Backend scoring: the overall score's band, picked by the server. Optional for an older backend.
+    var band: PronunciationBand? = nil
+    /// Backend scoring: the word's syllables in reading order, each with its band. Optional for an older backend.
+    var syllables: [PronunciationSyllable]? = nil
 
     /// False for silence or noise: not a fail, the learner should just read again.
     var isValid: Bool { validity == "valid" }
+
+    /// The server's band, or one derived from the score when the backend sends none. Nil without a score
+    /// (on-device and Lab takes), which keeps the plain result.
+    var scoreBand: PronunciationBand? {
+        guard isValid, let accuracyScore else { return nil }
+        if let band, band != .unknown { return band }
+        return .fallback(for: accuracyScore)
+    }
 }
 
 struct CommitSummary: Decodable, Equatable {

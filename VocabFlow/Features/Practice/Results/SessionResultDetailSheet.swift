@@ -103,6 +103,12 @@ struct SessionResultDetailSheet: View {
             if !block.countedAsReview.isEmpty {
                 countedAsReview(block.countedAsReview)
             }
+            if block.title == .speaking {
+                Text("Speaking never changes your progress.")
+                    .font(Typography.micro)
+                    .foregroundStyle(Color.mutedInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -253,8 +259,12 @@ struct SessionResultDetailSheet: View {
     }
 
     /// Under the reason: the skill it happened in, and for a review word learned this week, when.
+    /// Under a speaking score: its band, as the read-aloud titled it.
     private func detail(for item: ResultItem) -> Text? {
         var parts: [Text] = []
+        if item.score != nil, let band = item.band, band != .unknown {
+            parts.append(Text(verbatim: band.title))
+        }
         if item.cause != nil, let skill = item.struggledAt?.name {
             parts.append(Text("while \(skill.lowercased(with: AppLanguage.active.locale))"))
         }
@@ -351,6 +361,8 @@ extension ResultSheetGroup.Kind {
         case .missed: "Not right this time"
         case .helped: "Right with a hint or another try"
         case .clean: "Right first time, on your own"
+        case .notPassed: "Not passed on the first try"
+        case .spokeRight: "Passed on the first try"
         case .becameFluent: "Said right again and again"
         case .slipped: "Fluent before, not right this time"
         }
@@ -368,6 +380,8 @@ extension ResultSheetGroup.Kind {
         case .missed: "Not done yet (\(count))"
         case .helped: "Right with help (\(count))"
         case .clean: "Right on your own (\(count))"
+        case .notPassed: "Not passed yet (\(count))"
+        case .spokeRight: "Said right (\(count))"
         case .becameFluent: "Now fluent (\(count))"
         case .slipped: "Need practice again (\(count))"
         }

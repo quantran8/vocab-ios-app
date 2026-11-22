@@ -46,12 +46,14 @@ struct ResultItem: Decodable, Equatable {
     /// Speaking changes: the status after the session, and the Azure score (nil when scored on the device).
     var status: SpeakingStatus? = nil
     var score: Double? = nil
+    /// Speaking items: the score's band, as on the scored read-aloud (nil when scored on the device).
+    var band: PronunciationBand? = nil
 }
 
 // In an extension, so the memberwise initializer stays.
 extension ResultItem {
     private enum CodingKeys: String, CodingKey {
-        case meaningId, wordId, lemma, gloss, nextReviewAt, learnedAt, cause, struggledAt, skill, status, score
+        case meaningId, wordId, lemma, gloss, nextReviewAt, learnedAt, cause, struggledAt, skill, status, score, band
     }
 
     init(from decoder: Decoder) throws {
@@ -67,7 +69,8 @@ extension ResultItem {
             struggledAt: try c.decodeIfPresent(ResultSkill.self, forKey: .struggledAt),
             skill: try c.decodeIfPresent(ResultSkill.self, forKey: .skill),
             status: try c.decodeIfPresent(SpeakingStatus.self, forKey: .status),
-            score: try c.decodeIfPresent(Double.self, forKey: .score)
+            score: try c.decodeIfPresent(Double.self, forKey: .score),
+            band: try c.decodeIfPresent(PronunciationBand.self, forKey: .band)
         )
     }
 }
@@ -113,6 +116,10 @@ enum PracticeGroup: String, CaseIterable {
     case clean, helped, missed
 }
 
+enum SpeakingGroup: String, CaseIterable {
+    case passed, notPassed
+}
+
 struct ReviewSummary: Decodable, Equatable {
     var total: Int? = nil
     var groups = ResultGroups<ReviewGroup>()
@@ -144,14 +151,18 @@ struct NeedPracticeCount: Decodable, Equatable {
 struct SpeakingSummary: Decodable, Equatable {
     var total = 0
     var passed = 0
+    /// Every scored pronunciation, passed or not; nil from an older backend, which sent only the counts.
+    var groups: ResultGroups<SpeakingGroup>? = nil
     var becameFluent: [ResultItem] = []
     var slipped: [ResultItem] = []
 
-    private enum CodingKeys: String, CodingKey { case total, passed, becameFluent, slipped }
+    private enum CodingKeys: String, CodingKey { case total, passed, groups, becameFluent, slipped }
 
-    init(total: Int = 0, passed: Int = 0, becameFluent: [ResultItem] = [], slipped: [ResultItem] = []) {
+    init(total: Int = 0, passed: Int = 0, groups: ResultGroups<SpeakingGroup>? = nil,
+         becameFluent: [ResultItem] = [], slipped: [ResultItem] = []) {
         self.total = total
         self.passed = passed
+        self.groups = groups
         self.becameFluent = becameFluent
         self.slipped = slipped
     }
@@ -160,6 +171,7 @@ struct SpeakingSummary: Decodable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         total = try c.decodeIfPresent(Int.self, forKey: .total) ?? 0
         passed = try c.decodeIfPresent(Int.self, forKey: .passed) ?? 0
+        groups = try c.decodeIfPresent(ResultGroups<SpeakingGroup>.self, forKey: .groups)
         becameFluent = try c.decodeIfPresent([ResultItem].self, forKey: .becameFluent) ?? []
         slipped = try c.decodeIfPresent([ResultItem].self, forKey: .slipped) ?? []
     }

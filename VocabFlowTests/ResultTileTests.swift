@@ -166,6 +166,29 @@ final class ResultTileTests: XCTestCase {
         XCTAssertTrue(ResultSheetModel.blocks(for: PracticeResult(kind: .speakingPractice, summary: CommitSummary())).isEmpty)
     }
 
+    func testSpeakingBlockListsEveryScoredWordWhenTheServerSendsGroups() throws {
+        let speaking = SpeakingSummary(
+            total: 3, passed: 2,
+            groups: ResultGroups([.passed: items(2, "p"), .notPassed: items(1, "n")]),
+            becameFluent: items(1, "f", status: .fluent)
+        )
+        let blocks = ResultSheetModel.blocks(for: PracticeResult(kind: .speakingPractice, summary: CommitSummary(speaking: speaking)))
+        let block = try XCTUnwrap(blocks.first)
+        XCTAssertEqual(block.groups.map(\.kind), [.notPassed, .spokeRight, .becameFluent])
+        XCTAssertEqual(block.groups.map(\.collapsedByDefault), [false, false, true])
+        // The groups and the bar say it: no separate "said right" line.
+        XCTAssertNil(block.spoken)
+        XCTAssertEqual(block.bar, [2, 0, 1])
+    }
+
+    func testSpeakingItemDecodesItsBand() throws {
+        let json = #"{"total":1,"passed":0,"groups":{"passed":[],"notPassed":[{"meaningId":"m","lemma":"fatigue","score":64,"band":"fair"}]},"becameFluent":[],"slipped":[]}"#
+        let speaking = try JSONDecoder().decode(SpeakingSummary.self, from: Data(json.utf8))
+        let item = try XCTUnwrap(speaking.groups?[.notPassed].first)
+        XCTAssertEqual(item.score, 64)
+        XCTAssertEqual(item.band, .fair)
+    }
+
     func testRandomSheetListsAnswersThenTheReviewsTheyCounted() {
         let practice = PracticeSummary(groups: ResultGroups([
             .clean: [ResultItem(meaningId: "a", skill: .spelling), ResultItem(meaningId: "b", skill: .listening)],

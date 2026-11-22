@@ -16,12 +16,20 @@ struct FeedbackActionPanel<Action: View>: View {
     let feedback: FeedbackCopy?
     /// Shows Syllie beside the action, reacting with this mood. Nil hides him.
     var mascot: SyllieMood? = nil
+    /// Off when the result is shown above the panel (a scored read-aloud): the panel keeps the feedback's colour
+    /// and announcement, and shows `detail` (if any) instead of the icon and title.
+    var showsHeading = true
+    var detail: AnyView? = nil
     @ViewBuilder let action: Action
     @Environment(\.motion) private var motion
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            if let feedback {
+            if feedback != nil, !showsHeading, let detail {
+                detail
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(motion.reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+            } else if let feedback, showsHeading {
                 VStack(alignment: .leading, spacing: Spacing.xs - 2) {
                     HStack(spacing: Spacing.s - 2) {
                         Image(systemName: icon(feedback.kind))
@@ -61,7 +69,7 @@ struct FeedbackActionPanel<Action: View>: View {
             }
         }
         .padding(.horizontal, Spacing.practiceGutter)
-        .padding(.top, feedback == nil ? Spacing.s : Spacing.l - 4)
+        .padding(.top, feedback == nil || (!showsHeading && detail == nil) ? Spacing.s : Spacing.l - 4)
         .padding(.bottom, PinnedBarInset.bottom)
         .background {
             UnevenRoundedRectangle(

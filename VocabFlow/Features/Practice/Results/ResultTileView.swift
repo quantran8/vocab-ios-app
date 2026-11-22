@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// One of the equal-height tiles on the results screen: a title, one number, a caption and, when it opens the
-/// detail sheet, a "See details ›" link. The weaker groups are listed on the sheet, not here.
+/// One of the equal-height tiles on the results screen: a title, one number and a caption. Tapping it opens the
+/// detail sheet at its block; the one "See session details ›" link under the row says the sheet exists, since every
+/// tile opens the same sheet. The weaker groups are listed on the sheet, not here.
 struct ResultTileView: View {
     let tile: ResultTile
     /// False until the screen has appeared: the number counts up and the bar grows from it.
@@ -49,21 +50,6 @@ struct ResultTileView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
-
-            if onTap != nil {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    CardDivider()
-                    HStack(spacing: Spacing.xxs) {
-                        Text("See details")
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.bold))
-                            .accessibilityHidden(true)
-                    }
-                    .font(Typography.secondary.weight(.semibold))
-                    .foregroundStyle(Color.link)
-                }
-                .padding(.top, Spacing.m)
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(Spacing.m)

@@ -36,6 +36,7 @@ struct ResultSheetGroup: Equatable, Identifiable {
         case relearn, shaky, solid
         case revealed, retried, smooth, known
         case missed, helped, clean
+        case notPassed, spokeRight
         case becameFluent, slipped
     }
 
@@ -54,9 +55,9 @@ extension ResultSheetGroup.Kind {
     /// 0 strong, 1 mid, 2 weak; nil for groups that are not a share of the block (known words, speaking changes).
     var barLevel: Int? {
         switch self {
-        case .solid, .smooth, .clean: 0
+        case .solid, .smooth, .clean, .spokeRight: 0
         case .shaky, .retried, .helped: 1
-        case .relearn, .revealed, .missed: 2
+        case .relearn, .revealed, .missed, .notPassed: 2
         case .known, .becameFluent, .slipped: nil
         }
     }
@@ -118,13 +119,26 @@ enum ResultSheetModel {
     }
 
     /// Present whenever a recording was scored, so the speaking tile always has a block to open.
+    /// Every scored word, not passed first, each with its score; the status changes follow, collapsed.
+    /// An older backend sent only the counts: then the "said right" line stands in for the two groups.
     private static func speakingBlock(_ speaking: SpeakingSummary?) -> ResultSheetBlock? {
         guard let speaking, speaking.total > 0 else { return nil }
-        let groups = nonEmpty([
+        let results = speaking.groups.map { g in [
+            ResultSheetGroup(kind: .notPassed, items: g[.notPassed]),
+            ResultSheetGroup(kind: .spokeRight, items: g[.passed]),
+        ] } ?? []
+        let changes = [
             ResultSheetGroup(kind: .slipped, items: speaking.slipped),
             ResultSheetGroup(kind: .becameFluent, items: speaking.becameFluent),
-        ])
-        return ResultSheetBlock(section: .speaking, title: .speaking, groups: groups, spoken: .init(passed: speaking.passed, total: speaking.total))
+        ].map { group in
+            var group = group
+            group.collapsedByDefault = speaking.groups != nil
+            return group
+        }
+        return ResultSheetBlock(
+            section: .speaking, title: .speaking, groups: nonEmpty(results + changes),
+            spoken: speaking.groups == nil ? .init(passed: speaking.passed, total: speaking.total) : nil
+        )
     }
 
     private static func practiceGroups(_ groups: ResultGroups<PracticeGroup>) -> [ResultSheetGroup] {

@@ -35,6 +35,8 @@ struct PracticeResultsView: View {
                     if !tiles.isEmpty {
                         tileRow(tiles)
                             .padding(.top, Spacing.l + Spacing.xxs)
+                        detailsLink(opening: tiles[0].section)
+                            .padding(.top, Spacing.xs)
                     }
                 } else {
                     LegacyResultGrid(summary: result.summary, firstTryCount: firstTryCount, hasAppeared: hasAppeared)
@@ -43,7 +45,7 @@ struct PracticeResultsView: View {
 
                 if let effort {
                     ResultEffortCard(effort: effort)
-                        .padding(.top, Spacing.s)
+                        .padding(.top, result.tiles?.isEmpty == false ? Spacing.xxs : Spacing.s)
                 }
 
                 if hasCompletion, let scopeEvents {
@@ -78,6 +80,25 @@ struct PracticeResultsView: View {
             // Numbers count up and bars grow once; with reduced motion they are simply there.
             motion.perform(MotionTokens.progress.delay(MotionTokens.celebrationStatsDelay)) { hasAppeared = true }
         }
+    }
+
+    /// The one way in to the detail sheet shown as a link; it opens at the top (the first tile's block).
+    private func detailsLink(opening section: ResultSection) -> some View {
+        Button { sheetSection = section } label: {
+            HStack(spacing: Spacing.xxs) {
+                Text("See session details")
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .accessibilityHidden(true)
+            }
+            .font(Typography.secondary.weight(.semibold))
+            .foregroundStyle(Color.link)
+            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .opacity(hasAppeared || motion.reduceMotion ? 1 : 0)
+        .animation(motion.travel(MotionTokens.entrance.delay(MotionTokens.celebrationStatsDelay)), value: hasAppeared)
     }
 
     /// Tiles of equal height and width; a part with nothing to report has no tile.

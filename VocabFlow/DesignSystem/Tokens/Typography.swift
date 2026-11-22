@@ -50,6 +50,8 @@ enum Typography {
     static let choiceOption = Font.system(.title2)
     /// Big numbers in stat cards: 30 extrabold.
     static var stat: Font { scaled(30, .heavy, relativeTo: .title1) }
+    /// The overall score inside a scored read-aloud's ring: 56 extrabold.
+    static var scoreHero: Font { scaled(56, .heavy, relativeTo: .largeTitle) }
     /// Secondary figures beside a big stat: 19 extrabold.
     static var statSmall: Font { scaled(19, .heavy, relativeTo: .title3) }
     /// Button labels: 16 bold.

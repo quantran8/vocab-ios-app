@@ -93,7 +93,7 @@ final class PracticeSessionStore {
     private(set) var followUp: FollowUp?
     /// A daily chain's first commit (the review), kept for the results screen once the new words are saved.
     private(set) var pendingReviewSummary: ReviewSummary?
-    /// Falls back to the backend when the task has no reference text or on-device recognition can't run.
+    /// Backend (Azure) by default. `.onDevice` is opt-in and falls back to the backend when the task has no reference text or recognition can't run.
     var recordingScoring: RecordingScoring
 
     let audio: AudioClipPlaying
@@ -133,7 +133,7 @@ final class PracticeSessionStore {
         recorder: VoiceRecording,
         haptics: FeedbackProviding,
         sounds: SoundEffectsPlaying = SilentSoundEffects(),
-        recordingScoring: RecordingScoring = .onDevice,
+        recordingScoring: RecordingScoring = .backend,
         transcriber: SpeechTranscribing? = nil,
         now: @escaping () -> ContinuousClock.Instant = { ContinuousClock.now }
     ) {
@@ -472,6 +472,9 @@ final class PracticeSessionStore {
         }
         advance()
     }
+
+    /// The current take is checked by the device's transcript, not scored by the backend (no score to show).
+    var scoresOnDevice: Bool { canTranscribe == true && transcriptTarget != nil }
 
     private var transcriptTarget: String? {
         guard recordingScoring == .onDevice, case .recording(let accepted)? = currentAttempt?.task.body else { return nil }

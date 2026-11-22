@@ -12,6 +12,9 @@ enum MotionTokens {
     static let wordFlightSettle: Double = 0.26
     static let returnToOrigin = Animation.spring(response: 0.34, dampingFraction: 0.84)
     static let feedback = Animation.spring(response: 0.36, dampingFraction: 0.68)
+    /// The feedback panel growing or shrinking around its detail (read-aloud syllables), like a system sheet
+    /// changing detent: a quick spring that settles with almost no overshoot, the same both ways.
+    static let panelExpand = Animation.spring(response: 0.45, dampingFraction: 0.88)
     /// One full wrong-answer shake.
     static let shake = Animation.linear(duration: 0.4)
     /// Time for an answer's own feedback (tile shake / colour, the feedback panel sliding in, Match's wrong-pair
@@ -64,6 +67,16 @@ enum MotionTokens {
     static let reviewTrainSettle: Double = 0.45
     static let reviewWigglePause: ClosedRange<Double> = 1.1...2.4
     static let streamCharacter: Double = 0.022
+
+    // Scored read-aloud (visual only)
+    /// The score ring filling and its number counting up.
+    static let scoreRingFill = Animation.easeOut(duration: scoreRingFillDuration)
+    static let scoreRingFillDuration: Double = 0.9
+    /// Syllables take their colour one by one, in reading order, after the ring has filled.
+    static let syllableColorStagger: Double = 0.14
+    static let syllableColor = Animation.easeOut(duration: 0.3)
+    /// One pass of the light sweeping over the word while a take is scored.
+    static let scoringSweepPeriod: Double = 1.3
 
     // End-of-session results (visual only)
     static let celebrationStatsDelay: Double = 0.25

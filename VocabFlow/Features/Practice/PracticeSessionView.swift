@@ -349,9 +349,12 @@ private struct ReviewFinishedView: View {
     @Environment(LearningPlanStore.self) private var plan
     @Environment(\.motion) private var motion
 
+    /// The Focus topics the new words come from, named only when there are one or two: a long Focus would print
+    /// every topic, and the word list below already says what comes next. (New-word steps carry no `sourceTopic`.)
     private var focusNames: String {
-        TopicCatalog.topics(ids: plan.current.topicIDs).map(\.name)
-            .formatted(.list(type: .and).locale(AppLanguage.active.locale))
+        let names = TopicCatalog.topics(ids: plan.current.topicIDs).map(\.name)
+        guard names.count <= 2 else { return "" }
+        return names.formatted(.list(type: .and).locale(AppLanguage.active.locale))
     }
 
     var body: some View {
@@ -652,10 +655,12 @@ private struct LearnCardStep: View {
 
     /// A new word is heard once as its card appears, after the step transition so the sound lands on the card.
     /// Leaving the step cancels it; the store stops any sound on advance.
+    /// Only while the session is running: when the review ends, the step moves to the first new word as the stage
+    /// turns to `reviewFinished`, and the outgoing flow briefly renders that card while it fades out.
     private func autoplay() async {
         guard let clip = card.audio else { return }
         try? await Task.sleep(for: Self.autoplayDelay)
-        guard !Task.isCancelled else { return }
+        guard !Task.isCancelled, store.stage == .running else { return }
         store.playClip(clip)
     }
 

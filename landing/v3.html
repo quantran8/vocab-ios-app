@@ -4,47 +4,60 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Syll — Học đúng từ, nhớ thật lâu</title>
-<meta name="description" content="Syll: học từ vựng tiếng Anh theo mục tiêu của bạn. Ôn từ sắp quên, luyện kỹ năng còn yếu, trong một app được làm tỉ mỉ đến từng chi tiết.">
+<meta name="description" content="Syll: học từ vựng tiếng Anh theo mục tiêu của bạn. Ôn từ sắp quên, luyện lại từ hay sai, được chấm phát âm từng âm tiết, trong một app được làm tỉ mỉ đến từng chi tiết.">
 <link rel="icon" href="assets/app-icon.png">
 <!-- TEMP ẢNH: ảnh chia sẻ mạng xã hội, 1200×630 -->
 <meta property="og:title" content="Syll — Học đúng từ, nhớ thật lâu">
-<meta property="og:description" content="Bộ từ, chủ đề và từ của riêng bạn. Ôn đúng lúc, luyện đúng chỗ yếu.">
+<meta property="og:description" content="Bộ từ, chủ đề và từ của riêng bạn. Ôn đúng lúc, luyện đúng từ hay sai, nói to và được chấm điểm.">
 <meta property="og:image" content="assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <style>
 /* Tokens mirror VocabFlow/DesignSystem/Tokens (Colors, Radii, Spacing, Typography). */
 :root {
+  /* Ramps (Colors.swift, docs/DESIGN_SYSTEM.md §4.1): 60 white · 30 Ink · 10 accent. */
+  --ink-50: #F7F7F9; --ink-100: #EFEFF2; --ink-200: #E2E2E7; --ink-300: #C8C8D0; --ink-400: #A3A3AE;
+  --ink-500: #80808C; --ink-600: #62626D; --ink-700: #4A4A54; --ink-800: #34343C; --ink-950: #131217;
+  --blue-50: #EEF3FD; --blue-100: #DCE6FB; --blue-200: #BACCF6; --blue-300: #92AEEF; --blue-500: #3E68DB; --blue-600: #3053C2; --blue-700: #28449E; --blue-800: #22387D;
+  --green-50: #EAFBF1; --green-200: #A0EABE; --green-500: #2BC86A; --green-600: #1FA857; --green-700: #188646; --green-800: #12673A;
+  --coral-50: #FFF1EE; --coral-200: #FFBFB1; --coral-500: #FF5A3C; --coral-600: #E5432A; --coral-700: #BA3421; --coral-800: #8C2A1D;
+  --sun-50: #FFFBEA; --sun-300: #FFD84A; --sun-500: #FFB800; --sun-700: #B47800; --sun-800: #875A06;
+  --mark-everyday: #2F9BF4; --mark-ielts: #F0458A; --mark-toeic: #FF8A1F; --mark-business: #14B8A6; --mark-custom: #FFB800;
+
+  /* Semantic */
   --canvas: #FFFFFF;
-  --ink: #171717;
-  --muted: #5C606B;
-  --primary: #303030;
-  --primary-depth: #080808;
-  --interactive: #4775F5;
-  --interactive-depth: #2B55CE;
-  --reward: #FFD23F;
-  --reward-depth: #B89528;
-  --success: #2BC86A;
-  --error: #FF795D;
-  --neutral: #F5F5F5;
-  --quiet: #FAFAFA;
-  --stroke: #E1E4EB;
-  --tile-depth: #CDD2DC;
-  --sel-bg: #EAF0FF;
-  --sel-ink: #234EAE;
-  --sel-depth: #B2C5F5;
-  --ok-bg: #E5FAED;
-  --ok-ink: #12673A;
-  --ok-depth: #9EE5B8;
-  --err-bg: #FFF0EA;
-  --err-ink: #943727;
-  --err-depth: #FFB5A5;
-  --dis-bg: #F1F2F4;
-  --dis-ink: #707783;
-  --slot-target: #D9E4FF;
+  --ink: var(--ink-950);
+  --muted: var(--ink-500);
+  --body: var(--ink-600);
+  --primary: var(--ink-800);
+  --primary-depth: var(--ink-950);
+  --interactive: var(--blue-500);
+  --interactive-depth: var(--blue-700);
+  --link: var(--blue-600);
+  --reward: var(--sun-500);
+  --reward-depth: var(--sun-700);
+  --success: var(--green-500);
+  --error: var(--coral-500);
+  --neutral: var(--ink-100);
+  --quiet: var(--ink-50);
+  --stroke: var(--ink-200);
+  --divider: var(--ink-100);
+  --tile-depth: var(--ink-200);
+  --sel-bg: var(--blue-50);
+  --sel-ink: var(--blue-700);
+  --sel-depth: var(--blue-200);
+  --ok-bg: var(--green-50);
+  --ok-ink: var(--green-800);
+  --ok-depth: var(--green-200);
+  --err-bg: var(--coral-50);
+  --err-ink: var(--coral-800);
+  --err-depth: var(--coral-200);
+  --dis-bg: var(--ink-100);
+  --dis-ink: var(--ink-400);
+  --slot-target: var(--blue-100);
 
   --r-chip: 10px;
   --r-tile: 14px;
-  --r-btn: 16px;
+  --r-btn: 999px;
   --r-card: 20px;
   --r-hero: 24px;
 
@@ -79,37 +92,38 @@ h2.display { font-size: clamp(34px, 4.4vw, 52px); }
 .lead { font-size: 19px; color: var(--muted); max-width: 32em; }
 
 /* ---------- Product-zone buttons: flat, press = scale .97 ---------- */
+/* Buttons (DESIGN_SYSTEM §5.1): 50pt capsules, 16 bold. Ink face on an Ink 950 edge;
+   Blue only for actions that start practice; outline = white, 2pt Ink 200, flat. */
 .fbtn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 52px; padding: 0 24px; border-radius: var(--r-btn);
-  background: var(--primary); color: #fff; font-weight: 700; font-size: 17px; text-decoration: none;
-  transition: transform var(--press) var(--ease);
+  min-height: 50px; padding: 0 24px; border-radius: var(--r-btn);
+  background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; text-decoration: none;
+  box-shadow: 0 4px 0 var(--primary-depth); margin-bottom: 4px;
+  transition: transform var(--press) var(--ease), box-shadow var(--press) var(--ease);
 }
-.fbtn:active { transform: scale(.97); }
-.fbtn.secondary { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--stroke); }
-.fbtn.small { min-height: 40px; padding: 0 16px; font-size: 15px; border-radius: 12px; }
-.textlink { color: var(--interactive); font-weight: 700; text-decoration: none; }
+.fbtn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--primary-depth); }
+.fbtn.secondary { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--stroke); }
+.fbtn.secondary:active { transform: scale(.97); }
+.fbtn.small { min-height: 40px; padding: 0 18px; font-size: 15px; box-shadow: 0 3px 0 var(--primary-depth); margin-bottom: 3px; }
+.textlink { color: var(--link); font-weight: 700; text-decoration: none; }
 
 /* ---------- Lesson-zone buttons: thick edge (ActionButtonStyle) ---------- */
 .pbtn {
   position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; min-height: 52px; border-radius: var(--r-btn); overflow: hidden;
-  background: var(--primary); color: #fff; font-weight: 700; font-size: 17px; text-decoration: none;
+  width: 100%; min-height: 50px; border-radius: var(--r-btn); overflow: hidden;
+  background: var(--primary); color: #fff; font-weight: 700; font-size: 16px; text-decoration: none;
   box-shadow: 0 4px 0 var(--primary-depth); margin-bottom: 4px;
   transition: transform var(--press) var(--ease), box-shadow var(--press) var(--ease);
 }
-.pbtn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--primary-depth); }
+.pbtn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--primary-depth); }
+/* Blue: only actions that start practice ("Bắt đầu", "Luyện ngay", "Tải Syll" leads into the first session) */
+.pbtn.practice { background: var(--interactive); box-shadow: 0 4px 0 var(--interactive-depth); }
+.pbtn.practice:active:not(:disabled) { box-shadow: 0 0 0 var(--interactive-depth); }
 .pbtn:disabled { background: var(--dis-bg); color: var(--dis-ink); box-shadow: none; cursor: default; }
 .pbtn.inline { display: inline-flex; width: auto; padding: 0 28px; }
-.pbtn.shimmer::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 45%, transparent 60%);
-  transform: translateX(-120%); animation: shimmer 3.2s ease-in-out infinite;
-}
-@keyframes shimmer { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
 
-/* ---------- Card surface: 1.5 stroke, no shadow ---------- */
-.card { background: #fff; border-radius: var(--r-card); box-shadow: inset 0 0 0 1.5px var(--stroke); }
+/* ---------- Card surface (Borders.card): 2pt Ink 200, radius 20, no shadow ---------- */
+.card { background: #fff; border-radius: var(--r-card); box-shadow: inset 0 0 0 2px var(--stroke); }
 
 /* ---------- Nav ---------- */
 nav.top { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid transparent; transition: border-color .2s; }
@@ -317,7 +331,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
   .strip .wrap { grid-template-columns: 1fr 1fr; }
   .strip .it { padding: 22px 16px; }
   .strip .it:nth-child(odd) { border-left: 0; padding-left: 0; }
-  .strip .it:nth-child(n+3) { border-top: 1px solid var(--stroke); }
+  .strip .it:nth-child(n+3) { border-top: 1.5px solid var(--divider); }
 }
 
 /* ---------- Session steps ---------- */
@@ -326,7 +340,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .step .n { font-size: 15px; font-weight: 700; color: var(--interactive); font-variant-numeric: tabular-nums; }
 .step h3 { font-size: 22px; font-weight: 700; letter-spacing: -.6px; margin: 8px 0 8px; line-height: 1.2; }
 .step p { color: var(--muted); font-size: 15px; }
-.step .mini { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--stroke); display: grid; gap: 10px; }
+.step .mini { margin-top: 24px; padding-top: 20px; border-top: 1.5px solid var(--divider); display: grid; gap: 10px; }
 .row-word { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
 .row-word b { font-weight: 600; }
 .row-word span { color: var(--muted); }
@@ -354,7 +368,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .intro-word span { display: inline-block; animation: letterUp 420ms var(--ease) backwards; }
 @keyframes letterUp { from { opacity: 0; transform: translateY(18px); } }
 .ipa { color: var(--muted); font-size: 17px; }
-.intro-sec { padding: 16px 0; border-top: 1px solid var(--stroke); }
+.intro-sec { padding: 16px 0; border-top: 1.5px solid var(--divider); }
 .intro-sec:first-of-type { border-top: 0; }
 .intro-sec .eyebrow { margin-bottom: 6px; }
 .intro-sec .meaning { font-size: 22px; font-weight: 600; }
@@ -377,7 +391,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
   .play { grid-template-columns: minmax(0, 1fr); gap: 28px; justify-items: center; }
   .tpl-list { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; justify-self: stretch; margin: 0 -20px; padding: 2px 20px 8px; scrollbar-width: none; }
   .tpl-list::-webkit-scrollbar { display: none; }
-  .tpl { padding: 8px 14px 8px 8px; align-items: center; border-radius: 99px; box-shadow: inset 0 0 0 1.5px var(--stroke); }
+  .tpl { padding: 8px 14px 8px 8px; align-items: center; border-radius: 99px; box-shadow: inset 0 0 0 2px var(--stroke); }
   .tpl .ic { width: 32px; height: 32px; border-radius: 99px; }
   .tpl small { display: none; }
 }
@@ -387,7 +401,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .q-title { font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 20px; }
 .q-title .mark { color: var(--interactive); }
 .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.opt { min-height: 56px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 1.5px var(--stroke); font-weight: 700; font-size: 19px; transition: background var(--lift), box-shadow var(--lift), color var(--lift), transform var(--press); }
+.opt { min-height: 56px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 2px var(--stroke); font-weight: 700; font-size: 19px; transition: background var(--lift), box-shadow var(--lift), color var(--lift), transform var(--press); }
 .opt:active { transform: scale(.97); }
 .opt[aria-pressed="true"] { background: var(--sel-bg); color: var(--sel-ink); box-shadow: inset 0 0 0 2px var(--interactive); }
 .level-note { margin-top: 18px; min-height: 22px; }
@@ -398,7 +412,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .seg .opt { font-size: 17px; min-height: 48px; }
 .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .days .opt { aspect-ratio: 1; min-height: 0; font-size: 14px; border-radius: 12px; }
-.remind { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 1.5px var(--stroke); }
+.remind { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 2px var(--stroke); }
 .switch { width: 51px; height: 31px; border-radius: 99px; background: var(--stroke); position: relative; transition: background var(--lift); flex: none; }
 .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform var(--lift) var(--ease); }
 .switch[aria-checked="true"] { background: var(--success); }
@@ -423,7 +437,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .checkpoint { padding: 18px; display: grid; gap: 14px; }
 .checkpoint .head { display: flex; justify-content: space-between; font-weight: 700; }
 .checkpoint .head span { font-weight: 600; font-variant-numeric: tabular-nums; }
-.tabbar { margin-top: 28px; display: flex; justify-content: space-around; padding-top: 10px; border-top: 1px solid var(--stroke); font-size: 11px; font-weight: 600; color: var(--muted); }
+.tabbar { margin-top: 28px; display: flex; justify-content: space-around; padding-top: 10px; border-top: 1.5px solid var(--divider); font-size: 11px; font-weight: 600; color: var(--muted); }
 .tabbar span { display: grid; justify-items: center; gap: 2px; }
 .tabbar span.on { color: var(--interactive); }
 .tabbar svg { width: 24px; height: 24px; }
@@ -467,7 +481,7 @@ section.tint { background: var(--quiet); border-block: 1px solid var(--stroke); 
 .store small { display: block; font-size: 11px; font-weight: 600; opacity: .8; }
 .store b { font-size: 19px; }
 .store svg { width: 26px; height: 26px; }
-footer { border-top: 1px solid var(--stroke); padding: 32px 0 48px; font-size: 15px; color: var(--muted); }
+footer { border-top: 1.5px solid var(--divider); padding: 32px 0 48px; font-size: 15px; color: var(--muted); }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
 footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
 footer a { color: var(--muted); text-decoration: none; }
@@ -488,7 +502,7 @@ footer a:hover { color: var(--ink); }
    ========================================================= */
 .eyebrow .no { color: var(--interactive); }
 .hero .values { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
-.pill { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 99px; background: var(--quiet); box-shadow: inset 0 0 0 1.5px var(--stroke); font-size: 15px; font-weight: 600; color: var(--ink); text-decoration: none; transition: box-shadow var(--lift); }
+.pill { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border-radius: 99px; background: var(--quiet); box-shadow: inset 0 0 0 2px var(--stroke); font-size: 15px; font-weight: 600; color: var(--ink); text-decoration: none; transition: box-shadow var(--lift); }
 .pill:hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
 .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--interactive); }
 .pill:nth-child(2) i { background: var(--success); }
@@ -504,19 +518,19 @@ footer a:hover { color: var(--ink); }
 .promise > span:last-child { font-size: 15px; color: var(--muted); }
 @media (max-width: 860px) {
   .promises .wrap { grid-template-columns: minmax(0, 1fr); }
-  .promise { border-left: 0; padding: 22px 0; border-top: 1px solid var(--stroke); }
+  .promise { border-left: 0; padding: 22px 0; border-top: 1.5px solid var(--divider); }
   .promise:first-child { border-top: 0; }
 }
 
 /* ---------- 01 Builder ---------- */
 .builder { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 20px; align-items: stretch; }
 .builder > .card { padding: 28px; }
-.b-step + .b-step { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--stroke); }
+.b-step + .b-step { margin-top: 24px; padding-top: 24px; border-top: 1.5px solid var(--divider); }
 .b-step > .eyebrow { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
 .b-step > .eyebrow em { font-style: normal; width: 22px; height: 22px; border-radius: 50%; background: var(--interactive); color: #fff; display: grid; place-items: center; font-size: 12px; letter-spacing: 0; }
 .collections { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip-btn { min-height: 44px; padding: 0 16px; border-radius: 99px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--stroke); font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background var(--lift), box-shadow var(--lift), color var(--lift), transform var(--press) var(--ease); }
+.chip-btn { min-height: 44px; padding: 0 16px; border-radius: 99px; background: #fff; box-shadow: inset 0 0 0 2px var(--stroke); font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background var(--lift), box-shadow var(--lift), color var(--lift), transform var(--press) var(--ease); }
 .chip-btn:active { transform: scale(.97); }
 .chip-btn[aria-pressed="true"] { background: var(--sel-bg); color: var(--sel-ink); box-shadow: inset 0 0 0 2px var(--interactive); }
 .chip-btn.big { min-height: 56px; padding: 0 8px; font-size: 17px; font-weight: 700; border-radius: var(--r-tile); }
@@ -535,17 +549,18 @@ footer a:hover { color: var(--ink); }
 .today .head { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0 16px; }
 .today .head b { font-size: 22px; font-weight: 700; letter-spacing: -.6px; }
 .today-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.today-sum > div { background: #fff; border-radius: var(--r-tile); padding: 12px 14px; box-shadow: inset 0 0 0 1.5px var(--stroke); }
+.today-sum > div { background: #fff; border-radius: var(--r-tile); padding: 12px 14px; box-shadow: inset 0 0 0 2px var(--stroke); }
 .today-sum span { display: block; }
 .today-sum b { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .today-list { display: grid; gap: 8px; margin-top: 16px; flex: 1; align-content: start; }
-.tword { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 1.5px var(--stroke); animation: tIn 320ms var(--ease) backwards; }
+.tword { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 2px var(--stroke); animation: tIn 320ms var(--ease) backwards; }
 .tword .w { flex: 1; min-width: 0; }
 .tword b { display: block; font-weight: 700; }
 .tword .m { display: block; color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @keyframes tIn { from { opacity: 0; transform: translateY(8px); } }
 .tag { flex: none; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 99px; background: var(--neutral); color: var(--muted); white-space: nowrap; }
-.tag.mine { background: #FFF4CC; color: #6E5408; }
+.tag.mine { background: var(--sun-50); color: var(--sun-800); }
+.chip-btn .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .today-foot { margin-top: 16px; }
 @media (max-width: 960px) { .builder { grid-template-columns: minmax(0, 1fr); } }
 
@@ -562,7 +577,7 @@ footer a:hover { color: var(--ink); }
 .loop-steps { display: grid; gap: 8px; position: relative; }
 .lstep { position: relative; text-align: left; display: flex; gap: 16px; padding: 16px 18px 20px; border-radius: var(--r-tile); transition: background var(--lift), box-shadow var(--lift); }
 .lstep:hover { background: #fff; }
-.lstep .num { width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 15px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--stroke); color: var(--muted); transition: background var(--lift), color var(--lift), box-shadow var(--lift); }
+.lstep .num { width: 36px; height: 36px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 15px; background: #fff; box-shadow: inset 0 0 0 2px var(--stroke); color: var(--muted); transition: background var(--lift), color var(--lift), box-shadow var(--lift); }
 .lstep b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -.3px; }
 .lstep small { display: block; font-size: 15px; color: var(--muted); margin-top: 2px; }
 .lstep[aria-selected="true"] { background: #fff; box-shadow: inset 0 0 0 2px var(--interactive); }
@@ -600,7 +615,7 @@ footer a:hover { color: var(--ink); }
 /* Review → learn */
 .rl .eyebrow { margin-top: 4px; }
 .rl .eyebrow + .rrow { margin-top: 10px; }
-.rrow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 1.5px var(--stroke); }
+.rrow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-tile); background: #fff; box-shadow: inset 0 0 0 2px var(--stroke); }
 .rrow + .rrow { margin-top: 8px; }
 .rrow .w { flex: 1; } .rrow b { font-weight: 700; } .rrow .m { color: var(--muted); font-size: 15px; margin-left: 8px; }
 .ck { width: 24px; height: 24px; border-radius: 50%; background: var(--stroke); display: grid; place-items: center; color: #fff; flex: none; animation: ckOn 300ms var(--ease) forwards; }
@@ -611,35 +626,57 @@ footer a:hover { color: var(--ink); }
 .rrow .tag.new { background: var(--sel-bg); color: var(--sel-ink); }
 .rl .gap { margin-top: 22px; }
 
-/* Skill bars */
-.skill-word { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
-.skill-word b { font-size: 28px; font-weight: 800; letter-spacing: -.6px; }
-.skills { display: grid; gap: 14px; }
-.skill { display: grid; grid-template-columns: 52px minmax(0, 1fr) 44px; gap: 12px; align-items: center; font-weight: 600; }
-.skill .bar { height: 12px; border-radius: 99px; background: var(--neutral); overflow: hidden; }
-.skill .bar i { display: block; height: 100%; border-radius: 99px; background: var(--success); width: var(--w); animation: grow 900ms var(--ease) backwards; }
-.skill.mid .bar i { background: var(--reward); }
-.skill.weak .bar i { background: var(--error); }
-.skill .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
-.skill.weak .v { color: var(--err-ink); font-weight: 700; }
-@keyframes grow { from { width: 0; } }
-.mapping { display: grid; gap: 8px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--stroke); font-size: 15px; }
-.mapping div { display: flex; justify-content: space-between; gap: 12px; }
-.mapping span { color: var(--muted); }
+/* Scored read-aloud (PronunciationResultViews): word coloured per syllable, score ring, band title, syllable detail */
+.pron { align-items: center; text-align: center; }
+.pron-word { font-size: 36px; font-weight: 800; letter-spacing: -.8px; }
+.pron-word span { color: var(--ink); animation: tint 300ms var(--ease) forwards; }
+.pron-word .ok { --to: var(--green-700); }
+.pron-word .bad { --to: var(--coral-600); }
+@keyframes tint { to { color: var(--to); } }
+.pron-ipa { color: var(--muted); font-size: 17px; margin-top: 2px; }
+.ring { position: relative; width: 104px; height: 104px; margin-top: 20px; display: grid; place-items: center; }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 9; }
+.ring .trk { stroke: var(--neutral); }
+.ring .val { stroke: var(--green-600); stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: ringFill 1s var(--ease) .2s forwards; }
+@keyframes ringFill { to { stroke-dashoffset: calc(100 - var(--v)); } }
+.ring b { font-size: 32px; font-weight: 800; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
+.band { margin-top: 10px; font-size: 22px; font-weight: 800; letter-spacing: -.6px; color: var(--green-700); }
+.pron-panel { align-self: stretch; margin-top: 20px; padding: 14px 18px 10px; border-radius: var(--r-card); background: var(--ok-bg); color: var(--ok-ink); text-align: left; font-size: 15px; }
+.pron-panel .sum { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1.5px solid #CFF5DE; }
+.pron-panel .more { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; }
+.pron-panel .more svg { width: 14px; height: 14px; transform: rotate(180deg); }
+.srow { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; min-height: 36px; opacity: 0; animation: fadeUp 300ms var(--ease) forwards; }
+.srow span { color: var(--muted); }
+.srow .ok { color: var(--green-700); } .srow .bad { color: var(--coral-600); }
+.srow b:last-child { font-variant-numeric: tabular-nums; }
 
 /* Weak practice */
-.weak-card { padding: 18px; border-radius: var(--r-card); box-shadow: inset 0 0 0 1.5px var(--stroke); background: #fff; }
+.weak-card { padding: 18px; border-radius: var(--r-card); box-shadow: inset 0 0 0 2px var(--stroke); background: #fff; }
 .weak-card .top { display: flex; align-items: center; gap: 14px; }
 .weak-card .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--err-bg); color: var(--err-ink); display: grid; place-items: center; flex: none; }
 .weak-card .ic svg { width: 22px; height: 22px; }
-.weak-card .chips { margin: 16px 0 14px; }
-.weak-card .chip-btn { min-height: 36px; font-size: 14px; pointer-events: none; }
+.weak-card .top > div { flex: 1; }
+.weak-card .cnt { font-size: 22px; font-weight: 800; color: var(--coral-600); font-variant-numeric: tabular-nums; }
+.weak-card .queue { margin: 16px 0; }
+.weak-card .ic { background: var(--coral-50); color: var(--coral-600); }
+.pbtn.sm { min-height: 44px; font-size: 15px; pointer-events: none; }
+.mini-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.mini-tiles .mt { display: grid; gap: 2px; padding: 14px; border-radius: var(--r-card); box-shadow: inset 0 0 0 2px var(--stroke); background: #fff; }
+.mini-tiles .ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 8px; }
+.mini-tiles .ic svg { width: 18px; height: 18px; }
+.mini-tiles .ic.green { background: var(--green-50); color: var(--green-700); }
+.mini-tiles .ic.blue { background: var(--blue-50); color: var(--blue-600); }
+.mini-tiles b { font-weight: 700; font-size: 15px; }
+.mini-tiles span:last-child { font-size: 13px; color: var(--muted); }
+.rrow.known b, .rrow.known .m { color: var(--muted); }
+.rrow.known .tag { background: var(--neutral); color: var(--ink-700); }
 .queue { display: grid; gap: 8px; }
 .qrow { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--quiet); font-size: 15px; opacity: 0; animation: fadeUp 360ms var(--ease) forwards; }
-.qrow .qi { width: 32px; height: 32px; border-radius: 10px; background: #fff; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px var(--stroke); flex: none; }
+.qrow .qi { width: 32px; height: 32px; border-radius: 10px; background: #fff; display: grid; place-items: center; box-shadow: inset 0 0 0 2px var(--stroke); flex: none; }
 .qrow .qi svg { width: 16px; height: 16px; }
 .qrow b { font-weight: 700; }
-.qrow span { color: var(--muted); margin-left: auto; }
+.qrow > span:last-child { color: var(--muted); margin-left: auto; }
 
 /* ---------- 03 Craft ---------- */
 .sub-head { margin-bottom: 32px; scroll-margin-top: 88px; }
@@ -673,7 +710,7 @@ footer a:hover { color: var(--ink); }
 .bento-head { margin-top: 112px; }
 .bento-head + .bento { margin-top: 0; }
 .moments { display: grid; gap: 8px; margin-top: 24px; }
-.moment { display: grid; text-align: left; gap: 2px; padding: 12px 16px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 1.5px var(--stroke); background: #fff; transition: background var(--lift), box-shadow var(--lift), transform var(--press) var(--ease); }
+.moment { display: grid; text-align: left; gap: 2px; padding: 12px 16px; border-radius: var(--r-tile); box-shadow: inset 0 0 0 2px var(--stroke); background: #fff; transition: background var(--lift), box-shadow var(--lift), transform var(--press) var(--ease); }
 .moment:active { transform: scale(.98); }
 .moment b { font-weight: 700; }
 .moment span { font-size: 15px; color: var(--muted); }
@@ -697,7 +734,9 @@ footer a:hover { color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .curve .remember { stroke-dashoffset: 0; }
-  .curve circle, .rrow.new, .qrow, .ck svg { opacity: 1; }
+  .curve circle, .rrow.new, .qrow, .ck svg, .srow { opacity: 1; }
+  .pron-word span { color: var(--to); }
+  .ring .val { stroke-dashoffset: calc(100 - var(--v)); }
   .ck { background: var(--success); }
 }
 
@@ -745,6 +784,10 @@ footer a:hover { color: var(--ink); }
   <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5" stroke-linecap="round"/></g></symbol>
   <symbol id="i-tag" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/></g></symbol>
   <symbol id="i-pen" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></g></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></g></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3.2.9 4.3 2.6l2.4 4.8c1.1 1.7 2.3 2.6 4.3 2.6H21M3 17h3.5c1.4 0 2.4-.4 3.2-1.2M14 8.2c.8-.8 1.8-1.2 3.2-1.2H21"/><path d="M18.5 4.5L21 7l-2.5 2.5M18.5 14.5L21 17l-2.5 2.5"/></g></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/></g></symbol>
   <symbol id="i-repeat" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 15"/><path d="M4 20v-5h5"/></g></symbol>
 </svg>
 
@@ -766,11 +809,11 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="copy">
       <span class="eyebrow">Từ vựng tiếng Anh cho người Việt</span>
-      <h1 class="display">Học đúng từ.<br>Nhớ thật lâu<span class="mark">.</span></h1>
+      <h1 class="display">Học đúng từ.<br>Nhớ thật lâu.</h1>
       <p class="tagline">Và muốn mở app mỗi ngày.</p>
-      <p class="lead">Syll xây phiên học từ chính mục tiêu của bạn, biết bạn sắp quên từ nào và đang yếu kỹ năng nào. Phần còn lại, từ cú chạm đến lời khen, được làm tỉ mỉ để việc học thành niềm vui.</p>
+      <p class="lead">Syll xây phiên học từ chính mục tiêu của bạn, biết bạn sắp quên từ nào, hay sai từ nào, và chấm cả cách bạn phát âm. Phần còn lại, từ cú chạm đến lời khen, được làm tỉ mỉ để việc học thành niềm vui.</p>
       <div class="cta">
-        <a class="pbtn inline shimmer" href="#tai">Tải Syll</a>
+        <a class="fbtn" href="#tai">Tải Syll</a>
         <a class="fbtn secondary" href="#thong-minh">Xem cách Syll dạy</a>
       </div>
       <div class="values">
@@ -788,7 +831,7 @@ footer a:hover { color: var(--ink); }
 <div class="promises">
   <div class="wrap">
     <a class="promise" href="#ca-nhan"><span class="n">01</span><b>Học từ bạn thật sự cần</b><span>Bộ từ theo mục tiêu, chủ đề bạn thích và cả những từ bạn tự thêm.</span></a>
-    <a class="promise" href="#thong-minh"><span class="n">02</span><b>Ôn đúng lúc, luyện đúng chỗ</b><span>Ôn từ sắp quên trước, học mới sau, rồi luyện kỹ năng còn yếu.</span></a>
+    <a class="promise" href="#thong-minh"><span class="n">02</span><b>Ôn đúng lúc, luyện đúng chỗ</b><span>Ôn từ sắp quên trước, học mới sau, rồi luyện lại từ hay sai và luyện nói.</span></a>
     <a class="promise" href="#trai-nghiem"><span class="n">03</span><b>Đẹp, mượt và vui đến lạ</b><span>Chăm chút như một sản phẩm cao cấp, từ cú chạm đầu tiên đến màn ăn mừng cuối phiên. Học xong vẫn muốn thêm một phiên.</span></a>
   </div>
 </div>
@@ -798,7 +841,7 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="sec-head in-view">
       <span class="eyebrow"><span class="no">01</span> · Của riêng bạn</span>
-      <h2 class="display">Lộ trình chỉ dành cho bạn<span class="mark">.</span></h2>
+      <h2 class="display">Lộ trình chỉ dành cho bạn</h2>
       <p class="lead">Ôn IELTS, chuẩn bị phỏng vấn, hay chỉ muốn nói chuyện tự nhiên hơn? Chọn bộ từ theo mục tiêu, chọn chủ đề bạn quan tâm, rồi thêm bất kỳ từ nào bạn gặp trên phim, trong sách hay ở chỗ làm. Syll gom tất cả vào phiên học mỗi ngày.</p>
     </div>
 
@@ -850,7 +893,7 @@ footer a:hover { color: var(--ink); }
       <div class="feat card in-view">
         <span class="ic"><svg><use href="#i-pen"/></svg></span>
         <h3>Từ của riêng bạn</h3>
-        <p>Gõ một từ, Syll tra nghĩa tiếng Việt, phát âm và câu ví dụ. Sửa nghĩa theo ý bạn, chỉ bạn thấy thay đổi đó.</p>
+        <p>Gõ một từ rồi chọn nghĩa bạn muốn học, Syll kèm phát âm và câu ví dụ. Sửa nghĩa theo ý bạn, chỉ bạn thấy thay đổi đó.</p>
       </div>
     </div>
   </div>
@@ -861,8 +904,8 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="sec-head in-view">
       <span class="eyebrow"><span class="no">02</span> · Học thông minh</span>
-      <h2 class="display">Mỗi phiên biết bạn cần gì<span class="mark">.</span></h2>
-      <p class="lead">Syll theo dõi từng từ và từng kỹ năng của bạn, rồi quyết định hôm nay nên ôn gì, học gì và luyện gì. Thời gian của bạn dành đúng cho những gì cần nhất.</p>
+      <h2 class="display">Mỗi phiên biết bạn cần gì</h2>
+      <p class="lead">Syll theo dõi từng từ bạn học, cả những lần bạn trả lời sai và cách bạn phát âm, rồi quyết định hôm nay nên ôn gì, học gì và luyện gì. Thời gian của bạn dành đúng cho những gì cần nhất.</p>
     </div>
     <div class="loop in-view">
       <div class="loop-steps" id="loopSteps" role="tablist" aria-label="Cách Syll lên phiên học"></div>
@@ -876,7 +919,7 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="sec-head in-view">
       <span class="eyebrow"><span class="no">03</span> · Trau chuốt từng chi tiết</span>
-      <h2 class="display">Cảm nhận được ngay từ cú chạm đầu tiên<span class="mark">.</span></h2>
+      <h2 class="display">Cảm nhận được ngay từ cú chạm đầu tiên</h2>
       <p class="lead">Mỗi màn hình trong Syll đều được thiết kế và chỉnh sửa nhiều lần cho đến khi thật vừa tay. Kết quả là một app học từ vựng mà bạn thấy thích cầm lên, như một món đồ được làm kỹ, và muốn mở lại mỗi ngày.</p>
     </div>
 
@@ -924,7 +967,7 @@ footer a:hover { color: var(--ink); }
       <div class="card meet wide in-view">
         <div>
           <span class="eyebrow">Không học một mình</span>
-          <h3>Luôn có người học cùng bạn<span class="mark">.</span></h3>
+          <h3>Luôn có người học cùng bạn</h3>
           <p>Syllie ở cạnh bạn trong từng câu hỏi và phản ứng như một người bạn học thật sự. Bạn sẽ thấy mình được cổ vũ, kể cả những hôm chỉ học được năm phút.</p>
           <div class="moments" role="group" aria-label="Syllie phản ứng cùng bạn" id="moods">
             <button class="moment" data-mood="thinking" aria-pressed="false"><b>Khi bạn phân vân</b><span>Syllie nghĩ cùng bạn</span></button>
@@ -957,14 +1000,14 @@ footer a:hover { color: var(--ink); }
       <div class="card in-view celebrate-card" id="celebrateCard">
         <span class="eyebrow">Cảm giác hoàn thành</span>
         <h3>Học xong là thấy mình giỏi lên.</h3>
-        <p>Mỗi phiên khép lại bằng một màn ăn mừng và con số cho thấy bạn đã làm được gì. Chính cảm giác đó kéo bạn quay lại vào ngày mai.</p>
+        <p>Mỗi phiên khép lại bằng màn ăn mừng của Syllie, rồi bảng tổng kết: từ đã nhớ chắc, từ mới nắm được, số từ nói đúng và LP bạn kiếm được. Chạm vào là xem chi tiết từng từ.</p>
         <button class="pbtn" id="celebrateBtn">Ăn mừng thử</button>
       </div>
 
       <div class="card in-view">
         <span class="eyebrow">Không áp lực</span>
         <h3>Sai cũng không sao.</h3>
-        <p>Không mất tim, không bị trừ điểm, không bảng xếp hạng. Thử lại hoặc xem đáp án rồi đi tiếp. Bạn quay lại vì thích học, không phải vì sợ bị phạt.</p>
+        <p>Không mất tim, không bị trừ điểm. Thử lại hoặc xem đáp án rồi đi tiếp. Bảng xếp hạng tuần chỉ có tên bạn khi bạn tự bật. Bạn quay lại vì thích học, không phải vì sợ bị phạt.</p>
       </div>
     </div>
   </div>
@@ -975,7 +1018,7 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="sec-head center in-view">
       <span class="eyebrow">Tóm lại</span>
-      <h2 class="display">Những gì bạn nhận được<span class="mark">.</span></h2>
+      <h2 class="display">Những gì bạn nhận được</h2>
     </div>
     <div class="compare single in-view">
       <div class="card col us">
@@ -983,7 +1026,9 @@ footer a:hover { color: var(--ink); }
           <li><svg><use href="#i-check"/></svg>Học đúng bộ từ, chủ đề và cả những từ của riêng bạn</li>
           <li><svg><use href="#i-check"/></svg>Bảy dạng bài: chọn, điền, gõ, xếp chữ, nối, sửa chính tả, đọc to</li>
           <li><svg><use href="#i-check"/></svg>Từ sắp quên được gọi lại đúng lúc</li>
-          <li><svg><use href="#i-check"/></svg>Biết mình mạnh, yếu ở Đọc, Nghe, Viết hay Nói, và luyện đúng chỗ còn yếu</li>
+          <li><svg><use href="#i-check"/></svg>Từ hay sai được gom lại để luyện riêng, từ đã biết thì bỏ qua bằng một chạm</li>
+          <li><svg><use href="#i-check"/></svg>Đọc to và được chấm phát âm đến từng âm tiết</li>
+          <li><svg><use href="#i-check"/></svg>LP, Tier và bảng xếp hạng tuần, chỉ công khai khi bạn muốn</li>
           <li><svg><use href="#i-check"/></svg>Một app đẹp, mượt, có Syllie đi cùng mỗi phiên</li>
         </ul>
       </div>
@@ -996,15 +1041,19 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <div class="sec-head center in-view">
       <span class="eyebrow">Câu hỏi</span>
-      <h2 class="display">Trước khi bắt đầu<span class="mark">.</span></h2>
+      <h2 class="display">Trước khi bắt đầu</h2>
     </div>
     <div class="faq in-view">
-      <details open><summary>Tôi có tự chọn từ để học được không?<svg><use href="#i-chev"/></svg></summary><p>Có. Chọn bộ từ (Hằng ngày, IELTS, TOEIC, Kinh doanh) và những chủ đề bạn quan tâm. Gặp từ nào hay, bạn thêm vào: Syll tra nghĩa, phát âm và ví dụ, rồi đưa từ đó vào phiên học của bạn.</p></details>
-      <details><summary>Syll biết tôi sắp quên từ nào bằng cách nào?<svg><use href="#i-chev"/></svg></summary><p>Mỗi từ có lịch ôn riêng, dựa trên việc bạn trả lời đúng hay sai. Từ đến hạn được đưa vào đầu phiên học, trước khi bạn gặp từ mới.</p></details>
-      <details><summary>“Luyện kỹ năng yếu” là gì?<svg><use href="#i-chev"/></svg></summary><p>Mỗi bài tập luyện một kỹ năng: Đọc, Nghe, Viết hoặc Nói. Syll ghi lại kết quả theo từng kỹ năng của từng từ, nên phần Từ còn yếu cho bạn luyện lại đúng kỹ năng và đúng những từ bạn đang hụt.</p></details>
-      <details><summary>Mỗi phiên học gồm những gì?<svg><use href="#i-chev"/></svg></summary><p>Bạn ôn những từ đến hạn, gặp từ mới với nghĩa, phát âm và ví dụ, rồi luyện qua bảy dạng bài: chọn nghĩa, điền vào câu, tự gõ, xếp chữ, nối cặp, sửa chính tả và đọc to, có phản hồi ngay sau mỗi câu.</p></details>
+      <details open><summary>Tôi có tự chọn từ để học được không?<svg><use href="#i-chev"/></svg></summary><p>Có. Chọn bộ từ (Hằng ngày, IELTS, TOEIC, Kinh doanh) và những chủ đề bạn quan tâm. Gặp từ nào hay, bạn thêm vào và chọn nghĩa muốn học: Syll kèm phát âm và ví dụ, rồi đưa từ đó vào phiên học của bạn.</p></details>
+      <details><summary>Syll biết tôi sắp quên từ nào bằng cách nào?<svg><use href="#i-chev"/></svg></summary><p>Mỗi từ có lịch ôn riêng, dựa trên việc bạn trả lời đúng hay sai. Từ đến hạn được đưa vào đầu phiên học, trước khi bạn gặp từ mới. Nếu từ chờ ôn dồn lại nhiều, bạn có thể ôn riêng một lượt, không kèm từ mới.</p></details>
+      <details><summary>“Từ còn yếu” là gì?<svg><use href="#i-chev"/></svg></summary><p>Là những từ bạn trả lời sai gần đây, tính cả lần trả lời mới nhất. Mở Từ còn yếu trong Từ của tôi là Syll lên ngay một phiên chỉ gồm những từ đó. Trả lời đúng rồi thì từ tự rời khỏi danh sách.</p></details>
+      <details><summary>Syll chấm phát âm thế nào?<svg><use href="#i-chev"/></svg></summary><p>Bạn đọc từ vào micro, Syll chấm điểm cả từ và từng âm tiết, tô màu âm nào chưa chuẩn. Luyện nói có trong Từ của tôi; muốn có bài đọc to trong bài học hằng ngày thì bật “Luyện nói” trong Hồ sơ. Đúng hay sai đều không ảnh hưởng tiến độ học của bạn.</p></details>
+      <details><summary>Tôi đã biết một từ rồi thì sao?<svg><use href="#i-chev"/></svg></summary><p>Khi gặp từ mới, chạm “Tôi biết từ này” bên dưới nút Tiếp tục. Syll bỏ qua từ đó và các bài tập của nó, phiên học dành thời gian cho từ bạn chưa biết.</p></details>
+      <details><summary>Mỗi phiên học gồm những gì?<svg><use href="#i-chev"/></svg></summary><p>Bạn ôn những từ đến hạn, gặp từ mới với nghĩa, phát âm và ví dụ, rồi luyện qua các dạng bài: chọn nghĩa, điền vào câu, tự gõ, xếp chữ, nối cặp và sửa chính tả (thêm đọc to nếu bạn bật Luyện nói), có phản hồi ngay sau mỗi câu. Cuối phiên là bảng tổng kết những gì bạn vừa làm được.</p></details>
       <details><summary>Mỗi ngày học bao lâu?<svg><use href="#i-chev"/></svg></summary><p>Bạn tự chọn số từ mới mỗi ngày, những ngày học và giờ nhắc. Đổi lại được bất cứ lúc nào.</p></details>
       <details><summary>Syll dành cho trình độ nào?<svg><use href="#i-chev"/></svg></summary><p>Từ A1 đến C2. Bạn chọn trình độ lúc bắt đầu, hoặc làm bài test ngắn để Syll xếp giúp.</p></details>
+      <details><summary>Có bảng xếp hạng không? Tôi có bị so sánh với người khác không?<svg><use href="#i-chev"/></svg></summary><p>Có bảng xếp hạng tuần theo LP, nhưng tên bạn chỉ xuất hiện khi bạn tự bật “Hiện tôi trên bảng xếp hạng” trong Cài đặt. Kết quả cuối phiên không bao giờ nhắc thứ hạng.</p></details>
+      <details><summary>Đăng nhập bằng gì?<svg><use href="#i-chev"/></svg></summary><p>Email và mật khẩu, Sign in with Apple hoặc Google. Tiến độ được lưu trên tài khoản, đổi máy không mất.</p></details>
       <details><summary>App có trên Android không?<svg><use href="#i-chev"/></svg></summary><p>Hiện Syll có trên iPhone, iOS 17 trở lên.</p></details>
     </div>
   </div>
@@ -1014,7 +1063,7 @@ footer a:hover { color: var(--ink); }
 <section class="final tint" id="tai">
   <div class="wrap in-view">
     <div id="finalPet"></div>
-    <h2 class="display">Học đúng từ. Nhớ thật lâu<span class="mark">.</span></h2>
+    <h2 class="display">Học đúng từ. Nhớ thật lâu.</h2>
     <p class="lead">Tải Syll, chọn mục tiêu của bạn và bắt đầu phiên học đầu tiên hôm nay.</p>
     <!-- TEMP: thay href bằng link App Store; có thể thay cả nút bằng badge chính thức của Apple -->
     <a class="fbtn store" href="#" aria-label="Tải trên App Store">
@@ -1150,7 +1199,7 @@ footer a:hover { color: var(--ink); }
 
   function confetti(host) {
     const c = el('div', 'confetti'); host.append(c);
-    const colors = ['#FFD23F', '#4775F5', '#2BC86A', '#FF795D'];
+    const colors = ['#FFB800', '#3E68DB', '#2BC86A', '#FF5A3C'];
     for (let k = 0; k < 60; k++) {
       const p = el('i');
       p.style.left = Math.random() * 100 + '%';
@@ -1225,28 +1274,28 @@ footer a:hover { color: var(--ink); }
      ========================================================= */
   (function personal() {
     const COLLECTIONS = [
-      { id: 'everyday', name: 'Hằng ngày', topics: [
+      { id: 'everyday', mark: 'var(--mark-everyday)', name: 'Hằng ngày', topics: [
         { id: 'communication', name: 'Giao tiếp', words: [['apologize', 'xin lỗi'], ['appreciate', 'trân trọng']] },
         { id: 'travel', name: 'Du lịch', words: [['luggage', 'hành lý'], ['itinerary', 'lịch trình']] },
         { id: 'food', name: 'Ăn uống', words: [['ingredient', 'nguyên liệu'], ['flavor', 'hương vị']] },
         { id: 'health', name: 'Sức khoẻ', words: [['symptom', 'triệu chứng'], ['recover', 'hồi phục']] },
         { id: 'shopping', name: 'Mua sắm', words: [['receipt', 'hoá đơn'], ['discount', 'giảm giá']] },
       ] },
-      { id: 'ielts', name: 'IELTS', topics: [
+      { id: 'ielts', mark: 'var(--mark-ielts)', name: 'IELTS', topics: [
         { id: 'education', name: 'Giáo dục', words: [['curriculum', 'chương trình học'], ['literacy', 'khả năng đọc viết']] },
         { id: 'environment', name: 'Môi trường', words: [['pollution', 'sự ô nhiễm'], ['sustainable', 'bền vững']] },
         { id: 'technology', name: 'Công nghệ', words: [['innovation', 'sự đổi mới'], ['automation', 'tự động hoá']] },
         { id: 'society', name: 'Xã hội', words: [['inequality', 'sự bất bình đẳng'], ['community', 'cộng đồng']] },
         { id: 'economy', name: 'Kinh tế', words: [['inflation', 'lạm phát'], ['revenue', 'doanh thu']] },
       ] },
-      { id: 'toeic', name: 'TOEIC', topics: [
+      { id: 'toeic', mark: 'var(--mark-toeic)', name: 'TOEIC', topics: [
         { id: 'office', name: 'Văn phòng', words: [['deadline', 'hạn chót'], ['supervisor', 'người giám sát']] },
         { id: 'meetings', name: 'Cuộc họp', words: [['agenda', 'chương trình họp'], ['postpone', 'hoãn lại']] },
         { id: 'hiring', name: 'Tuyển dụng', words: [['applicant', 'ứng viên'], ['qualification', 'bằng cấp, trình độ']] },
         { id: 'purchasing', name: 'Mua hàng', words: [['invoice', 'hoá đơn'], ['supplier', 'nhà cung cấp']] },
         { id: 'finance', name: 'Tài chính', words: [['budget', 'ngân sách'], ['expense', 'chi phí']] },
       ] },
-      { id: 'business', name: 'Kinh doanh', topics: [
+      { id: 'business', mark: 'var(--mark-business)', name: 'Kinh doanh', topics: [
         { id: 'workplace', name: 'Nơi làm việc', words: [['colleague', 'đồng nghiệp'], ['collaborate', 'hợp tác']] },
         { id: 'marketing', name: 'Marketing', words: [['campaign', 'chiến dịch'], ['audience', 'khán giả, đối tượng']] },
         { id: 'interviews', name: 'Phỏng vấn', words: [['strength', 'điểm mạnh'], ['achievement', 'thành tích']] },
@@ -1265,7 +1314,7 @@ footer a:hover { color: var(--ink); }
     let col = COLLECTIONS[0], picked = new Set(['communication', 'travel']), mine = [], pending = false;
 
     COLLECTIONS.forEach(c => {
-      const b = el('button', 'chip-btn big', c.name);
+      const b = el('button', 'chip-btn big', `<i class="dot" style="background:${c.mark}"></i>${c.name}`);
       b.addEventListener('click', () => {
         if (c === col) return;
         col = c; picked = new Set(c.topics.slice(0, 2).map(t => t.id)); // switching collection resets topics, as in EditFocusView
@@ -1364,7 +1413,7 @@ footer a:hover { color: var(--ink); }
           </div>` },
       { title: 'Rồi mới học từ mới', desc: 'Ôn xong mới đến từ mới, nên từ cũ không bị bỏ rơi.',
         viz: () => `<span class="eyebrow">Bước 2</span><h4>Cũ trước, mới sau.</h4>
-          <p class="secondary">Phiên học mở đầu bằng những từ cần ôn. Xong phần đó, từ mới mới xuất hiện, kèm nghĩa, phát âm và ví dụ.</p>
+          <p class="secondary">Phiên học mở đầu bằng những từ cần ôn. Xong phần đó, từ mới mới xuất hiện, kèm nghĩa, phát âm và ví dụ. Từ nào đã biết, chạm “Tôi biết từ này” để bỏ qua.</p>
           <div class="grow rl">
             <div class="eyebrow">Ôn lại · 3 từ</div>
             <div class="rrow"><span class="w"><b>consider</b><span class="m">cân nhắc</span></span>${ck(400)}</div>
@@ -1373,35 +1422,43 @@ footer a:hover { color: var(--ink); }
             <div class="eyebrow gap">Từ mới · 2 từ</div>
             <div class="rrow new" style="animation-delay:1500ms"><span class="w"><b>appreciate</b><span class="m">trân trọng</span></span><span class="tag new">Mới</span></div>
             <div class="rrow new" style="animation-delay:1650ms"><span class="w"><b>negotiate</b><span class="m">đàm phán</span></span><span class="tag new">Mới</span></div>
+            <div class="rrow new known" style="animation-delay:1800ms"><span class="w"><b>commute</b><span class="m">đi làm hằng ngày</span></span><span class="tag">Tôi biết từ này</span></div>
           </div>` },
-      { title: 'Chấm điểm theo kỹ năng', desc: 'Đọc, Nghe, Viết, Nói: mỗi câu trả lời cho biết bạn mạnh, yếu ở đâu.',
+      { title: 'Chấm phát âm từng âm tiết', desc: 'Đọc to, Syll cho điểm và chỉ rõ âm nào cần sửa.',
         viz: () => {
-          const S = [['Đọc', 92, ''], ['Nghe', 78, ''], ['Viết', 38, 'weak'], ['Nói', 61, 'mid']];
-          return `<span class="eyebrow">Bước 3</span><h4>Biết bạn yếu ở kỹ năng nào.</h4>
-          <p class="secondary">Mỗi dạng bài luyện một kỹ năng. Syll ghi điểm theo từng kỹ năng của từng từ.</p>
-          <div class="grow">
-            <div class="skill-word"><b>consider</b><span class="secondary">cân nhắc</span></div>
-            <div class="skills">${S.map(([n, v, c], k) => `<div class="skill ${c}"><span>${n}</span><div class="bar"><i style="--w:${v}%;animation-delay:${k * 120}ms"></i></div><span class="v">${v}%</span></div>`).join('')}</div>
-            <div class="mapping">
-              <div><b>Đọc</b><span>chọn nghĩa, điền từ, nối cặp</span></div>
-              <div><b>Nghe</b><span>nghe rồi chọn từ</span></div>
-              <div><b>Viết</b><span>gõ từ, xếp chữ, sửa chính tả</span></div>
-              <div><b>Nói</b><span>đọc to</span></div>
+          const SYL = [['re', '/rɪ/', 95, 'ok'], ['sil', '/ˈzɪl/', 88, 'ok'], ['ient', '/iənt/', 52, 'bad']];
+          return `<span class="eyebrow">Bước 3</span><h4>Nói to, biết ngay âm nào chưa chuẩn.</h4>
+          <p class="secondary">Đọc từ vào micro, Syll chấm điểm phát âm và tô màu từng âm tiết. Luyện nói chỉ để bạn tiến bộ, không bao giờ làm thay đổi tiến độ học.</p>
+          <div class="grow pron">
+            <div class="pron-word" aria-label="resilient: re và sil tốt, ient cần luyện">${SYL.map(([t, , , c], k) => `<span class="${c}" style="animation-delay:${600 + k * 160}ms">${t}</span>`).join('')}</div>
+            <div class="pron-ipa">/rɪˈzɪliənt/</div>
+            <div class="ring" role="img" aria-label="Điểm phát âm: 82">
+              <svg viewBox="0 0 120 120"><circle class="trk" cx="60" cy="60" r="52"/><circle class="val" pathLength="100" cx="60" cy="60" r="52" style="--v:82"/></svg>
+              <b>82</b>
+            </div>
+            <div class="band">Làm tốt lắm</div>
+            <div class="pron-panel">
+              <div class="sum"><span>Cần luyện: ient</span><span class="more">Chi tiết${icon('i-chev')}</span></div>
+              ${SYL.map(([t, ipa, v, c], k) => `<div class="srow" style="animation-delay:${900 + k * 120}ms"><b class="${c}">${t}</b><span>${ipa}</span><b class="${c}">${v}</b></div>`).join('')}
             </div>
           </div>`;
         } },
-      { title: 'Luyện đúng chỗ yếu', desc: 'Phiên luyện tập nhắm vào kỹ năng và từ còn yếu của bạn.',
-        viz: () => `<span class="eyebrow">Bước 4</span><h4>Luyện đúng chỗ còn hụt.</h4>
-          <p class="secondary">Mở Từ còn yếu, Syll lên ngay một phiên chỉ gồm những từ và kỹ năng bạn cần luyện lại. Hoặc tự chọn luyện theo kỹ năng.</p>
+      { title: 'Luyện lại từ hay sai', desc: 'Từ còn yếu, Luyện nói, Luyện tập ngẫu nhiên: mở ra là luyện ngay.',
+        viz: () => `<span class="eyebrow">Bước 4</span><h4>Luyện đúng những từ còn hụt.</h4>
+          <p class="secondary">Từ bạn trả lời sai gần đây gom vào Từ còn yếu. Luyện nói đưa từ nói trượt lần trước lên đầu. Muốn đổi gió thì Luyện tập ngẫu nhiên theo bộ từ hoặc chủ đề.</p>
           <div class="grow">
             <div class="weak-card">
-              <div class="top"><span class="ic">${icon('t-surgery')}</span><div><b>Từ còn yếu</b><div class="secondary">Luyện lại kỹ năng đang yếu</div></div></div>
-              <div class="chips"><span class="chip-btn">Đọc</span><span class="chip-btn">Nghe</span><span class="chip-btn" aria-pressed="true">Viết</span><span class="chip-btn">Nói</span></div>
+              <div class="top"><span class="ic">${icon('i-target')}</span><div><b>Từ còn yếu</b><div class="secondary">Những từ bạn hay sai</div></div><span class="cnt">12</span></div>
               <div class="queue">
                 <div class="qrow" style="animation-delay:200ms"><span class="qi">${icon('t-typing')}</span><b>consider</b><span>Gõ từ</span></div>
-                <div class="qrow" style="animation-delay:340ms"><span class="qi">${icon('t-reorder')}</span><b>appreciate</b><span>Xếp chữ</span></div>
+                <div class="qrow" style="animation-delay:340ms"><span class="qi">${icon('t-cloze')}</span><b>appreciate</b><span>Điền từ</span></div>
                 <div class="qrow" style="animation-delay:480ms"><span class="qi">${icon('t-surgery')}</span><b>separate</b><span>Sửa chính tả</span></div>
               </div>
+              <span class="pbtn practice sm">Luyện ngay</span>
+            </div>
+            <div class="mini-tiles">
+              <div class="mt"><span class="ic green">${icon('i-mic')}</span><b>Luyện nói</b><span>Đọc to các từ của bạn</span></div>
+              <div class="mt"><span class="ic blue">${icon('i-shuffle')}</span><b>Luyện tập ngẫu nhiên</b><span>Chọn bộ từ hoặc chủ đề</span></div>
             </div>
             <p class="secondary" style="margin-top:16px">Luyện xong, các từ lại vào lịch ôn, và vòng học tiếp tục.</p>
           </div>` },

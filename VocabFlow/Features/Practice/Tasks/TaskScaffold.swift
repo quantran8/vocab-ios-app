@@ -9,6 +9,11 @@ struct TaskScaffold<Content: View, Action: View>: View {
     var meaningCue: MeaningCue? = nil
     /// Called on a tap anywhere in the scroll area that no control takes, e.g. to close the keyboard (Typing).
     var onTapOutside: (() -> Void)? = nil
+    /// Recording scored by the backend: the word sweeps while the take is scored, then shows its syllables' colours.
+    var promptStyle: RecordingPromptStyle? = nil
+    /// Off when the result is shown above the panel (scored Recording); `feedbackDetail` takes the title's place.
+    var feedbackShowsHeading = true
+    var feedbackDetail: AnyView? = nil
     @ViewBuilder let content: Content
     @ViewBuilder let action: Action
     /// The reactions for the next right and wrong answer, picked ahead so they're ready before the answer renders.
@@ -32,7 +37,7 @@ struct TaskScaffold<Content: View, Action: View>: View {
                         ExerciseHeading(title: Text(verbatim: question))
                     }
                     VStack(spacing: Spacing.xs) {
-                        TaskPromptView(attempt: attempt)
+                        TaskPromptView(attempt: attempt, style: promptStyle)
                         // Recording: which of the word's sounds to read.
                         if let ipa = attempt.task.ipa {
                             Text(verbatim: ipa)
@@ -56,7 +61,12 @@ struct TaskScaffold<Content: View, Action: View>: View {
         .scrollDismissesKeyboard(.interactively)
         .modifier(TapOutside(action: onTapOutside))
         .stepActionBar {
-            FeedbackActionPanel(feedback: feedback ?? TaskFeedbackCopy.make(attempt), mascot: shownMood ?? mascotMood) { action }
+            FeedbackActionPanel(
+                feedback: feedback ?? TaskFeedbackCopy.make(attempt),
+                mascot: shownMood ?? mascotMood,
+                showsHeading: feedbackShowsHeading,
+                detail: feedbackDetail
+            ) { action }
         }
         .task(id: mascotMood) {
             let target = mascotMood
@@ -135,6 +145,7 @@ private struct TapOutside: ViewModifier {
 /// A task has at most one prompt kind. Audio stays audio: showing the text would give the answer away.
 struct TaskPromptView: View {
     let attempt: TaskAttempt
+    var style: RecordingPromptStyle? = nil
     @Environment(PracticeSessionStore.self) private var store
 
     var body: some View {
@@ -150,6 +161,13 @@ struct TaskPromptView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)
+            } else if let style {
+                RecordingPromptWord(text: text, style: style)
+                    .font(promptFont)
+                    .tracking(Typography.displayTracking)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, minHeight: Self.promptMinHeight)
             } else {
                 promptText(text, highlight: highlight)
                     .font(promptFont)

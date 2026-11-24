@@ -7,6 +7,7 @@ import SwiftUI
 struct RecordingTaskView: View {
     let attempt: TaskAttempt
     @Environment(PracticeSessionStore.self) private var store
+    @State private var paywallReason: PaywallReason?
 
     var body: some View {
         TaskScaffold(
@@ -37,6 +38,9 @@ struct RecordingTaskView: View {
             VStack(spacing: Spacing.s) {
                 actions
             }
+        }
+        .sheet(item: $paywallReason) { reason in
+            PaywallView(reason: reason)
         }
     }
 
@@ -111,13 +115,21 @@ struct RecordingTaskView: View {
                 statusText("Scoring…")
             }
         case .assessed:
-            EmptyView()
+            // A free take is right or wrong only; Premium scores it. Speaking never changes progress either way.
+            if store.isFreeSpeaking {
+                TextLink(title: "Get a pronunciation score with Premium", color: .grape600, systemImage: "crown") { paywallReason = .speaking }
+            }
         case .uploadFailed:
             statusText("Couldn’t check your recording.")
         case .blocked(let reason):
-            statusText(reason == PracticeSessionStore.UnavailableReason.micDenied
-                ? "Microphone access is off. You can turn it on in Settings."
-                : "Recording isn’t available right now.")
+            switch reason {
+            case PracticeSessionStore.UnavailableReason.micDenied:
+                statusText("Microphone access is off. You can turn it on in Settings.")
+            case PracticeSessionStore.UnavailableReason.onDeviceUnavailable:
+                statusText("Speech checking isn’t available on this device. Turn on Speech Recognition for Syll in Settings.")
+            default:
+                statusText("Recording isn’t available right now.")
+            }
         }
     }
 

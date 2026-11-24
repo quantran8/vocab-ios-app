@@ -20,6 +20,8 @@ tailwind.config = {
         blue:  { 50:'#EEF3FD',100:'#DCE6FB',200:'#BACCF6',300:'#92AEEF',400:'#6A8DE6',500:'#3E68DB',600:'#3053C2',700:'#28449E',800:'#22387D',900:'#1A2A5B',950:'#0E1733' },
         green: { 50:'#EAFBF1',100:'#CFF5DE',200:'#A0EABE',300:'#6BDC9A',400:'#45D17E',500:'#2BC86A',600:'#1FA857',700:'#188646',800:'#12673A',900:'#0E4A2A',950:'#062615' },
         coral: { 50:'#FFF1EE',100:'#FFDFD8',200:'#FFBFB1',300:'#FF9883',400:'#FF7559',500:'#FF5A3C',600:'#E5432A',700:'#BA3421',800:'#8C2A1D',900:'#5E1E16',950:'#320E09' },
+        /* Grape: Premium only (paywall, Premium entry points, plan cards). No other screen uses it. */
+        grape: { 50:'#F4F0FF',100:'#E8DFFF',200:'#D2C0FF',300:'#B497FF',400:'#9670FA',500:'#7C4FF0',600:'#6838D6',700:'#5329AE',800:'#3F2085',900:'#2C175C',950:'#1A0D38' },
         sun:   { 50:'#FFFBEA',100:'#FFF4C5',200:'#FFE88A',300:'#FFD84A',400:'#FFC81F',500:'#FFB800',600:'#E09A00',700:'#B47800',800:'#875A06',900:'#5C3E08',950:'#301F03' },
         figma: '#E9E9EC',
       },
@@ -45,6 +47,14 @@ tailwind.config = {
 .score-sweep { color: transparent; background: linear-gradient(90deg, #C8C8D0 35%, #F7F7F9 50%, #C8C8D0 65%); background-size: 250% 100%;
   -webkit-background-clip: text; background-clip: text; animation: scoreSweep 1.3s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .score-sweep { animation: none; color: #C8C8D0; background: none; } }
+/* "Premium" word: the Premium signature gradient Grape 500 → Coral 400 as text with the Home Start button's shimmer (ShimmerSweep) running through the letters:
+   a slanted white band crosses in 1.4 s (MotionTokens.shimmerSweep), then rests until the 4 s cycle ends (shimmerCycle).
+   Reduce Motion: no band, the gradient stays. */
+@keyframes premiumShimmer { 0% { background-position: 130% 0, 0 0; } 35%, 100% { background-position: -30% 0, 0 0; } }
+.premium-word { color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.85) 50%, transparent 58%), linear-gradient(90deg, #7C4FF0, #FF7559);
+  background-size: 300% 100%, 100% 100%; background-repeat: no-repeat; animation: premiumShimmer 4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .premium-word { animation: none; background-image: linear-gradient(90deg, #7C4FF0, #FF7559); background-size: 100% 100%; } }
 @layer components {
   /* Frames */
   .frame { @apply relative w-[390px] h-[844px] bg-white overflow-hidden flex flex-col text-ink-950 shrink-0; }
@@ -70,6 +80,9 @@ tailwind.config = {
   .btn-coral { @apply bg-coral-600 text-white shadow-[0_4px_0_#8C2A1D] active:translate-y-1 active:shadow-none; }
   .btn-line3d { @apply bg-white text-ink-950 border-2 border-ink-200 shadow-[0_3px_0_#E2E2E7] active:translate-y-[3px] active:shadow-none; }
   .btn-ink { @apply bg-ink-800 text-white shadow-[0_4px_0_#131217] active:translate-y-1 active:shadow-none; }
+  /* Premium buttons only (Home free limit, Profile upgrade card, the paywall's pinned CTA): Sun 400 with one-colour Sun 900 label (text and crown) and a Sun 600 depth edge.
+     Sun is the spark on the Grape Premium identity (gold on violet). No other button is Sun. */
+  .btn-premium { @apply bg-sun-400 text-sun-900 shadow-[0_4px_0_#E09A00] active:translate-y-1 active:shadow-none; }
   .btn-line { @apply bg-white text-ink-950 border-2 border-ink-200 active:scale-[.97]; }
   .btn-danger { @apply bg-coral-600 text-white active:scale-[.97]; }
   .btn-sm { @apply h-9 w-auto px-4 text-[14px]; }
@@ -126,6 +139,7 @@ tailwind.config = {
     <a href="#flow-addword" class="px-3 py-1.5 rounded-md hover:bg-ink-800">3 · Thêm từ</a>
     <a href="#flow-profile" class="px-3 py-1.5 rounded-md hover:bg-ink-800">4 · Hồ sơ</a>
     <a href="#flow-ranking" class="px-3 py-1.5 rounded-md hover:bg-ink-800">5 · Xếp hạng</a>
+    <a href="#flow-premium" class="px-3 py-1.5 rounded-md hover:bg-ink-800">6 · Premium</a>
   </nav>
 </header>
 
@@ -238,6 +252,9 @@ tailwind.config = {
 /* ---------- icons (Lucide-style strokes) ---------- */
 const I = {
   frame: '<path d="M22 6H2M22 18H2M6 2v20M18 2v20"/>',
+  crown: '<path d="m2 7 5 5 5-8 5 8 5-5-2 12H4z"/>', sparkles: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/>',
+  ticket: '<path d="M3 8a2 2 0 0 0 0 4v4h18v-4a2 2 0 0 1 0-4V4H3z"/>', grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  wave: '<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 11v2"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', noads: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 3l18 18"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>', check: '<path d="M20 6 9 17l-5-5"/>',
   chev: '<path d="m9 18 6-6-6-6"/>', back: '<path d="m15 18-6-6 6-6"/>', down: '<path d="m6 9 6 6 6-6"/>', up: '<path d="m18 15-6-6-6 6"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -761,7 +778,7 @@ function recordingScored(overall, syl, open = false) {
 
 /* ===================== PRODUCT SCREENS (inspired by Brilliant) ===================== */
 /* done: every new word of the collection is learned (scope exhausted, all topics chosen, no added words left). */
-function home(done = false) {
+function home(done = false, free = false) {
   // No wordmark, no greeting: Syllie is the warmth, LP is the only number up top.
   const top = `<div class="flex items-center justify-between pt-2"><img src="${SYLLIE}" alt="" class="w-[104px]">
       <span class="pill h-8 px-3 text-[14px] bg-sun-50 text-sun-800">${ic('zap', 'w-4 h-4 text-sun-500', true)}1.240</span></div>`;
@@ -773,6 +790,13 @@ function home(done = false) {
           <p class="mt-1.5 text-[15px] text-ink-600 leading-snug">Từ đã học vẫn được ôn đều. Chọn bộ từ khác để học thêm từ mới.</p></div></div>
       <button class="btn btn-blue mt-5">Ôn 10 từ</button>
       <button class="btn btn-line mt-3">Chọn bộ từ khác</button>
+    </div>` : free ? `<div class="mt-7 card p-5">
+      <div class="eyebrow">Bài học hôm nay</div>
+      <div class="mt-3 flex items-start gap-3"><span class="ico bg-grape-50 text-grape-600">${ic('crown', 'w-5 h-5')}</span>
+        <div class="flex-1 min-w-0"><div class="text-[21px] font-extrabold tracking-tight leading-tight">Bạn đã học hết 150 từ miễn phí</div>
+          <p class="mt-1.5 text-[15px] text-ink-600 leading-snug">Các từ đã học vẫn được ôn tập. Nâng cấp ${pwMark('Premium')} để tiếp tục học từ mới.</p></div></div>
+      <button class="btn btn-blue mt-5">Ôn 10 từ</button>
+      <button class="btn btn-premium mt-3">${ic('crown', 'w-4 h-4')}Dùng Premium</button>
     </div>` : `<div class="mt-7 card">
       <div class="p-5">
         <div class="eyebrow">Bài học hôm nay</div>
@@ -942,15 +966,36 @@ function customWordRemove() {
   return confirmSheet(sheetOver(blankUnder, customWordList()), 'Xóa nghĩa này?', 'Từ sẽ không được xếp lịch ôn và các chỉnh sửa của bạn sẽ bị xóa. Lịch sử học vẫn được giữ.', 'Xóa');
 }
 
-function profile() {
+/* The plan always sits right under the account block, shown once: free learners get the upgrade card,
+   Premium learners a "Gói của bạn" section (status, manage, restore). No plan pill in the account block. */
+/* Plan cards on Profile, in the Premium identity (Grape + a Sun spark):
+   upgrade (free) = the paywall's wash (Grape 100 → Grape 50 → Coral 100, diagonal), 2pt Grape 200 border, a Grape 500 badge with a Sun crown,
+   Ink title and Ink 700 copy, the free-words bar Grape 500 on white, and the Sun Premium button (the brightest thing on the card).
+   Soft on purpose: a solid Grape block was too loud for Profile; the wash still sets it apart and carries straight into the paywall.
+   Premium = a quiet status card: Grape 50, 2pt Grape 200 border, a Grape 500 badge with a Sun crown, Ink title. It doesn't sell. */
+function profileUpgradeCard() {
+  return `<div class="mt-5 rounded-[20px] border-2 border-grape-200 p-4" style="background:linear-gradient(118deg,#E8DFFF 0%,#F4F0FF 50%,#FFDFD8 100%)">
+    <div class="flex items-center gap-2.5 text-[18px] font-extrabold tracking-tight leading-tight"><span class="w-[34px] h-[34px] rounded-full bg-grape-500 text-sun-400 grid place-items-center shrink-0">${ic('crown', 'w-[18px] h-[18px]', true)}</span>Nâng cấp Premium</div>
+    <p class="mt-1.5 text-[14px] text-ink-700 leading-snug">Học từ mới không giới hạn, mọi chủ đề, chấm phát âm từng âm tiết, không quảng cáo.</p>
+    <div class="mt-3 text-[13px] font-semibold text-ink-700">Đã dùng 120/150 từ miễn phí</div>
+    <div class="mt-1.5 h-2 rounded-full bg-white overflow-hidden"><div class="h-full rounded-full bg-grape-500" style="width:80%"></div></div>
+    <button class="btn btn-premium mt-4">${ic('crown', 'w-4 h-4')}Nâng cấp Premium</button>
+  </div>`;
+}
+function profile(plan = 'free') {
+  const premium = plan === 'premium';
   return `${status()}
   <div class="flex-1 overflow-hidden px-5">
     <div class="flex items-center justify-between pt-6"><h1 class="h-display">Hồ sơ</h1><span class="w-11 h-11 grid place-items-center text-ink-950">${ic('gear', 'w-6 h-6')}</span></div>
     <div class="mt-6 flex items-center gap-4">
       <span class="w-16 h-16 rounded-[20px] bg-blue-100 text-blue-700 grid place-items-center text-[26px] font-extrabold">Q</span>
-      <div class="flex-1 text-[20px] font-extrabold tracking-tight">quan.tran</div>
+      <div class="flex-1 min-w-0 text-[20px] font-extrabold tracking-tight">quan.tran</div>
       <span class="link">Sửa</span>
     </div>
+    ${premium ? `<div class="mt-5 rounded-[20px] border-2 border-grape-200 bg-grape-50 px-4 py-3.5 flex items-center gap-3">
+      <span class="w-10 h-10 rounded-full bg-grape-500 text-sun-400 grid place-items-center shrink-0">${ic('crown', 'w-5 h-5', true)}</span>
+      <div class="flex-1 min-w-0"><div class="text-[18px] font-extrabold tracking-tight">Premium</div><div class="mt-0.5 text-[13px] text-ink-500">Gia hạn ngày 23 thg 11, 2027</div></div>
+      ${ic('chev', 'w-4 h-4 text-ink-400')}</div>` : profileUpgradeCard()}
     <div class="mt-5 card p-4">
       <div class="flex items-center gap-3"><span class="ico bg-sun-50 text-sun-600">${ic('trophy')}</span><div class="flex-1"><div class="font-bold">Silver</div><div class="text-[13px] text-ink-500">Tiến độ lên Gold</div></div><span class="text-[14px] font-bold tabular-nums">1.240 / 2.000 LP</span></div>
       <div class="mt-3">${bar(62, 'bg-sun-500', 'h-2.5')}</div>
@@ -1248,6 +1293,149 @@ function resetCode() {
     </div>
     <button class="btn btn-ink mt-7">Đặt mật khẩu mới</button>
   </div>`;
+}
+
+
+/* ===================== PREMIUM & FREE PLAN ===================== */
+/* Paywall: the one colourful screen in the app, built from Syll's own pieces (SF type, 2pt cards, Ink button) plus
+   a soft diagonal colour blend and a key visual of its own. No serif, no gradient text, no promo pill, no Syllie. */
+/* Key visual: a fan of vocabulary cards. Three solid cards (Grape 500, Coral 400, Sun 400, 3D edge in their 700 tone)
+   behind a white word card: "unlimited", its IPA, the Vietnamese meaning. Two small Sun sparkles. A grown-up, word-led image. */
+function pwKeyVisual(compact = false) {
+  const back = (bg, edge, rot, x, y) => `<span class="absolute left-1/2 top-1/2 w-[168px] h-[108px] rounded-[20px]" style="background:${bg};box-shadow:0 5px 0 ${edge};transform:translate(-50%,-50%) translate(${x}px,${y}px) rotate(${rot}deg)"></span>`;
+  return `<div class="relative shrink-0" style="height:${compact ? 132 : 150}px">
+    <div class="absolute left-1/2 top-1/2 w-[260px] h-[170px]" style="transform:translate(-50%,-50%) scale(${compact ? .72 : .8})">
+      ${back('#7C4FF0', '#5329AE', -16, -44, 6)}${back('#FF7559', '#BA3421', 13, 46, 4)}${back('#FFC81F', '#B47800', -5, -10, -10)}
+      <div class="absolute left-1/2 top-1/2 w-[176px] rounded-[20px] bg-white border-2 border-ink-200 shadow-[0_5px_0_#E2E2E7] px-4 py-3.5" style="transform:translate(-50%,-44%) rotate(3deg)">
+        <div class="text-[24px] font-extrabold tracking-[-0.6px] leading-none">unlimited</div>
+        <div class="mt-1 text-[13px] text-ink-500">/ʌnˈlɪmɪtɪd/</div>
+        <div class="mt-2.5 pt-2 border-t-[1.5px] border-ink-100 text-[14px] font-semibold">không giới hạn</div></div>
+      <span class="absolute right-2 top-1 text-sun-500">${ic('sparkles', 'w-6 h-6')}</span><span class="absolute left-3 bottom-2 text-sun-500">${ic('sparkles', 'w-4 h-4')}</span>
+    </div></div>`;
+}
+/* "Premium" in a headline: the word in the signature gradient Grape 500 → Coral 400 (the key visual's two outer cards), no background. */
+const pwMark = w => `<span class="premium-word">${w}</span>`;
+/* The Premium wash behind the hero, at full strength: Grape 100 → Grape 50 → Coral 100, diagonal, fading to white before the table/plans. */
+const PW_WASH = `<div class="absolute inset-x-0 top-0 h-[460px] pointer-events-none" style="background:linear-gradient(118deg,#E8DFFF 0%,#F4F0FF 48%,#FFDFD8 100%);-webkit-mask:linear-gradient(#000 60%,transparent);mask:linear-gradient(#000 60%,transparent)"></div>`;
+const pwFooter = label => `<div class="relative px-5 pt-3 pb-10 bg-white border-t-[1.5px] border-ink-100"><button class="btn btn-premium">${ic('crown', 'w-4 h-4')}${label}</button></div>`;
+function paywallCompare(reason = 'words') {
+  /* Comparison table (Brilliant's structure: label column, Free band, a taller Premium band) in Syll's materials:
+     the Free band is Ink 50, the Premium band a flat solid Grape 500 block (no depth edge); every tick is a flat Grape 500 circle with a white check. */
+  const rows = [['words', 'Từ mới không giới hạn', 'Miễn phí: 150 từ', false], ['topics', 'Mọi bộ từ vựng và chủ đề', 'Miễn phí: 1 bộ, 3 chủ đề', false],
+    ['speak', 'Chấm điểm từng âm tiết', 'Miễn phí: đúng / sai', false], ['ads', 'Không quảng cáo', '', false], ['daily', 'Bài học mỗi ngày', '', true]];
+  /* Rows run from what Free has to what it doesn't (✓ before ✕); among the ✕ rows the limit just met leads. */
+  /* One scope row covers both scope limits: a locked collection highlights it too. */
+  const key = reason === 'collection' ? 'topics' : reason;
+  const sorted = [...rows.filter(r => r[3]), ...rows.filter(r => !r[3] && r[0] === key), ...rows.filter(r => !r[3] && r[0] !== key)];
+  const sub = { words: 'Bạn đã học hết 150 từ miễn phí.', topics: 'Gói miễn phí có 3 chủ đề.', collection: 'Gói miễn phí giữ bộ từ vựng bạn chọn đầu tiên.', speak: 'Xem bạn đọc từng âm tiết thế nào.', general: 'Mở khóa mọi thứ Syll có.' }[reason];
+  const yes = () => `<span class="w-7 h-7 rounded-full bg-grape-500 text-white grid place-items-center">${ic('check', 'w-3.5 h-3.5')}</span>`;
+  const no = `<span class="w-6 h-6 rounded-full bg-ink-200 text-white grid place-items-center">${ic('x', 'w-3 h-3')}</span>`;
+  const H = 'h-[54px]';
+  return `${PW_WASH}<div class="relative">${status()}</div><div class="relative flex justify-end px-5 pt-1"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+  <div class="relative flex-1 overflow-hidden px-5">
+    ${pwKeyVisual()}
+    <div class="text-center eyebrow text-grape-700">Syll Premium</div>
+    <h2 class="h-display text-center mt-1.5">Học không giới hạn<br>với ${pwMark('Premium')}</h2>
+    <p class="mt-2 text-center text-[16px] text-ink-600">${sub}</p>
+    <div class="mt-4 flex items-end">
+      <div class="flex-1 min-w-0"><div class="h-[44px] flex items-end pb-2 text-[16px] font-extrabold">Quyền lợi</div>
+        ${sorted.map(([k, t, d]) => `<div class="${H} flex flex-col justify-center border-t-[1.5px] border-ink-100 pr-2"><span class="text-[15px] leading-tight ${k === key ? 'font-bold' : ''}">${t}</span>${d && k === key ? `<span class="text-[12px] text-ink-500">${d}</span>` : ''}</div>`).join('')}</div>
+      <div class="w-[78px] rounded-t-[18px] bg-ink-50"><div class="h-[40px] flex items-end justify-center pb-2 text-[14px] font-bold text-ink-500">Miễn phí</div>
+        ${sorted.map(r => `<div class="${H} grid place-items-center border-t-[1.5px] border-white">${r[3] ? yes() : no}</div>`).join('')}</div>
+      <div class="w-[96px] rounded-[20px] bg-grape-500 px-[7px] pb-[7px] -mb-[7px] relative z-[1]">
+        <div class="h-[54px] flex items-end justify-center pb-2.5 text-[16px] font-extrabold text-white">Premium</div>
+        <div class="bg-white rounded-[13px]">${sorted.map((r, i) => `<div class="${H} grid place-items-center ${i ? 'border-t-[1.5px] border-ink-100' : ''}">${yes()}</div>`).join('')}</div></div>
+    </div>
+  </div>${pwFooter('Xem các gói')}`;
+}
+function paywallPlans() {
+  /* Selected plan: Grape 50 card, 2pt Grape 500 border, Grape tick like the table's, no shadow (not the app's usual Blue outline). */
+  const plan = (on, name, price, lines, extra = '') => `<div class="relative rounded-[20px] px-4 py-3.5 border-2 ${on ? 'bg-grape-50 border-grape-500' : 'bg-white border-ink-200'}">
+    ${extra}<div class="flex items-center justify-between"><span class="text-[17px] font-bold">${name}</span>
+    <span class="w-7 h-7 rounded-full grid place-items-center ${on ? 'bg-grape-500 text-white' : 'border-2 border-ink-300'}">${on ? ic('check', 'w-3.5 h-3.5') : ''}</span></div>
+    <div class="mt-1 text-[30px] font-extrabold tracking-[-1px] tabular-nums">${price}<span class="text-[15px] font-semibold tracking-normal text-ink-500"> / tháng</span></div>${lines}</div>`;
+  return `${PW_WASH}<div class="relative">${status()}</div><div class="relative flex items-center justify-between px-5 pt-1"><span class="icon-btn">${ic('back', 'w-4 h-4')}</span><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+  <div class="relative flex-1 overflow-hidden px-5">
+    ${pwKeyVisual(true)}
+    <h2 class="h-display text-center mt-1">Chọn gói ${pwMark('Premium')}</h2>
+    <p class="mt-2 text-center text-[16px] text-ink-600">Học không giới hạn. Hủy bất cứ lúc nào.</p>
+    <div class="mt-5 space-y-4">
+      ${plan(true, 'Hằng năm', '83.250 ₫', `<div class="mt-1 text-[14px] tabular-nums">12 tháng · 999.000 ₫ <s class="ml-1 text-ink-400">2.100.000 ₫</s></div>
+        <div class="mt-2 inline-flex pill bg-grape-100 text-grape-800">Miễn phí 1 tuần đầu</div>`, `<span class="absolute -top-3 right-14 pill h-7 px-3 bg-coral-500 text-white text-[13px]">Tiết kiệm 52%</span>`)}
+      ${plan(false, 'Hằng tháng', '175.000 ₫', `<div class="mt-1 text-[14px] text-ink-500">Thanh toán mỗi tháng</div>`)}
+    </div>
+    <p class="mt-5 text-center text-[12px] text-ink-500 leading-snug">Gói đăng ký tự động gia hạn trừ khi bạn hủy ít nhất 24 giờ trước khi kỳ hạn kết thúc. Quản lý hoặc hủy trong cài đặt tài khoản App Store.</p>
+    <div class="mt-2 flex justify-center gap-4 text-[12px] font-semibold text-blue-600"><span>Khôi phục giao dịch</span><span>Có mã?</span><span>Điều khoản</span></div>
+  </div>${pwFooter('Bắt đầu dùng thử miễn phí')}`;
+}
+
+/* Home when the free plan's new words are used up: reviews stay, Premium is the second button. */
+const homeFreeLimit = () => home(false, true);
+
+/* Topics under the free plan: the count is against the limit and "Chọn tất cả" is gone (only "Bỏ chọn" once one is on).
+   At the limit the unselected chips are locked: dimmed to 40% like a disabled control, still tappable (they open the paywall). */
+function obTopicsFree() {
+  return obTopics().replace('Everyday · 3/12 chủ đề', 'Everyday · 3/3 chủ đề miễn phí').replace('Chọn tất cả', 'Bỏ chọn tất cả')
+    .replaceAll('class="chip "', 'class="chip opacity-40"');
+}
+
+/* Focus sheet on the free plan: the saved collection is kept, the others are locked chips (dimmed, open the paywall). */
+function focusFree() {
+  const cols = [['Everyday', MARK.everyday, true], ['IELTS', MARK.ielts], ['Business', MARK.business], ['TOEIC', MARK.toeic]];
+  const topics = [['bubble', 'Daily conversation', 1], ['cart', 'Shopping', 1], ['plane', 'Travel', 1], ['utensils', 'Food', 0], ['heart', 'Health', 0], ['home', 'Home', 0], ['zap', 'Sports', 0], ['user', 'Family', 0]];
+  return sheetOver(profile('free'), `<div class="flex justify-end px-5 pt-1"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5"><h2 class="h-sheet">Trọng tâm của bạn</h2>
+      <div class="mt-5 eyebrow mb-3">Bộ từ vựng</div>
+      <div class="flex flex-wrap gap-2">${cols.map(([n, c, on]) => `<span class="chip ${on ? 'on' : 'opacity-40'}"><i class="w-2.5 h-2.5 rounded-full" style="background:${c}"></i>${n}</span>`).join('')}</div>
+      <div class="mt-6 flex items-center justify-between mb-3"><span class="eyebrow">Everyday · 3/3 chủ đề miễn phí</span><span class="link text-[14px]">Bỏ chọn tất cả</span></div>
+      <div class="flex flex-wrap gap-2">${topics.map(([i, n, on]) => `<span class="chip ${on ? 'on' : 'opacity-40'}">${ic(i, 'w-4 h-4')}${n}</span>`).join('')}</div>
+    </div>
+    <div class="px-5 pt-3 pb-10 border-t-[1.5px] border-ink-100"><p class="text-center text-[13px] font-semibold text-ink-500 mb-2">Đã chọn 3 chủ đề</p><button class="btn btn-ink">Lưu thay đổi</button></div>`, 54);
+}
+
+/* A free take: checked on the device (right or wrong, no score), with the Premium hint under the mic. */
+function recordingFree() {
+  return taskScreen({
+    question: 'Đọc to từ này.',
+    prompt: recordingPrompt('appreciate'),
+    content: `<div class="mt-8 flex flex-col items-center">
+      ${soundCenter('mic', 'off')}
+      <p class="mt-5 flex items-center gap-1.5 text-[15px] font-semibold text-grape-600">${ic('crown', 'w-4 h-4')}Nhận điểm phát âm với Premium</p></div>`,
+    panelHtml: `<div class="bg-green-50 rounded-t-[24px] px-6 pt-5 pb-10">
+      <div class="flex items-center gap-2.5 text-[19px] font-extrabold text-green-800"><span class="w-7 h-7 rounded-full bg-green-500 text-white grid place-items-center">${ic('check', 'w-4 h-4')}</span>Chính xác!</div>
+      <div class="mt-4 flex items-end gap-3">${syllieSm}<div class="flex-1"><button class="btn btn-green">Tiếp tục</button></div></div></div>`,
+  });
+}
+
+/* "Gói của bạn" sheet (from the one-line row on Profile): the plan's details and every Premium action. */
+function planSheet() {
+  const info = (k, v) => `<div class="row"><span class="flex-1 text-ink-600">${k}</span><span class="font-semibold">${v}</span></div>`;
+  return sheetOver(profile('premium'), `<div class="flex justify-end px-5 pt-1"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 px-5"><h2 class="h-sheet">Gói của bạn</h2>
+      <div class="mt-5 card">${info('Gói', 'Syll Premium · Hằng năm')}${info('Gia hạn', '23 thg 11, 2027')}${info('Giá', '999.000 ₫ / năm')}</div>
+      <p class="mt-3 text-[13px] text-ink-500 leading-snug">Gói được quản lý trong App Store. Hủy ít nhất 24 giờ trước ngày gia hạn để không bị tính phí kỳ sau.</p>
+      <div class="mt-5 flex justify-center gap-6 text-[15px] font-semibold text-blue-600"><span>Khôi phục giao dịch</span><span>Nhập mã</span></div></div>
+    <div class="px-5 pb-10"><button class="btn btn-line">Quản lý gói đăng ký</button></div>`, 380);
+}
+
+/* Redeem a Syll code (not an App Store offer code). Shown only while the server allows it. */
+function redeemSheet(done = false) {
+  const content = done ? `<div class="flex justify-end px-5 pt-1"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 flex flex-col items-center justify-center px-5 text-center"><img src="${SYLLIE}" alt="" class="w-[150px]">
+      <h2 class="h-sheet mt-3">Bạn đã là Premium!</h2><p class="mt-1.5 text-[15px] text-ink-600">Premium đến 23 tháng 12, 2026</p></div>
+    <div class="px-5 pb-10"><button class="btn btn-ink">Xong</button></div>`
+    : `<div class="flex justify-end px-5 pt-1"><span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 px-5"><h2 class="h-sheet">Nhập mã</h2><p class="mt-1.5 text-[15px] text-ink-600">Nhập mã bạn nhận được để mở khóa Syll Premium.</p>
+      <div class="mt-6 font-semibold text-[15px] mb-2">Mã</div><div class="field border-blue-500"><span class="font-semibold tracking-wide">SYLL-WELCOME</span></div></div>
+    <div class="px-5 pb-10"><button class="btn btn-ink">Đổi mã</button></div>`;
+  return sheetOver(paywallPlans(), content, 380);
+}
+
+/* Interstitial ad after the results screen closes (every N sessions, free plan only). Drawn by the AdMob SDK. */
+function adInterstitial() {
+  return `<div class="absolute inset-0 bg-ink-950 text-white flex flex-col">${status()}
+    <div class="flex justify-between items-center px-5 pt-2"><span class="pill bg-white/15 text-white">Quảng cáo</span><span class="w-9 h-9 rounded-full bg-white/15 grid place-items-center">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 grid place-items-center px-10 text-center text-white/60 text-[15px]">Nội dung quảng cáo của Google AdMob (SDK tự vẽ)</div></div>`;
 }
 
 /* ===================== FLOWS ===================== */
@@ -1726,6 +1914,68 @@ document.getElementById('flows').innerHTML = [
   ]),
   flow('flow-ranking', 'Luồng 5 · Xếp hạng', 'Một màn chính; báo cáo người chơi chuyển từ nhấn giữ sang nút ⋯ (chưa vẽ).', [
     frame('5.1', 'Xếp hạng tuần', ranking(), ['Segmented control gốc của iOS.', 'Top 1 số hạng màu Sun; dòng của bạn nền Blue 50.', 'Chưa có báo cáo người chơi: dòng không có nút ⋯.']),
+  ]),
+  flow('flow-premium', 'Luồng 6 · Premium & gói miễn phí', 'Gói miễn phí: một Collection (bộ lưu đầu tiên), tối đa 3 chủ đề, 150 từ mới, chấm phát âm trên máy (đúng/sai), một quảng cáo sau mỗi 3 buổi học. Premium bán qua App Store (tháng, năm); server quyết định ai là Premium. Paywall hai bước: so sánh, rồi chọn gói. <b>Màu nhận diện Premium: Grape</b> (ramp riêng, 50…950, Grape 500 = #7C4FF0), chỉ dùng cho Premium; Sun 400 là điểm lấp lánh (vương miện, nút Premium); gradient chữ ký Grape 500 → Coral 400.', [
+    frame('6.1', 'Paywall · so sánh', paywallCompare('words'), [
+      '<b>Màn duy nhất trong app được nhiều màu.</b> Vẫn là màn của Syll (chữ SF, card 2pt); màu đến từ bộ nhận diện Premium: khối Grape, điểm nhấn Sun, gradient Grape → Coral. Không serif, không Syllie.',
+      'Nền: trắng, phía trên là dải chuyển màu chéo Grape 100 → Grape 50 → Coral 100 ở độ đậm đầy đủ, mờ dần về trắng trước bảng. Giống ở 6.2.',
+      'Key visual: chồng thẻ từ vựng xếp quạt, không dùng Syllie. Ba thẻ màu đặc (Grape 500, Coral 400, Sun 400, cạnh dày tông 700) nghiêng sau một thẻ trắng viền 2pt ghi "unlimited", IPA và nghĩa "không giới hạn"; hai ✦ Sun nhỏ. Thẻ xòe ra khi mở màn (Reduce Motion: đứng yên).',
+      'Eyebrow "Syll Premium" Grape 700, tiêu đề h-display Ink; chữ "Premium" tô gradient chữ ký Grape 500 → Coral 400 (màu hai thẻ ngoài của key visual; Coral 400 thay Coral 300 để chữ đủ tương phản), không nền, có hiệu ứng lấp lánh như nút "Bắt đầu" ở Home (dải sáng nghiêng quét qua 1,4 s, chu kỳ 4 s; Reduce Motion: không quét). Một dòng phụ theo giới hạn vừa gặp.',
+      'Bảng so sánh theo cấu trúc của Brilliant, chất liệu của Syll: cột nhãn xếp từ có đến không: các quyền lợi gói Miễn phí cũng có (✓) ở trên, rồi đến những gì chỉ Premium có (✕); trong nhóm ✕, dòng giới hạn vừa gặp đứng đầu, chữ đậm, kèm "Miễn phí: 150 từ"; cột Miễn phí là dải Ink 50 bo góc trên, không có là ✕ trắng trên tròn Ink 200; cột Premium cao hơn, là khối Grape 500 đặc, phẳng (không cạnh dày), chữ "Premium" trắng, lòng trắng bo 13pt, mọi tick trong bảng (cả cột Miễn phí) cùng một kiểu: tròn Grape 500 phẳng (không cạnh), tick trắng. Không có dải gradient.',
+      'Chỉ nút chính ghim đáy, là nút Premium (Sun 400, nhãn Sun 900, vương miện, cạnh dày Sun 600): "Xem các gói".',
+    ]),
+    go('Xem các gói'),
+    frame('6.2', 'Paywall · chọn gói', paywallPlans(), [
+      'Chồng thẻ thu nhỏ ở trên; tiêu đề "Chọn gói Premium" (Premium tô gradient như 6.1) và "Học không giới hạn. Hủy bất cứ lúc nào."',
+      'Hai card gói (Hằng năm chọn sẵn). Khác ô lựa chọn mặc định của app: gói đang chọn là card nền Grape 50, viền 2pt Grape 500, tick tròn Grape 500 như trong bảng, không shadow; gói kia trắng viền 2pt Ink 200 với vòng tròn trống. Không dùng card nền tối. Giá/tháng to; gói năm thêm "12 tháng · tổng" và 12 tháng gói tháng gạch ngang; dùng thử là pill Grape 100, chữ Grape 800 (không dùng Green: Green là màu "đúng").',
+      'Mức tiết kiệm thật là pill Coral 500 "Tiết kiệm 52%" (chữ trắng, màu ưu đãi) vắt trên mép card gói năm; chỉ hiện khi gói năm rẻ hơn 12 tháng gói tháng (giá App Store).',
+      'Điều khoản gia hạn, "Khôi phục giao dịch", "Có mã?" (khi server bật), Điều khoản, Chính sách nằm trong nội dung; chỉ nút chính ghim đáy (nút Premium Sun, như 6.1): "Bắt đầu dùng thử miễn phí" hoặc "Đăng ký".',
+    ]),
+    go('Từ Luồng 1: hết từ miễn phí'),
+    frame('6.3', 'Trang chủ · hết từ miễn phí', homeFreeLimit(), [
+      'Như "đã học hết Collection" (1.1a), nhưng icon là vương miện Grape 600 nền Grape 50, "Bạn đã học hết 150 từ miễn phí", một dòng hướng dẫn.',
+      'Chữ "Premium" trong dòng mô tả dùng cùng kiểu với paywall (gradient + lấp lánh).',
+      'Nút Blue "Ôn N từ" (không có từ đến hạn thì "Luyện tập"), nút Premium "Dùng Premium" mở 6.1: màu đặc Sun 400, nhãn một màu Sun 900 (chữ và icon; không gradient trên nút), cạnh dày Sun 600, icon vương miện, không có hiệu ứng lấp lánh. Cùng nút ghim đáy của paywall; không nút nào khác màu Sun. Không gradient. Kiểu nút này chỉ dùng cho Premium (lối vào và nút mua). Không có ⓘ và không có dòng "Ôn thêm".',
+      'Còn ít từ miễn phí: card vẫn như 1.1, ⓘ có thêm dòng "Còn n/150 từ mới miễn phí".',
+    ]),
+    frame('6.4', 'Chủ đề · gói miễn phí', obTopicsFree(), [
+      'Nhãn đếm theo giới hạn: "Everyday · 3/3 chủ đề miễn phí". Không có "Chọn tất cả", chỉ "Bỏ chọn tất cả" khi đã chọn.',
+      'Đủ 3 chủ đề: các chip chưa chọn bị khóa, mờ 40% như control bị vô hiệu nhưng vẫn chạm được. Bỏ chọn một chủ đề thì chúng sáng lại ngay.',
+      'Chạm chip bị khóa: chip không đổi, mở 6.1 với dòng "Mọi bộ từ vựng và chủ đề" đứng đầu nhóm ✕. Cùng quy tắc ở Onboarding và sheet Trọng tâm.',
+      'Scope còn lại từ lúc Premium (quá 3 chủ đề) vẫn giữ; sheet Trọng tâm báo bằng chữ Coral, "Lưu" mờ tới khi bỏ bớt, kèm link "Dùng Premium".',
+    ]),
+    frame('6.4a', 'Trọng tâm · gói miễn phí', focusFree(), [
+      'Gói miễn phí giữ bộ từ vựng lưu đầu tiên (server trả <code>FREE_COLLECTION_LOCKED</code> cho bộ khác). Các bộ khác là chip bị khóa: mờ 40%, vẫn chạm được, mở 6.1 với dòng "Mọi bộ từ vựng và chủ đề" đứng đầu nhóm ✕ và dòng phụ "Gói miễn phí giữ bộ từ vựng bạn chọn đầu tiên."',
+      'Trong bộ đang giữ vẫn đổi chủ đề như 6.4. Onboarding không khóa: lần lưu đầu chọn bộ nào cũng được.',
+    ]),
+    frame('6.5', 'Đọc to · gói miễn phí', recordingFree(), [
+      'Chấm trên máy: chỉ đúng/sai, không có vòng điểm (giữ kết quả T7). Dưới micro là link Grape 600 có vương miện "Nhận điểm phát âm với Premium" mở 6.1.',
+      'Máy không nhận dạng được giọng nói: dòng trạng thái "Thiết bị này chưa kiểm tra được giọng nói…", chỉ còn "Tiếp tục". Luyện nói vẫn không ảnh hưởng tiến độ.',
+    ]),
+    frame('6.6', 'Hồ sơ · gói miễn phí', profile('free'), [
+      'Khối tài khoản chỉ có tên và "Sửa" (không có pill gói). Ngay dưới nó luôn là khối về gói, mỗi thông tin chỉ hiện một lần.',
+      'Chưa Premium thì luôn có card "Nâng cấp Premium" ngay dưới khối tài khoản, trên mọi phần khác, nền là wash của paywall (Grape 100 → Grape 50 → Coral 100, chéo), viền 2pt Grape 200, huy hiệu tròn Grape 500 có vương miện Sun 400 trước tiêu đề Ink, một dòng quyền lợi Ink 700, số từ miễn phí đã dùng với thanh Grape 500 trên rãnh trắng, nút Premium Sun "Nâng cấp Premium" mở 6.1. Không dùng khối Grape đặc (quá gắt cho Hồ sơ): nền mềm để nút vàng là điểm nổi nhất, và chạm vào thì paywall mở ra cùng dải màu.',
+      'Card chỉ có một thao tác là nút "Nâng cấp Premium" (mở 6.1). Khôi phục giao dịch và nhập mã nằm cuối paywall 6.2, không nhét vào card. Không có nút đóng: card chỉ mất khi server xác nhận Premium.',
+      'Premium không nằm trong Cài đặt: Cài đặt chỉ giữ thiết lập của app.',
+    ]),
+    frame('6.6a', 'Hồ sơ · Premium', profile('premium'), [
+      'Premium: ở đúng chỗ của card nâng cấp là card trạng thái gọn một dòng, không có tiêu đề mục, nhẹ vì không còn bán hàng: nền Grape 50, viền 2pt Grape 200, huy hiệu tròn Grape 500 có vương miện Sun 400, chữ "Premium" Ink (không gradient, không lấp lánh), ngày gia hạn/hết hạn, dấu ›. Nền Grape 50 trơn, không có Coral như 6.6: card trạng thái, không phải card mời. Chạm mở sheet 6.6b; không có thao tác nào khác trên Hồ sơ.',
+    ]),
+    go('Chạm "Gói của bạn"'),
+    frame('6.6b', 'Gói của bạn (sheet)', planSheet(), [
+      'Sheet vừa nội dung: tiêu đề "Gói của bạn", card thông tin (gói, ngày gia hạn hoặc hết hạn, giá từ App Store), một dòng về việc hủy trong App Store.',
+      'Thao tác: nút viền "Quản lý gói đăng ký" ghim đáy (mở sheet quản lý của App Store), hai link "Khôi phục giao dịch" và "Nhập mã" (khi server bật). Premium do mã đổi: ghi "Hết hạn" thay cho "Gia hạn", không có giá và nút quản lý.',
+    ]),
+    go('"Có mã?" ở 6.2 hoặc "Nhập mã" ở 6.6b'),
+    frame('6.7', 'Nhập mã (sheet)', redeemSheet(), ['Sheet vừa nội dung: tiêu đề, một dòng, ô "Mã" (chữ in hoa, không tự sửa), nút "Đổi mã". Lỗi (sai, hết hạn, hết lượt, đã dùng) hiện ngay dưới ô.']),
+    go('Đổi mã thành công'),
+    frame('6.7a', 'Đã đổi mã', redeemSheet(true), ['Syllie vui, "Bạn đã là Premium!", ngày hết hạn; nút "Xong".']),
+    go('Sau buổi học thứ 3'),
+    frame('6.8', 'Quảng cáo', adInterstitial(), [
+      'Gói miễn phí: một quảng cáo toàn màn hình (Google AdMob) sau mỗi N buổi học hoàn thành (server cấu hình, mặc định 3). Hiện khi đóng màn Tổng kết và quay về Trang chủ, không bao giờ trong buổi học hay lúc mở app.',
+      'Không hiện khi người học vừa chọn bước tiếp theo ở màn kết thúc (chọn chủ đề, luyện tập, Premium). Quảng cáo chưa tải xong thì để lần sau.',
+      'Lần đầu: form đồng ý (UMP) nếu luật yêu cầu, rồi hộp thoại App Tracking Transparency của iOS. Premium không có quảng cáo.',
+    ]),
   ]),
 ].join('');
 

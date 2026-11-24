@@ -5,7 +5,11 @@ enum RecordingScoring: Equatable {
     /// Upload the audio to `recording-assess`; the receipt is committed.
     case backend
     /// Transcribe on the device and compare with the task's `acceptedResponses`; each take commits as `transcribed`.
+    /// Falls back to the backend when the task has no reference text or recognition can't run.
     case onDevice
+    /// The free tier (backend FRONTEND_FLOW §16): like `onDevice`, but never uploads, since the backend answers
+    /// `403 PREMIUM_REQUIRED`. Without recognition the take can't be checked and the task commits as `unavailable`.
+    case onDeviceOnly
 }
 
 /// Instant feedback only: the backend re-checks the committed transcript the same way.

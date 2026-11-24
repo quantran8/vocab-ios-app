@@ -169,6 +169,13 @@ final class StubVocabAPI: VocabAPI, @unchecked Sendable {
         try assessResult.get()
     }
 
+    var syncResults: [Result<PremiumPlan, APIError>] = []
+    private(set) var syncedTransactions: [String] = []
+    func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan {
+        syncedTransactions.append(signedTransaction)
+        return try (syncResults.isEmpty ? .failure(.transport) : syncResults.removeFirst()).get()
+    }
+
     func commitSession(sessionID: String, body: Data) async throws -> CommitResponse {
         commitBodies.append(body)
         return try commitResults.removeFirst().get()

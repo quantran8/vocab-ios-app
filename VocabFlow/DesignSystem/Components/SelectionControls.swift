@@ -106,6 +106,8 @@ struct TopicChip: View {
     var isFinished = false
     /// Fill when selected; `.surface` on a Blue 50 panel.
     var selectedFill: Color = .selectedSurface
+    /// Past the free topic limit: dimmed like a disabled control, but still tappable so the caller can offer Premium.
+    var isLocked = false
     let action: () -> Void
     @Environment(\.motion) private var motion
 
@@ -138,11 +140,14 @@ struct TopicChip: View {
                 }
             }
             .chipSurface(isSelected: isSelected, selectedFill: selectedFill)
+            .opacity(isLocked ? 0.4 : 1)
             .frame(minHeight: Spacing.minTouchTarget)
             .animation(motion.animation(MotionTokens.press), value: isSelected)
+            .animation(motion.animation(MotionTokens.press), value: isLocked)
         }
         .buttonStyle(PressScaleButtonStyle())
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityHint(isLocked ? Text("Get Premium") : Text(verbatim: ""))
     }
 }
 

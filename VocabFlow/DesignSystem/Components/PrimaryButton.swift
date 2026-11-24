@@ -38,7 +38,8 @@ struct PrimaryButton: View {
                     .multilineTextAlignment(.center)
             }
             Button(action: action) {
-                ActionButtonLabel(title: title, systemImage: systemImage)
+                // The Premium button's crown leads its label.
+                ActionButtonLabel(title: title, systemImage: systemImage, iconLeading: kind == .premium)
             }
             .buttonStyle(ActionButtonStyle(kind: kind ?? .app, shimmers: shimmers))
             .disabled(!isEnabled)
@@ -164,6 +165,8 @@ struct ActionButtonStyle: ButtonStyle {
         case danger
         /// Ink text only: no fill, border or edge.
         case plain
+        /// Sun 400 on Sun 600 with a one-colour Sun 900 label: Premium only (entry points and the paywall's action).
+        case premium
     }
 
     enum Size { case regular, small }
@@ -203,7 +206,7 @@ struct ActionButtonStyle: ButtonStyle {
 
     private var depth: CGFloat {
         switch kind {
-        case .practice, .success, .retry, .app: Spacing.buttonDepth
+        case .practice, .success, .retry, .app, .premium: Spacing.buttonDepth
         case .outline3D: Spacing.tileDepth
         case .outline, .danger, .plain: 0
         }
@@ -215,6 +218,7 @@ struct ActionButtonStyle: ButtonStyle {
         switch kind {
         case .practice, .success, .retry, .app, .danger: return .white
         case .outline, .outline3D, .plain: return .ink
+        case .premium: return .sun900
         }
     }
 
@@ -228,6 +232,7 @@ struct ActionButtonStyle: ButtonStyle {
         case .app: return .primaryAction
         case .outline, .outline3D: return .surface
         case .plain: return .clear
+        case .premium: return .sun400
         }
     }
 
@@ -238,13 +243,14 @@ struct ActionButtonStyle: ButtonStyle {
         case .retry: return .errorActionDepth
         case .app: return .primaryDepth
         case .outline3D: return .tileDepth
+        case .premium: return .sun600
         case .outline, .danger, .plain: return .clear
         }
     }
 }
 
-/// A slanted band of light crossing the button, then a pause. Decorative only.
-private struct ShimmerSweep: View {
+/// A slanted band of light crossing the button (or the paywall's "Premium" word), then a pause. Decorative only.
+struct ShimmerSweep: View {
     /// Horizontal unit-point range that starts and ends with the band fully off the button.
     private static let travel: ClosedRange<Double> = -0.6...1.3
     private static let bandWidth: Double = 0.3
@@ -298,6 +304,7 @@ enum PinnedBarInset {
         PrimaryButton(title: "Continue", kind: .success) {}
         PrimaryButton(title: "Try again", kind: .retry) {}
         PrimaryButton(title: "Save", kind: .app) {}
+        PrimaryButton(title: "Get Premium", systemImage: "crown.fill", kind: .premium) {}
         SecondaryButton(title: "Log out", kind: .outline) {}
         DestructiveButton(title: "Delete account") {}
         PrimaryButton(title: "Check", isEnabled: false) {}

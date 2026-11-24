@@ -9,6 +9,8 @@ struct AppRootView: View {
     @Environment(LearnerStore.self) private var learner
     @Environment(PracticeSessionStore.self) private var practice
     @Environment(ChallengeRunStore.self) private var challengeRun
+    @Environment(PurchaseStore.self) private var purchases
+    @Environment(AdStore.self) private var ads
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shellTab: MainTab = .home
     @State private var profilePath: [ShellPage] = []
@@ -43,6 +45,13 @@ struct AppRootView: View {
         .onChange(of: isLaunchLoading) { _, _ in endSplashIfReady(motion) }
         .task(id: canLoadLearner) {
             if canLoadLearner { await learner.load() }
+        }
+        // Once the account is known: a purchase made signed out or on another device reaches it.
+        .task(id: learner.profile?.id) {
+            if learner.profile != nil {
+                await purchases.syncEntitlements()
+                await ads.prepare()
+            }
         }
         .task(id: auth.phase) {
             // The next account starts on Home.
@@ -188,4 +197,6 @@ private enum RouteID: Hashable {
         .environment(ChallengeMapStore(api: OfflineVocabAPI()))
         .environment(RankingStore(api: OfflineVocabAPI()))
         .environment(ChallengeRunStore(api: OfflineVocabAPI(), haptics: NoOpFeedback(), defaults: nil))
+        .environment(PurchaseStore(client: NoStoreKit(), api: OfflineVocabAPI(), learner: LearnerStore(api: OfflineVocabAPI(), plan: plan)))
+        .environment(AdStore(provider: NoInterstitialAds(), learner: LearnerStore(api: OfflineVocabAPI(), plan: plan), defaults: nil))
 }

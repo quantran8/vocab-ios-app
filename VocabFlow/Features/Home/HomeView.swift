@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var isChoosingReviewLoad = false
     @State private var isShowingLessonInfo = false
     @State private var showsAllTopics = false
+    @State private var paywallReason: PaywallReason?
 
     var body: some View {
         let due = learner.home?.dueCount ?? 0
@@ -58,12 +59,16 @@ struct HomeView: View {
                 .presentationBackground(Color.canvas)
             }
         }
+        .sheet(item: $paywallReason) { reason in
+            PaywallView(reason: reason)
+        }
     }
 
     /// The footer offers reviews beyond this daily session’s allocation.
     /// Out of new words, the Daily card's own button already reviews.
     private func showsExtraReview(_ status: DailyLessonStatus) -> Bool {
         if case .exhaustedNoCustom = status.scope { return false }
+        if status.freeWordsUsedUp != nil { return false }
         return status.backlog > status.sessionReviews
     }
 
@@ -124,7 +129,7 @@ struct HomeView: View {
                     Eyebrow(text: "Today’s lesson")
                         .accessibilityAddTraits(.isHeader)
                     // Full touch target without making the eyebrow row taller.
-                    if status.scope != .exhaustedNoCustom {
+                    if status.scope != .exhaustedNoCustom, status.freeWordsUsedUp == nil {
                         lessonInfoButton(status)
                             .padding(.vertical, -(Spacing.minTouchTarget - Spacing.l) / 2)
                     }
@@ -140,6 +145,19 @@ struct HomeView: View {
                              : Text("You’ve learned all your selected topics"))
                                 .font(Typography.screenTitle.weight(.heavy))
                             Text("Your learned words will still be reviewed. Choose another collection to learn new words.")
+                                .font(Typography.secondary)
+                                .foregroundStyle(Color.bodyInk)
+                        }
+                    }
+                    .padding(.top, Spacing.s)
+                } else if let max = status.freeWordsUsedUp {
+                    HStack(alignment: .top, spacing: Spacing.s) {
+                        IconBadge(systemImage: "crown", tone: .premium)
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            Text("You’ve learned your \(max) free words")
+                                .font(Typography.screenTitle.weight(.heavy))
+                            // "Premium" in the paywall's signature gradient.
+                            Text("Your learned words will still be reviewed. Upgrade to \(Text(verbatim: "Premium").foregroundStyle(PremiumGradient.accent)) to keep learning new words.")
                                 .font(Typography.secondary)
                                 .foregroundStyle(Color.bodyInk)
                         }
@@ -364,6 +382,8 @@ struct HomeView: View {
             lines.append(Text("\(status.newWords) new words today, balanced with your reviews"))
         case .scopeLimited:
             if case .ok = status.scope { lines.append(Text("Only \(status.newWords) new words left today in \(topicNames)")) }
+        case .freeLimit(let remaining, let max):
+            lines.append(Text("\(remaining) of your \(max) free new words left"))
         case .none:
             break
         }
@@ -384,6 +404,15 @@ struct HomeView: View {
                 }
                 // Every topic of the collection is already chosen: only another collection brings new words.
                 SecondaryButton(title: plan.current.hasAllTopics ? "Choose another collection" : "Choose more topics", action: onChooseTopics)
+            }
+        } else if let max = status.freeWordsUsedUp {
+            VStack(spacing: Spacing.s) {
+                if due > 0 {
+                    PrimaryButton(title: "Review \(status.sessionReviews) words", shimmers: true, kind: .practice) { startReviewOnly() }
+                } else {
+                    PrimaryButton(title: "Practise", shimmers: true, kind: .practice, action: onOpenRandomPractice)
+                }
+                PrimaryButton(title: "Get Premium", systemImage: "crown.fill", kind: .premium) { paywallReason = .words(max: max) }
             }
         } else {
             PrimaryButton(title: due > 0 ? "Start" : "Start Flow", shimmers: true, kind: .practice) { start(.daily) }
@@ -416,6 +445,8 @@ struct DailyLessonStatus: Equatable {
         case autoBalanced
         /// Fewer new words than chosen because that's all the scope holds.
         case scopeLimited
+        /// The free plan allows only `remaining` more new words (of `max`).
+        case freeLimit(remaining: Int, max: Int)
     }
 
     let newWords: Int
@@ -443,8 +474,17 @@ struct DailyLessonStatus: Equatable {
         case .userOverride?: reason = .userOverride(until: load?.override?.mode == .untilDate ? load?.override?.until : nil)
         case .autoBalanced?: reason = .autoBalanced
         case .scopeLimited?: reason = .scopeLimited
+        case .freeLimit?:
+            let allowance = home?.freeAllowance
+            reason = .freeLimit(remaining: allowance?.remaining ?? newWords, max: allowance?.max ?? 0)
         default: reason = nil
         }
+    }
+
+    /// The free plan's limit when its new words are all used: the card offers reviews and Premium instead.
+    var freeWordsUsedUp: Int? {
+        guard case .freeLimit(_, let max) = reason, newWords == 0 else { return nil }
+        return max
     }
 }
 

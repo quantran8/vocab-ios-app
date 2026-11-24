@@ -17,6 +17,8 @@ struct VocabFlowApp: App {
     @State private var challengeMap: ChallengeMapStore
     @State private var challengeRun: ChallengeRunStore
     @State private var ranking: RankingStore
+    @State private var purchases: PurchaseStore
+    @State private var ads: AdStore
     private let sounds: SoundEffects
 
     init() {
@@ -34,6 +36,18 @@ struct VocabFlowApp: App {
         let auth = AuthStore(api: api)
         let learner = LearnerStore(api: api, plan: plan)
         let practice = PracticeSessionStore(api: api, audio: AudioClipPlayer(), recorder: VoiceRecorder(), haptics: haptics, sounds: sounds)
+        // Free learners are scored on the device; read per session, since the plan can change in between.
+        practice.scoringForSession = { [learner] in learner.recordingScoring }
+        let purchases = PurchaseStore(client: LiveStoreKit(), api: api, learner: learner)
+        // Renewals, Ask to Buy and unfinished transactions arrive here from launch on.
+        purchases.listen()
+        #if canImport(GoogleMobileAds)
+        let adProvider: InterstitialAdProviding = AdMobInterstitials() ?? NoInterstitialAds()
+        #else
+        let adProvider: InterstitialAdProviding = NoInterstitialAds()
+        #endif
+        let ads = AdStore(provider: adProvider, learner: learner)
+        practice.onSessionFinished = { [ads] in ads.sessionFinished() }
         let onboarding = OnboardingStore(plan: plan, api: api, haptics: haptics)
         let customWords = CustomWordStore(api: api, audio: AudioClipPlayer())
         customWords.onRoadmapChanged = { [learner] in await learner.refresh() }
@@ -80,6 +94,8 @@ struct VocabFlowApp: App {
         _challengeMap = State(initialValue: challengeMap)
         _challengeRun = State(initialValue: challengeRun)
         _ranking = State(initialValue: ranking)
+        _purchases = State(initialValue: purchases)
+        _ads = State(initialValue: ads)
         _store = State(initialValue: store)
         _sandbox = State(initialValue: TemplateSandboxStore(
             templates: repository.loadLabOrFail().templates,
@@ -106,6 +122,8 @@ struct VocabFlowApp: App {
                 .environment(challengeMap)
                 .environment(challengeRun)
                 .environment(ranking)
+                .environment(purchases)
+                .environment(ads)
                 .environment(\.soundEffects, sounds)
         }
     }

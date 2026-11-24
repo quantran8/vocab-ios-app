@@ -262,6 +262,36 @@ final class LearnerStore {
         profile?.reviewPauses?.contains { $0.collectionId == collectionID } ?? false
     }
 
+    // MARK: Premium (FRONTEND_FLOW §16)
+
+    /// Nil while nothing limits the learner: Premium, freemium off on the server, or an older backend.
+    var freeLimits: PremiumPlan.Limits? { profile?.plan?.limits }
+    var isPremium: Bool { profile?.plan?.isPremium == true }
+    /// Premium can be bought: the server runs freemium, or the learner already has it (to manage it).
+    var offersPremium: Bool { profile?.features?.freemiumEnabled == true || isPremium }
+    var canRedeem: Bool { profile?.features?.redeemEnabled == true }
+    /// The most topics the learner may choose; nil means no limit.
+    var maxTopics: Int? { freeLimits?.maxTopics }
+    /// The collection a limited learner is kept on: the backend answers `FREE_COLLECTION_LOCKED` to any other.
+    /// Nil when nothing limits the learner. Onboarding doesn't ask: the first save picks freely.
+    func lockedCollectionID(saved: String) -> String? { freeLimits == nil ? nil : saved }
+    /// Free learners are scored on the device; Premium by the backend.
+    var recordingScoring: RecordingScoring { freeLimits == nil ? .backend : .onDeviceOnly }
+    /// The `appAccountToken` StoreKit purchases carry, so App Store notifications find this account.
+    var accountToken: UUID? { profile.flatMap { UUID(uuidString: $0.id) } }
+
+    /// Applies the plan a purchase, restore or redeem answered with, then re-reads what it unlocks.
+    func adoptPlan(_ premium: PremiumPlan) async {
+        profile?.plan = premium
+        async let profile: Void = reloadProfile()
+        async let home: Void = refreshHome()
+        _ = await (profile, home)
+    }
+
+    func redeem(code: String) async throws {
+        await adoptPlan(try await api.redeem(code: code))
+    }
+
     private func refreshHome() async {
         if let home = try? await api.learnHome() { self.home = home }
     }

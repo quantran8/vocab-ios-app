@@ -28,6 +28,17 @@ struct PracticeSessionView: View {
                 }
                 closeButton
             }
+        case .empty where store.isDaily && store.newWords?.withheldReason == .freeLimit:
+            // The free plan's new words are used up and nothing is due.
+            StatusScreen(title: "You’ve learned all your free words", message: Text("Upgrade to Premium to keep learning new words. You can still practise the words you learned.")) {
+                PrimaryButton(title: "Get Premium", systemImage: "sparkles") {
+                    motion.perform(MotionTokens.transition) { store.close(followUp: .upgrade) }
+                }
+                SecondaryButton(title: "Practise") {
+                    motion.perform(MotionTokens.transition) { store.close(followUp: .randomPractice) }
+                }
+                closeButton
+            }
         case .empty:
             StatusScreen(title: "Nothing to practise right now", message: emptyMessage) {
                 closeButton

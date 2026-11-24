@@ -22,6 +22,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6FF8A58A30B580A900ACDD11 /* Syll.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Syll.storekit; sourceTree = "<group>"; };
 		A10000000000000000000030 /* VocabFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VocabFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000031 /* VocabFlowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VocabFlowTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -62,6 +63,7 @@
 		A10000000000000000000002 = {
 			isa = PBXGroup;
 			children = (
+				6FF8A58A30B580A900ACDD11 /* Syll.storekit */,
 				A10000000000000000000040 /* VocabFlow */,
 				A10000000000000000000041 /* VocabFlowTests */,
 				A10000000000000000000003 /* Products */,
@@ -343,6 +345,7 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Syll connects to your development server on the local network.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Syll records you reading a word aloud to score your pronunciation. Audio is not stored.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Syll turns your reading into text on this device to check what you said.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Syll uses this to show you more relevant ads on the free plan. Premium has no ads.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -378,6 +381,7 @@
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Syll connects to your development server on the local network.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Syll records you reading a word aloud to score your pronunciation. Audio is not stored.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Syll turns your reading into text on this device to check what you said.";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "Syll uses this to show you more relevant ads on the free plan. Premium has no ads.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

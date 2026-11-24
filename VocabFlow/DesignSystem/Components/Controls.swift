@@ -152,7 +152,7 @@ struct IconButtonLabel: View {
 
 /// 40 pt rounded-square icon on a tinted fill, leading a row or card.
 struct IconBadge: View {
-    enum Tone { case neutral, accent, success, error, reward, onAccent }
+    enum Tone { case neutral, accent, success, error, reward, onAccent, premium }
 
     let systemImage: String
     var tone: Tone = .neutral
@@ -175,6 +175,7 @@ struct IconBadge: View {
         case .error: (.coral50, .coral600)
         case .reward: (.sun50, .sun600)
         case .onAccent: (.white, .blue600)
+        case .premium: (.grape50, .grape600)
         }
     }
 }
@@ -265,11 +266,17 @@ extension SectionTitle {
 struct TextLink: View {
     let title: LocalizedStringKey
     var color: Color = .link
+    var systemImage: String?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            HStack(spacing: Spacing.xs - 2) {
+                if let systemImage {
+                    Image(systemName: systemImage).accessibilityHidden(true)
+                }
+                Text(title)
+            }
                 .font(Typography.secondary.weight(.semibold))
                 .foregroundStyle(color)
                 .frame(minHeight: Spacing.minTouchTarget)

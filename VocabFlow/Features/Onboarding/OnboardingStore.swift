@@ -162,13 +162,16 @@ final class OnboardingStore {
         haptics.selectionChanged()
     }
 
-    func toggleTopic(_ id: String) {
-        draft.toggleTopic(id)
+    /// False when the free plan's `limit` stopped the topic being added.
+    @discardableResult
+    func toggleTopic(_ id: String, limit: Int? = nil) -> Bool {
+        guard draft.toggleTopic(id, limit: limit) else { return false }
         haptics.selectionChanged()
+        return true
     }
 
-    func toggleAllTopics() {
-        draft.toggleAllTopics()
+    func toggleAllTopics(limit: Int? = nil) {
+        draft.toggleAllTopics(limit: limit)
         haptics.selectionChanged()
     }
 

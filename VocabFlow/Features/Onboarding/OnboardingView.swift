@@ -321,6 +321,8 @@ private struct CollectionStep: View {
 
 private struct TopicsStep: View {
     @Environment(OnboardingStore.self) private var store
+    @Environment(LearnerStore.self) private var learner
+    @State private var paywallReason: PaywallReason?
 
     var body: some View {
         StepPage {
@@ -333,13 +335,21 @@ private struct TopicsStep: View {
                 TopicPicker(
                     collection: collection,
                     selectedIDs: store.draft.topicIDs,
-                    onToggleTopic: { store.toggleTopic($0) },
-                    onToggleAll: { store.toggleAllTopics() },
+                    onToggleTopic: { id in
+                        if !store.toggleTopic(id, limit: learner.maxTopics), let max = learner.maxTopics {
+                            paywallReason = .topics(max: max)
+                        }
+                    },
+                    onToggleAll: { store.toggleAllTopics(limit: learner.maxTopics) },
                     countsSelection: true,
-                    showsProgress: false
+                    showsProgress: false,
+                    maxTopics: learner.maxTopics
                 )
                 .padding(.top, Spacing.l)
             }
+        }
+        .sheet(item: $paywallReason) { reason in
+            PaywallView(reason: reason)
         }
     }
 }

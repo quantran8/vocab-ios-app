@@ -64,6 +64,9 @@ struct UserProfile: Decodable, Equatable {
     var usernameChangeAvailableAt: Date? = nil
     var rankingIntroSeen: Bool? = nil
     var tierSummary: TierSummary? = nil
+    /// Premium and the free-tier limits (FRONTEND_FLOW §16). Nil from an older backend: nothing is limited.
+    var plan: PremiumPlan? = nil
+    var features: AppFeatures? = nil
 
     var hasFinishedOnboarding: Bool { proficiencyLevel != nil && scope != nil }
 }
@@ -171,6 +174,8 @@ struct LearnHome: Decodable, Equatable {
     /// Nil from a backend that predates scope completion.
     var scope: ScopeState? = nil
     var reviewLoad: ReviewLoad? = nil
+    /// Nil unless the free tier limits new words.
+    var freeAllowance: FreeAllowance? = nil
 
     var checkpointProgress: Double {
         guard checkpointSessionsRequired > 0 else { return 0 }
@@ -219,6 +224,8 @@ enum NewWordReason: String, LenientEnum {
     case scopeLimited = "scope_limited"
     case scopeExhausted = "scope_exhausted"
     case reviewOnly = "review_only"
+    /// The free tier's new words are used up (or are the tightest limit). Premium lifts it.
+    case freeLimit = "free_limit"
     case unknown
     static let fallback = NewWordReason.unknown
 }
@@ -449,6 +456,12 @@ protocol VocabAPI: Sendable {
     func markRankingIntroSeen() async throws
     func updatePublicProfile(_ update: PublicProfileUpdate) async throws -> PublicProfile
     func reportLearner(username: String, reason: ReportReason) async throws
+
+    // Premium (FRONTEND_FLOW §16).
+    /// Sends a verified StoreKit transaction (`jwsRepresentation`); the server answers with the plan it now grants.
+    func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan
+    /// Only while `features.redeemEnabled`; otherwise the server answers 404.
+    func redeem(code: String) async throws -> PremiumPlan
 }
 
 /// Older test doubles and previews keep compiling: these calls just fail offline.
@@ -468,6 +481,9 @@ extension VocabAPI {
     func markRankingIntroSeen() async throws {}
     func updatePublicProfile(_ update: PublicProfileUpdate) async throws -> PublicProfile { throw APIError.transport }
     func reportLearner(username: String, reason: ReportReason) async throws {}
+
+    func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan { throw APIError.transport }
+    func redeem(code: String) async throws -> PremiumPlan { throw APIError.transport }
 }
 
 extension VocabAPI {
@@ -765,6 +781,17 @@ struct LiveVocabAPI: VocabAPI {
         _ = try await client.sendRaw(try post("ranking/reports", LearnerReport(username: username, reason: reason)))
     }
 
+    func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan {
+        var request = try post("me/subscriptions/appstore", AppStoreSync(signedTransaction: signedTransaction))
+        // The server applies it idempotently, so a retry is safe.
+        request.retries = Self.commitRetries
+        return try await client.send(request)
+    }
+
+    func redeem(code: String) async throws -> PremiumPlan {
+        try await client.send(try post("me/redeem", RedeemRequest(code: code)))
+    }
+
     /// A POST whose body is `{}`.
     private func emptyPost(_ path: String) -> APIRequest {
         var request = APIRequest(method: .post, path: path)
@@ -852,6 +879,14 @@ struct LiveVocabAPI: VocabAPI {
     private struct LearnerReport: Encodable {
         let username: String
         let reason: ReportReason
+    }
+
+    private struct AppStoreSync: Encodable {
+        let signedTransaction: String
+    }
+
+    private struct RedeemRequest: Encodable {
+        let code: String
     }
 }
 

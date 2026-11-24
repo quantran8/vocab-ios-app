@@ -10,6 +10,8 @@ struct ProfileView: View {
     @Environment(RankingStore.self) private var ranking
     @State private var saveError: String?
     @State private var isEditingPublicProfile = false
+    @State private var paywallReason: PaywallReason?
+    @State private var isShowingPlan = false
 
     var body: some View {
         let preferences = plan.current
@@ -28,6 +30,9 @@ struct ProfileView: View {
 
                 identity
                     .padding(.top, Spacing.l)
+
+                planCard
+                    .padding(.top, Spacing.screenGutter)
 
                 if let card = tierCard {
                     ProfileTierCard(summary: card.summary, next: card.next)
@@ -65,6 +70,23 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $isEditingPublicProfile) {
             EditPublicProfileSheet()
+        }
+        .sheet(item: $paywallReason) { reason in
+            PaywallView(reason: reason)
+        }
+        .sheet(isPresented: $isShowingPlan) {
+            PremiumPlanSheet()
+        }
+    }
+
+    /// Right under the account block, shown once (6.6 / 6.6a): Premium learners get their plan's status card,
+    /// everyone else the upgrade card while the server sells Premium. Premium isn't in Settings.
+    @ViewBuilder
+    private var planCard: some View {
+        if learner.isPremium {
+            ProfilePremiumCard(plan: learner.profile?.plan) { isShowingPlan = true }
+        } else if learner.offersPremium {
+            ProfileUpgradeCard(limits: learner.freeLimits) { paywallReason = .general }
         }
     }
 

@@ -360,6 +360,78 @@
           }
         }
       }
+    },
+    "NSUserTrackingUsageDescription" : {
+      "comment" : "Privacy - Tracking Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Syll uses this to show you more relevant ads on the free plan. Premium has no ads."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll dùng quyền này để hiển thị quảng cáo phù hợp hơn trong gói miễn phí. Gói Premium không có quảng cáo."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll इसका उपयोग मुफ़्त प्लान में आपको ज़्यादा प्रासंगिक विज्ञापन दिखाने के लिए करता है। Premium में कोई विज्ञापन नहीं है।"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll usa esto para mostrarte anuncios más relevantes en el plan gratuito. Premium no tiene anuncios."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll は無料プランでより関連性の高い広告を表示するためにこれを使います。Premium には広告がありません。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Syll usa isso para mostrar anúncios mais relevantes no plano gratuito. O Premium não tem anúncios."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll은 무료 플랜에서 더 관련성 높은 광고를 보여 주기 위해 이 권한을 사용해요. Premium에는 광고가 없어요."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll 會使用此權限在免費方案中顯示更相關的廣告。Premium 沒有廣告。"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll ใช้สิ่งนี้เพื่อแสดงโฆษณาที่เกี่ยวข้องกับคุณมากขึ้นในแพ็กเกจฟรี Premium ไม่มีโฆษณา"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستخدم Syll هذا لعرض إعلانات أكثر صلة بك في الخطة المجانية. لا توجد إعلانات في Premium."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syll memakai ini untuk menampilkan iklan yang lebih relevan di paket gratis. Premium tanpa iklan."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

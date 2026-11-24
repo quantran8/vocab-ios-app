@@ -42,6 +42,7 @@ enum PlanSheet: String, Identifiable {
 struct MainShellView: View {
     @Environment(LearningPlanStore.self) private var plan
     @Environment(LearnerStore.self) private var learner
+    @Environment(AdStore.self) private var ads
     @Environment(ChallengeMapStore.self) private var challengeMap
     @Environment(ChallengeRunStore.self) private var challengeRun
     @Environment(PracticeSessionStore.self) private var practice
@@ -55,6 +56,7 @@ struct MainShellView: View {
     @State private var wordsPath: [ShellPage] = []
     @State private var rankingPath: [ShellPage] = []
     @State private var planSheet: PlanSheet?
+    @State private var paywallReason: PaywallReason?
     @State private var toast: String?
     @State private var toastToken = UUID()
 
@@ -78,12 +80,17 @@ struct MainShellView: View {
         }
         .tint(Color.interactive)
         .minimizingTabBarOnScroll()
+        .sheet(item: $paywallReason) { reason in
+            PaywallView(reason: reason)
+        }
         .task {
             // A session screen may have asked for the next step (choose topics, practise) as it closed.
             switch practice.consumeFollowUp() {
             case .chooseTopics?: openFocus()
             case .randomPractice?: openRandomPractice()
-            case nil: break
+            case .upgrade?: paywallReason = .words(max: learner.freeLimits?.maxNewWords ?? 0)
+            // Between sessions only, and never over a next step the learner just picked.
+            case nil: await ads.presentIfDue()
             }
             async let learnerRefresh: Void = learner.refresh()
             async let mapRefresh: Void = challengeMap.refresh()

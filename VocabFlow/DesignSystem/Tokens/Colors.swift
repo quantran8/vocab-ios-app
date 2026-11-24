@@ -65,6 +65,20 @@ extension Color {
     static let sun900 = Color(hex: 0x5C3E08)
     static let sun950 = Color(hex: 0x301F03)
 
+    /// Grape: the Premium identity only (paywall, Premium entry points, plan cards). No other screen uses it;
+    /// Sun 400 is its spark (crown, Premium button).
+    static let grape50 = Color(hex: 0xF4F0FF)
+    static let grape100 = Color(hex: 0xE8DFFF)
+    static let grape200 = Color(hex: 0xD2C0FF)
+    static let grape300 = Color(hex: 0xB497FF)
+    static let grape400 = Color(hex: 0x9670FA)
+    static let grape500 = Color(hex: 0x7C4FF0)
+    static let grape600 = Color(hex: 0x6838D6)
+    static let grape700 = Color(hex: 0x5329AE)
+    static let grape800 = Color(hex: 0x3F2085)
+    static let grape900 = Color(hex: 0x2C175C)
+    static let grape950 = Color(hex: 0x1A0D38)
+
     // Collection marks (the HTML's `MARK`): each collection's dot and progress bar.
     static let markEveryday = Color(hex: 0x2F9BF4)
     static let markIELTS = Color(hex: 0xF0458A)

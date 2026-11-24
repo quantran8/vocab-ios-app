@@ -76,9 +76,25 @@ struct LearningPreferences: Codable, Equatable {
         topicIDs = []
     }
 
-    mutating func toggleTopic(_ id: String) {
-        guard collection?.topicIDs.contains(id) == true else { return }
-        if topicIDs.contains(id) { topicIDs.remove(id) } else { topicIDs.insert(id) }
+    /// Adds or removes a topic. With a `limit` (the free plan's `maxTopics`) it won't add past it and returns false,
+    /// so the caller can offer Premium. Removing always works, even above the limit (a lapsed Premium scope).
+    @discardableResult
+    mutating func toggleTopic(_ id: String, limit: Int? = nil) -> Bool {
+        guard collection?.topicIDs.contains(id) == true else { return true }
+        if topicIDs.contains(id) {
+            topicIDs.remove(id)
+        } else if let limit, topicIDs.count >= limit {
+            return false
+        } else {
+            topicIDs.insert(id)
+        }
+        return true
+    }
+
+    /// The free plan can't hold every topic of this collection, so "Select all" isn't offered.
+    func limitsTopics(_ limit: Int?) -> Bool {
+        guard let limit, let collection else { return false }
+        return limit < collection.topicIDs.count
     }
 
     var hasAllTopics: Bool {
@@ -87,7 +103,12 @@ struct LearningPreferences: Codable, Equatable {
     }
 
     /// "Select all" when some topics are missing, "Clear all" when all are selected.
-    mutating func toggleAllTopics() {
+    /// Under a topic limit that the collection exceeds, it only clears.
+    mutating func toggleAllTopics(limit: Int? = nil) {
+        if limitsTopics(limit) {
+            topicIDs = []
+            return
+        }
         topicIDs = hasAllTopics ? [] : collection?.topicIDs ?? []
     }
 

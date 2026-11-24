@@ -151,19 +151,30 @@ struct TopicPicker: View {
     var countsSelection = false
     /// Learned/total on each chip; off for a new account, where every topic reads 0.
     var showsProgress = true
+    /// The free plan's topic limit. When the collection has more topics, "Select all" gives way to the count
+    /// against the limit. Once the limit is reached the unselected chips dim (`TopicChip.isLocked`) but stay
+    /// tappable: the caller offers Premium.
+    var maxTopics: Int? = nil
 
     var body: some View {
         let hasAll = selectedIDs == collection.topicIDs
+        let selected = selectedIDs.intersection(collection.topicIDs).count
+        let limit = maxTopics.flatMap { $0 < collection.topics.count ? $0 : nil }
+        let atLimit = maxTopics.map { selectedIDs.count >= $0 } ?? false
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(alignment: .firstTextBaseline) {
-                if countsSelection {
-                    Eyebrow(text: "\(collection.name) · \(selectedIDs.intersection(collection.topicIDs).count)/\(collection.topics.count) topics")
+                if let limit {
+                    Eyebrow(text: "\(collection.name) · \(selected)/\(limit) free topics")
+                } else if countsSelection {
+                    Eyebrow(text: "\(collection.name) · \(selected)/\(collection.topics.count) topics")
                 } else {
                     Eyebrow(text: LocalizedStringKey(collection.name))
                 }
                 Spacer()
-                TextLink(title: hasAll ? "Clear all" : "Select all", action: onToggleAll)
-                    .padding(.vertical, -Spacing.s)
+                if limit == nil || selected > 0 {
+                    TextLink(title: hasAll || limit != nil ? "Clear all" : "Select all", action: onToggleAll)
+                        .padding(.vertical, -Spacing.s)
+                }
             }
             .staticLabelRow()
 
@@ -175,7 +186,8 @@ struct TopicPicker: View {
                         systemImage: topic.systemImage,
                         isSelected: selectedIDs.contains(topic.id),
                         progress: showsProgress ? topic.total.map { (learned: topic.learned ?? 0, total: $0) } : nil,
-                        isFinished: showsProgress && topic.isFinished
+                        isFinished: showsProgress && topic.isFinished,
+                        isLocked: atLimit && !selectedIDs.contains(topic.id)
                     ) {
                         onToggleTopic(topic.id)
                     }

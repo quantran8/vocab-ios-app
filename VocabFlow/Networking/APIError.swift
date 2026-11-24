@@ -68,6 +68,24 @@ enum APIError: Error, Equatable {
                 String(localized: "You’ve sent the most reports for today.", bundle: .appLanguage)
             case "RANKING_DISABLED":
                 String(localized: "The leaderboard isn’t open yet.", bundle: .appLanguage)
+            case "FREE_COLLECTION_LOCKED":
+                String(localized: "The free plan keeps the first collection you chose. Upgrade to Premium to switch.", bundle: .appLanguage)
+            case "FREE_TOPIC_LIMIT":
+                String(localized: "The free plan has a limit on topics. Upgrade to Premium to choose more.", bundle: .appLanguage)
+            case "PREMIUM_REQUIRED":
+                String(localized: "This needs Syll Premium.", bundle: .appLanguage)
+            case "REDEEM_INVALID":
+                String(localized: "That code isn’t valid. Check it and try again.", bundle: .appLanguage)
+            case "REDEEM_EXPIRED":
+                String(localized: "That code has expired.", bundle: .appLanguage)
+            case "REDEEM_EXHAUSTED":
+                String(localized: "That code has already been used up.", bundle: .appLanguage)
+            case "REDEEM_ALREADY_USED":
+                String(localized: "You’ve already used this code.", bundle: .appLanguage)
+            case "APPSTORE_TRANSACTION_OWNED":
+                String(localized: "This subscription belongs to another Syll account. Sign in to that account to use it.", bundle: .appLanguage)
+            case "APPSTORE_TRANSACTION_INVALID":
+                String(localized: "We couldn’t confirm this purchase. Please try again.", bundle: .appLanguage)
             default:
                 requestID.map { String(localized: "Something went wrong. Reference: \($0)", bundle: .appLanguage) }
                     ?? String(localized: "Something went wrong. Please try again.", bundle: .appLanguage)

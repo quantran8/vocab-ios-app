@@ -74,7 +74,7 @@ Màn hình đang yêu cầu người học trả lời, hoặc đang mở đầu
 | ---- | --------------- | ----------------------------------------------------------------------- |
 | 60%  | Trắng `#FFFFFF` | Nền màn hình và card                                                    |
 | 30%  | Ink             | Chữ, Syllie, nút chính, icon, viền. **Không bao giờ làm nền card.**     |
-| 10%  | Nhấn            | Blue là chính; Green, Coral, Sun chỉ khi có trạng thái hoặc phần thưởng |
+| 10%  | Nhấn            | Blue là chính; Green, Coral, Sun chỉ khi có trạng thái hoặc phần thưởng; Grape chỉ cho Premium |
 
 Màu nhấn và màu trạng thái phải **tươi**, không làm trầm đi. Làm trầm khiến app tối lại.
 
@@ -87,6 +87,7 @@ Màu nhấn và màu trạng thái phải **tươi**, không làm trầm đi. L�
 | Green | `EAFBF1` | `CFF5DE` | `A0EABE` | `6BDC9A` | `45D17E` | `2BC86A` | `1FA857` | `188646` | `12673A` | `0E4A2A` | `062615` |
 | Coral | `FFF1EE` | `FFDFD8` | `FFBFB1` | `FF9883` | `FF7559` | `FF5A3C` | `E5432A` | `BA3421` | `8C2A1D` | `5E1E16` | `320E09` |
 | Sun   | `FFFBEA` | `FFF4C5` | `FFE88A` | `FFD84A` | `FFC81F` | `FFB800` | `E09A00` | `B47800` | `875A06` | `5C3E08` | `301F03` |
+| Grape | `F4F0FF` | `E8DFFF` | `D2C0FF` | `B497FF` | `9670FA` | `7C4FF0` | `6838D6` | `5329AE` | `3F2085` | `2C175C` | `1A0D38` |
 
 **Nghĩa của từng dải**
 
@@ -96,7 +97,8 @@ Màu nhấn và màu trạng thái phải **tươi**, không làm trầm đi. L�
 | Blue  | Màu nhấn: tiến độ, đang chọn, focus, link, tint của hệ thống, nút mở đầu luyện tập. Trầm hơn `#4775F5` cũ một chút. |
 | Green | Đúng, nhớ chắc, ôn tập. Giữ đúng hướng success cũ `#2BC86A`.                                                        |
 | Coral | Sai, cần luyện, xóa.                                                                                                |
-| Sun   | LP, sao, thành tựu, ăn mừng.                                                                                        |
+| Sun   | LP, sao, thành tựu, ăn mừng. Sun 400 còn là điểm lấp lánh của Premium (vương miện, nút Premium).                   |
+| Grape | **Chỉ Premium** (màu nhận diện): paywall, lối vào Premium, card gói trên Hồ sơ. Không màn nào khác dùng.            |
 
 **Quy ước bậc** (giống nhau cho mọi dải)
 
@@ -413,6 +415,25 @@ Rời buổi học: nút ✕ mở sheet có Syllie, nút Ink "Tiếp tục luy�
   - Card mở ra hiện Định nghĩa, Ví dụ và link "Sửa nghĩa này"; mở được nhiều card cùng lúc. Nút chính đếm số nghĩa đã chọn ("Thêm 2 nghĩa"). "Tìm nghĩa khác" là link dưới danh sách.
   - IPA và loa theo quy tắc của Chi tiết từ: mọi nghĩa đọc giống nhau thì nằm dưới từ, một lần; đọc khác nhau thì mỗi card có dòng IPA + loa riêng dưới nghĩa (loa nền trắng trên card đang chọn).
   - Sửa: từ được tô trong câu ví dụ luôn là từ đang thêm, tự tô, không có bước chọn từ. Câu ví dụ không còn từ đó thì báo lỗi ngay dưới ô và chưa cho lưu.
+
+- **Premium và gói miễn phí** (Luồng 6 trong `app-redesign-v1.html`):
+  - **Màu nhận diện Premium:** khối Grape (ramp riêng, chỉ dùng cho Premium), Sun 400 làm điểm lấp lánh (vương miện, nút Premium), một gradient chữ ký Grape 500 → Coral 400 (`PremiumGradient.accent`) cho chữ "Premium". Nền pha màu (`PremiumGradient.wash`): Grape 100 → Grape 50 → Coral 100, chéo, ở độ đậm đầy đủ.
+  - **Nút Premium** (`ActionButtonStyle.Kind.premium`): Sun 400, nhãn một màu Sun 900 (chữ và vương miện đứng trước), cạnh dày Sun 600, không gradient, không lấp lánh. Chỉ dùng cho Premium: lối vào (Trang chủ hết từ miễn phí, card nâng cấp trên Hồ sơ) và nút ghim đáy của paywall. Không nút nào khác màu Sun. Link mở paywall (đọc to, Trọng tâm) là chữ Grape 600 kèm vương miện.
+  - **Paywall là màn duy nhất trong app được nhiều màu sắc** (bố cục paywall của Brilliant, chất liệu của Syll: chữ SF, card 2pt). Không serif, không Syllie, không pill khuyến mãi tối. Sheet lớn, hai bước; trên cùng là wash Premium mờ dần về trắng trước bảng/gói. Chỉ nút Premium ghim đáy.
+  - Key visual: chồng thẻ từ vựng xếp quạt (`PremiumKeyVisual`): ba thẻ màu đặc Grape 500, Coral 400, Sun 400 (cạnh dày tông 700) nghiêng sau một thẻ trắng viền 2pt ghi "unlimited", IPA và nghĩa; hai ✦ Sun. Thẻ xòe ra khi mở (Reduce Motion: đứng yên).
+  - Bước 1 (so sánh): eyebrow "Syll Premium" Grape 700, tiêu đề h-display "… với / Premium" (`PremiumWord`: gradient chữ ký + dải sáng quét như nút "Bắt đầu"; Reduce Motion: không quét), một dòng theo giới hạn vừa gặp, rồi bảng. Bảng xếp **từ có đến không**: quyền lợi gói Miễn phí cũng có (✓) ở trên, rồi những gì chỉ Premium có (✕); trong nhóm ✕, giới hạn vừa gặp đứng đầu, chữ đậm, kèm mức miễn phí. Cột Miễn phí là dải Ink 50 bo góc trên, thiếu là ✕ trắng trên tròn Ink 200. Cột Premium cao hơn, khối Grape 500 phẳng (không cạnh dày), chữ "Premium" trắng, lòng trắng bo 13pt. Mọi tick (cả cột Miễn phí) là tròn Grape 500 phẳng, tick trắng. Nút: "Xem các gói".
+  - Bước 2 (chọn gói): key visual thu nhỏ, tiêu đề "Chọn gói Premium" (Premium tô gradient), "Học không giới hạn. Hủy bất cứ lúc nào." Hai card gói (Hằng năm chọn sẵn, đứng trên): gói đang chọn nền Grape 50, viền 2pt Grape 500, tick Grape; gói kia trắng viền 2pt Ink 200, vòng tròn trống. Giá/tháng to; gói năm thêm "12 tháng · tổng" và 12 tháng gói tháng gạch ngang. Dùng thử là pill Grape 100 chữ Grape 800 (không Green). Mức tiết kiệm thật là pill Coral 500 chữ trắng vắt trên mép card gói năm. Giá, tiền tệ và thời gian dùng thử luôn lấy từ App Store. Điều khoản gia hạn, khôi phục, "Có mã?", Điều khoản, Chính sách nằm trong nội dung.
+  - Không bịa nội dung marketing: không "Phổ biến nhất", không khuyến mãi giả, không đếm ngược. Pill chỉ hiện khi có mức tiết kiệm thật.
+  - Paywall tự đóng khi server xác nhận Premium. Lỗi hiện dưới nội dung, không dùng alert.
+  - Giới hạn hiện ở nơi người học gặp nó, không chặn trước: chạm chủ đề vượt giới hạn mở paywall; nhãn chủ đề đếm "3/3 chủ đề miễn phí" và không có "Chọn tất cả".
+  - **Chip bị khóa** (`TopicChip.isLocked`): khi đã đủ giới hạn, chip chưa chọn mờ 40% như control bị vô hiệu nhưng vẫn chạm được, chạm mở paywall với giới hạn đó đứng đầu. Dùng cho chủ đề (đủ 3 chủ đề) và bộ từ vựng: gói miễn phí giữ bộ lưu đầu tiên, sheet Trọng tâm khóa các bộ khác (Onboarding không khóa). Bảng so sánh gộp hai giới hạn này thành một dòng "Mọi bộ từ vựng và chủ đề" (Miễn phí: 1 bộ, 3 chủ đề); chạm chip bị khóa nào cũng đưa dòng này lên đầu nhóm ✕. Hết từ miễn phí: card Bài học hôm nay như khi học hết Collection, nhưng icon là vương miện Grape 600 nền Grape 50, chữ "Premium" trong câu tô gradient; nút Blue ôn tập và nút Premium "Dùng Premium".
+  - Bản ghi chấm trên máy giữ kết quả đúng/sai, thêm link Grape "Nhận điểm phát âm với Premium" dưới micro. Luyện nói vẫn không ảnh hưởng tiến độ.
+  - **Hồ sơ:** khối tài khoản chỉ có tên và "Sửa" (không pill gói). Ngay dưới là khối gói, hiện một lần:
+    - Chưa Premium (6.6): card nâng cấp nền wash Premium, viền 2pt Grape 200, huy hiệu tròn Grape 500 có vương miện Sun 400 trước tiêu đề Ink, một dòng quyền lợi Ink 700, số từ miễn phí đã dùng với thanh Grape 500 trên rãnh trắng, nút Premium "Nâng cấp Premium" (thao tác duy nhất). Không khối Grape đặc (quá gắt cho Hồ sơ). Không nút đóng.
+    - Premium (6.6a): card trạng thái một dòng, nền Grape 50 trơn (không Coral), viền 2pt Grape 200, huy hiệu Premium, chữ "Premium" Ink, ngày gia hạn/hết hạn, dấu ›. Chạm mở sheet "Gói của bạn" (6.6b): card thông tin (gói, gia hạn hoặc hết hạn, giá App Store), một dòng về hủy trong App Store, link "Khôi phục giao dịch" và "Nhập mã", nút viền "Quản lý gói đăng ký" ghim đáy. Premium do mã đổi: "Hết hạn", không giá, không nút quản lý.
+  - **Cài đặt không có Premium:** Cài đặt chỉ giữ thiết lập của app.
+  - Quảng cáo (chỉ gói miễn phí): toàn màn hình, sau mỗi N buổi học (server cấu hình), chỉ khi quay về Trang chủ sau màn Tổng kết. Không bao giờ trong buổi học, lúc mở app, hay chồng lên bước tiếp theo người học vừa chọn.
+  - Giọng văn: nói rõ giới hạn và lợi ích, không dọa mất dữ liệu, không đếm ngược, không ép mua.
 
 **Giọng văn:** rõ, ngắn, tôn trọng người đọc. Không reo hò, không gây áp lực.
 

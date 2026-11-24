@@ -54,6 +54,8 @@ final class PracticeSessionStore {
     /// Where the shell goes after a session screen closes, when the learner picked a next step there.
     enum FollowUp: Equatable {
         case chooseTopics, randomPractice
+        /// The free plan's new words ran out: open Premium.
+        case upgrade
     }
 
     enum UnavailableReason {
@@ -61,6 +63,8 @@ final class PracticeSessionStore {
         static let recorderFailed = "recorderFailed"
         static let assessmentFailed = "assessmentFailed"
         static let speechUnavailable = "speechProviderUnavailable"
+        /// Free tier: on-device recognition can't run (or the task has no text to check), and uploads need Premium.
+        static let onDeviceUnavailable = "onDeviceRecognitionUnavailable"
         static let skipped = "userSkipped"
     }
 
@@ -94,7 +98,12 @@ final class PracticeSessionStore {
     /// A daily chain's first commit (the review), kept for the results screen once the new words are saved.
     private(set) var pendingReviewSummary: ReviewSummary?
     /// Backend (Azure) by default. `.onDevice` is opt-in and falls back to the backend when the task has no reference text or recognition can't run.
+    /// `.onDeviceOnly` is the free tier. Re-read from `scoringForSession` whenever a session starts.
     var recordingScoring: RecordingScoring
+    /// Set by the app: who scores recordings in the next session (the learner's plan can change between sessions).
+    var scoringForSession: (@MainActor () -> RecordingScoring)?
+    /// A session was saved and its results are on screen (not the Lab). The ads count these.
+    var onSessionFinished: (@MainActor () -> Void)?
 
     let audio: AudioClipPlaying
     let haptics: FeedbackProviding
@@ -241,6 +250,7 @@ final class PracticeSessionStore {
     private func begin(_ request: Request) async {
         lastRequest = request
         pendingReviewSummary = nil
+        if let scoringForSession { recordingScoring = scoringForSession() }
         await plan(request)
     }
 
@@ -412,6 +422,11 @@ final class PracticeSessionStore {
         if canTranscribe == nil {
             canTranscribe = transcriptTarget != nil ? await transcriber.requestAccess() : false
         }
+        if mustScoreOnDevice, canTranscribe != true {
+            // Nothing could check the take; don't ask the learner to read for nothing.
+            recording = .blocked(reason: UnavailableReason.onDeviceUnavailable)
+            return
+        }
         do {
             try await recorder.start()
             // The learner may have left the task meanwhile; don't leave the mic running behind them.
@@ -440,10 +455,18 @@ final class PracticeSessionStore {
         pendingAudio = captured
         if canTranscribe == true, let transcriptTarget {
             await assessOnDevice(against: transcriptTarget)
+        } else if mustScoreOnDevice {
+            recording = .blocked(reason: UnavailableReason.onDeviceUnavailable)
         } else {
             await upload()
         }
     }
+
+    /// The free tier outside the Lab: a take is checked on the device or not at all.
+    private var mustScoreOnDevice: Bool { recordingScoring == .onDeviceOnly && !isSandbox }
+
+    /// A free learner's take: checked on the device, with no pronunciation score. Drives the Premium hint.
+    var isFreeSpeaking: Bool { recordingScoring == .onDeviceOnly && !isSandbox }
 
     func retryUpload() async {
         await upload()
@@ -477,7 +500,7 @@ final class PracticeSessionStore {
     var scoresOnDevice: Bool { canTranscribe == true && transcriptTarget != nil }
 
     private var transcriptTarget: String? {
-        guard recordingScoring == .onDevice, case .recording(let accepted)? = currentAttempt?.task.body else { return nil }
+        guard recordingScoring != .backend, case .recording(let accepted)? = currentAttempt?.task.body else { return nil }
         return accepted.first
     }
 
@@ -526,6 +549,17 @@ final class PracticeSessionStore {
             let failure = error.asAPIError
             if Self.endsSession(failure) {
                 stage = .failed(.sessionLost(String(localized: "This session is no longer available. Start a new one to keep going.", bundle: .appLanguage)))
+            } else if failure.code == "PREMIUM_REQUIRED" {
+                // Premium lapsed mid-session: score this and later takes on the device instead.
+                recordingScoring = .onDeviceOnly
+                // A task whose earlier take has a receipt keeps it: its events can't mix receipts and transcripts.
+                if latestReceiptID == nil, transcriptTarget != nil, await transcriber.requestAccess(),
+                   let transcriptTarget, currentAttempt?.task.id == taskID {
+                    canTranscribe = true
+                    await assessOnDevice(against: transcriptTarget)
+                } else {
+                    recording = .blocked(reason: UnavailableReason.onDeviceUnavailable)
+                }
             } else if failure.isRetryable || failure.code == "PAYLOAD_TOO_LARGE" {
                 recording = .uploadFailed
             } else {
@@ -704,6 +738,7 @@ final class PracticeSessionStore {
         pendingReviewSummary = nil
         stage = .finished(merged)
         haptics.success()
+        if !isSandbox { onSessionFinished?() }
     }
 
     /// A daily session goes straight from review to new words, even when the plan held only review.

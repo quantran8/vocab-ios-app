@@ -35,11 +35,13 @@ struct HintControl: View {
                 .opacity(isEnabled && canReveal ? 1 : 0.4)
             }
 
-            ForEach(Array(hints.enumerated()), id: \.offset) { _, hint in
+            // One row that fills in: each hint opens the next letter of the same row.
+            if let hint = hints.last {
                 Text(verbatim: hint)
                     .font(.system(.callout, design: .monospaced, weight: .bold))
                     .tracking(3)
                     .foregroundStyle(Color.blue700)
+                    .contentTransition(.numericText())
                     .padding(.horizontal, Spacing.s)
                     .frame(minHeight: 32)
                     .background(Color.blue50, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -48,6 +50,8 @@ struct HintControl: View {
                     .transition(motion.popTransition)
             }
         }
+        // Keeps the hint row clear of the Check button below.
+        .padding(.bottom, hints.isEmpty ? 0 : Spacing.m)
         .animation(motion.animation(MotionTokens.feedback), value: hints)
     }
 }

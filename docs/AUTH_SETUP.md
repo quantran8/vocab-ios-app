@@ -70,7 +70,16 @@ App dùng `SignInWithAppleButton` của AuthenticationServices. File `VocabFlow.
 - **Client IDs**: `com.visiongroup.VocabFlow`.
 - **Secret Key (for OAuth)**: để trống được, chỉ dùng cho luồng web.
 
-### 2.3 Lưu ý
+### 2.3 Android (web flow)
+
+Android không có Sign in with Apple native, nên app mở trang đăng nhập của Apple trong Custom Tab (xem `android_app/app/.../features/auth/AppleWebAuth.kt`).
+
+1. **Identifiers → + → Services IDs**: tạo Services ID, ví dụ `com.syll.signin` (khác App ID). Tick **Sign In with Apple → Configure**: Primary App ID `com.visiongroup.VocabFlow`; **Domains** `moneytogether.dpdns.org`; **Return URLs** `https://moneytogether.dpdns.org/service/vocab/v1/auth/apple/callback`. Return URL phải là https, nên bản debug cũng dùng URL production này (chỉ để chuyển kết quả về app; token vẫn gửi tới backend mà app đang dùng).
+2. Supabase → provider Apple → **Client IDs**: thêm Services ID, ngăn cách bằng dấu phẩy: `com.visiongroup.VocabFlow,com.syll.signin`.
+3. Backend: `APPLE_ANDROID_PACKAGE` (mặc định `com.syll`) là package mà `auth/apple/callback` trả kết quả về.
+4. Build app: `./gradlew :app:assembleRelease -PappleServiceId=com.syll.signin` (thêm `-PappleRedirectUri=…` nếu return URL khác). Để trống thì bấm nút Apple hiện "Chưa thiết lập đăng nhập bằng Apple."
+
+### 2.4 Lưu ý
 
 - Apple chỉ trả email ở **lần đăng nhập đầu tiên**. Người dùng có thể chọn **Hide My Email**, khi đó email có dạng `...@privaterelay.appleid.com`.
 - Muốn gửi được email (ví dụ email đặt lại mật khẩu) tới địa chỉ relay này, vào **Certificates, Identifiers & Profiles → Services → Sign in with Apple for Email Communication** và đăng ký domain/địa chỉ gửi email (địa chỉ SMTP ở mục 3.3). Nếu không, Apple sẽ chặn email.

@@ -850,11 +850,7 @@ const weekRhythm = (done = 4, goal = 7, days = WEEK) => `<div class="flex items-
     <span class="text-[12px] ${days[i] === 'today' ? 'font-bold text-ink-950' : 'text-ink-500'}">${d}</span>${dayMark(days[i])}</div>`).join('')}</div>`;
 /* This week's running total of new words: no future points, no smoothing. */
 const sparkline = `<svg viewBox="0 0 96 40" class="w-24 h-10"><polyline points="4,36 18,27 32,27 46,15 60,6" fill="none" stroke="#2F9BF4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-function journeyCard(kind = 'filled') {
-  if (kind === 'empty') return `<div class="card flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('path')}</span>
-    <div class="flex-1"><div class="font-bold text-[15px]">Hành trình bắt đầu từ một từ</div><div class="text-[13px] text-ink-500">Hoàn thành buổi học đầu tiên để bắt đầu.</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>`;
-  if (kind === 'error') return `<p class="text-[15px] text-ink-500">Chưa tải được hành trình · <span class="link">Thử lại</span></p>`;
-  if (kind === 'loading') return `<div class="card p-4 space-y-3"><div class="h-7 w-16 rounded-md bg-ink-100"></div><div class="h-4 w-40 rounded-md bg-ink-100"></div><div class="h-4 w-full rounded-md bg-ink-100"></div></div>`;
+function journeyCard() {
   return `<div class="card">
     <div class="flex items-center gap-4 p-4"><div class="flex-1"><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+24</div>
       <div class="text-[15px] text-ink-500">Từ mới trong tuần này</div></div>${sparkline}</div>
@@ -1628,18 +1624,6 @@ function journeyEmpty() {
       <div class="mt-3 font-bold text-[17px]">Hành trình bắt đầu từ một từ</div><p class="mt-1 text-[15px] text-ink-500">Hoàn thành buổi học đầu tiên để bắt đầu.</p></div>
   </div>`;
 }
-/* Home's journey block on its own, one state per card. */
-function journeyStates() {
-  const block = (label, html) => `<div class="mt-6"><div class="text-[12px] font-bold text-ink-400 mb-2">${label}</div>${sectionTitle('Hành trình của bạn')}${html}</div>`;
-  return `${status()}
-  <div class="flex-1 overflow-hidden px-5 pt-2">
-    ${block('Đã đạt mục tiêu tuần', `<div class="card"><div class="flex items-center gap-4 p-4"><div class="flex-1"><div class="text-[26px] font-extrabold tracking-tight">+31</div><div class="text-[15px] text-ink-500">Từ mới trong tuần này</div></div>${sparkline}</div>
-      <div class="p-4 border-t-[1.5px] border-ink-100">${weekRhythm(8, 7, ['done', 'done', 'done', 'done', 'done', 'today', 'ahead'])}</div></div>`)}
-    ${block('Chưa học bao giờ', journeyCard('empty'))}
-    ${block('Đang tải', journeyCard('loading'))}
-    ${block('Lỗi', journeyCard('error'))}
-  </div>${tabbar('Trang chủ')}`;
-}
 
 /* A sheet over another sheet (report from Chi tiết từ): its scrim covers the first sheet too. */
 const sheetOverTop = (under, content, top) => `${under}<div class="absolute inset-0 bg-ink-950/40 z-30"></div>
@@ -1768,7 +1752,10 @@ document.getElementById('flows').innerHTML = [
       'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
       'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
-      'Khối "Hành trình của bạn" ở cuối, sau Đang học: tuần này học bao nhiêu từ và bao nhiêu buổi. Chỉ là lịch sử; các trạng thái ở Luồng 7.',
+      'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Cả card là một nút mở 7.1 (dấu › chỉ là gợi ý điều hướng).',
+      'Trên: "+24" là số từ (không phải nghĩa) học lần đầu trong tuần; sparkline Blue 500 cộng dồn của tuần này, không có điểm tương lai, một ngày thì là một chấm, ẩn ở cỡ chữ trợ năng.',
+      'Dưới: "Buổi học tuần này 4/7": mục tiêu tính theo <b>buổi</b> (<code>weeklySessionGoal</code>), không theo ngày. Đạt hoặc vượt: pill Green "Đã đạt mục tiêu tuần", vẫn hiện số thật (8/7). Dải T2–CN: đã học là tick trong tròn Blue 500, hôm nay chưa học là vòng Ink 400, ngày đã qua chưa học là gạch Ink 300, ngày chưa tới là chấm Ink 100; mỗi trạng thái có hình riêng, VoiceOver đọc "Thứ Hai, đã học".',
+      'Chưa học bao giờ: một dòng "Hành trình bắt đầu từ một từ" (vẫn mở 7.2). Đang tải: khung xám. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả, không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card, thêm "Chưa cập nhật".',
     ], 1460),
     go('Chạm Bắt đầu'),
     frame('1.2', 'Ôn từ bạn đã học', reviewPreview(), [
@@ -2109,23 +2096,15 @@ document.getElementById('flows').innerHTML = [
       'Lần đầu: form đồng ý (UMP) nếu luật yêu cầu, rồi hộp thoại App Tracking Transparency của iOS. Premium không có quảng cáo.',
     ]),
   ]),
-  flow('flow-journey', 'Luồng 7 · Hành trình học tập', 'Chỉ là lịch sử, đặt sau "Bài học hôm nay" và "Đang học" trên Trang chủ: Trang chủ trả lời "Hôm nay học gì?" trước, rồi mới tới "Mình đã đi được bao xa?". Không thêm tab, không lặp số liệu hiện tại của Từ của tôi. Mọi số đến từ các buổi học đã commit (<code>GET /me/learning-journey</code>, FRONTEND_FLOW §17).', [
-    frame('7.1', 'Khối Hành trình · các trạng thái', journeyStates(), [
-      'Cả card là một nút mở trang con 7.2; dấu › chỉ là gợi ý điều hướng, không có nút 3D.',
-      'Trên: "+24" là số từ (không phải nghĩa) học lần đầu trong tuần; sparkline Blue 500 cộng dồn của tuần này, không có điểm tương lai, chỉ một ngày thì là một chấm. Ẩn sparkline ở cỡ chữ trợ năng.',
-      'Dưới: "Buổi học tuần này 4/7": mục tiêu tính theo <b>buổi</b> (cùng setting <code>weeklySessionGoal</code>), không theo ngày. Đạt hoặc vượt: pill Green "Đã đạt mục tiêu tuần", vẫn hiện số thật (8/7).',
-      'Dải T2–CN: đã học là tick trong tròn Blue 500, hôm nay chưa học là vòng Ink 400, ngày đã qua chưa học là gạch Ink 300, ngày chưa tới là chấm Ink 100. Mỗi trạng thái có hình riêng, không chỉ dựa vào màu; VoiceOver đọc "Thứ Hai, đã học".',
-      'Chưa học bao giờ: "Hành trình bắt đầu từ một từ" và vẫn mở được 7.3. Đang tải: khung xám, không spinner. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả và không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card cũ, thêm dòng "Chưa cập nhật".',
-    ], 1000),
-    go('Chạm card'),
-    frame('7.2', 'Hành trình học tập', journeyDetail(), [
+  flow('flow-journey', 'Luồng 7 · Hành trình học tập', 'Chỉ là lịch sử, đặt sau "Bài học hôm nay" và "Đang học" trên Trang chủ: Trang chủ trả lời "Hôm nay học gì?" trước, rồi mới tới "Mình đã đi được bao xa?". Khối trên Trang chủ và các trạng thái của nó ở 1.1; luồng này bắt đầu khi chạm khối đó. Không thêm tab, không lặp số liệu hiện tại của Từ của tôi. Mọi số đến từ các buổi học đã commit (<code>GET /me/learning-journey</code>, FRONTEND_FLOW §17).', [
+    frame('7.1', 'Hành trình học tập', journeyDetail(), [
       'Trang con của Trang chủ, nút quay lại của iOS, tiêu đề lớn trong nội dung.',
       'Segmented Tuần / Tháng / Tất cả, mặc định Tháng. Kỳ áp cho biểu đồ và Hoạt động; "Nhịp học tuần này" luôn là tuần hiện tại.',
       'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối.',
       'Hoạt động: Ngày đã học, Buổi đã hoàn thành, Từ mới, Lượt ôn nghĩa (mỗi nghĩa ôn trong một buổi tính một lượt). Daily tách phần ôn và phần từ mới thành hai buổi, nên có dòng giải thích cách đếm.',
       'Không có nút luyện tập ở đây: màn này không bắt đầu gì.',
     ], 1180),
-    frame('7.3', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
+    frame('7.2', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
   ]),
   flow('flow-report', 'Luồng 8 · Báo lỗi nội dung', 'Báo lỗi ngay tại chỗ thấy lỗi: thẻ học, bài luyện, từng nghĩa trong Chi tiết từ. Chỉ là phản hồi cho biên tập viên: không chấm lại, không đổi tiến độ, không đổi bài đang làm. Không có trong Thử thách, Practice Lab, bài kiểm tra trình độ (<code>POST /me/content-reports</code>, FRONTEND_FLOW §18).', [
     frame('8.1', 'Bài luyện · cờ báo lỗi', selectTask('sel'), [

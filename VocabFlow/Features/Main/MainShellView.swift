@@ -28,6 +28,7 @@ enum ShellPage: Hashable {
     case settings
     case randomPractice
     case challengeMap
+    case learningJourney
 }
 
 /// Plan editors Profile presents as bottom sheets.
@@ -46,6 +47,7 @@ struct MainShellView: View {
     @Environment(ChallengeMapStore.self) private var challengeMap
     @Environment(ChallengeRunStore.self) private var challengeRun
     @Environment(PracticeSessionStore.self) private var practice
+    @Environment(LearningJourneyStore.self) private var journey
     @Environment(\.motion) private var motion
     /// Owned by the root: the route swap unmounts this view during a session, and closing one returns to this tab.
     @Binding var tab: MainTab
@@ -94,9 +96,11 @@ struct MainShellView: View {
             }
             async let learnerRefresh: Void = learner.refresh()
             async let mapRefresh: Void = challengeMap.refresh()
+            // The shell reappears after every session, so this also picks up a new commit.
+            async let journeyRefresh: Void = journey.refreshSummary(force: true)
             // Settles a run the app was killed in; it refreshes the map again once done.
             await challengeRun.recoverPendingRun()
-            _ = await (learnerRefresh, mapRefresh)
+            _ = await (learnerRefresh, mapRefresh, journeyRefresh)
         }
     }
 
@@ -104,6 +108,7 @@ struct MainShellView: View {
         NavigationStack(path: $homePath) {
             HomeView(
                 onOpenChallengeMap: { homePath.append(.challengeMap) },
+                onOpenJourney: { homePath.append(.learningJourney) },
                 onChooseTopics: openFocus,
                 onOpenRandomPractice: openRandomPractice
             )
@@ -180,6 +185,10 @@ struct MainShellView: View {
                 .iconOnlyBackButton()
         case .challengeMap:
             ChallengeMapView()
+                .toolbar(.hidden, for: .tabBar)
+                .iconOnlyBackButton()
+        case .learningJourney:
+            LearningJourneyView()
                 .toolbar(.hidden, for: .tabBar)
                 .iconOnlyBackButton()
         }

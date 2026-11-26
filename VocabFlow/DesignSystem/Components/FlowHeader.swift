@@ -14,6 +14,8 @@ struct FlowHeader: View {
     let totalSteps: Int
     var closeLabel: LocalizedStringKey = "Exit flow"
     let onClose: () -> Void
+    /// Continuous style only: a control in the right slot, mirroring the ✕ (the report flag in a session).
+    var trailing: AnyView? = nil
     @Environment(\.motion) private var motion
 
     var body: some View {
@@ -48,6 +50,10 @@ struct FlowHeader: View {
                     .fixedSize()
                     .frame(minWidth: Self.sideSlot, alignment: .trailing)
                     .accessibilityHidden(true)
+            } else if let trailing {
+                trailing
+                    // A 44 pt control laid out in the ✕'s 24 pt slot, so the bar stays centred.
+                    .padding(.horizontal, -(Spacing.minTouchTarget - Self.sideSlot) / 2)
             } else {
                 Color.clear.frame(width: Self.sideSlot, height: 0)
             }

@@ -248,6 +248,32 @@ final class StubVocabAPI: VocabAPI, @unchecked Sendable {
         return try profileUpdateResult.get()
     }
     func reportLearner(username: String, reason: ReportReason) async throws { reports.append((username, reason)) }
+
+    /// Answers `learningJourney(period:)`, per period; a missing one fails offline.
+    var journeyResults: [JourneyPeriod: Result<LearningJourney, APIError>] = [:]
+    private(set) var journeyPeriodsRequested: [JourneyPeriod] = []
+    func learningJourney(period: JourneyPeriod) async throws -> LearningJourney {
+        journeyPeriodsRequested.append(period)
+        return try (journeyResults[period] ?? .failure(.transport)).get()
+    }
+
+    /// Answers `learningJourneyWords`, one page per call, in order.
+    var journeyWordPages: [JourneyWordsPage] = []
+    private(set) var journeyWordOffsets: [Int] = []
+    func learningJourneyWords(period: JourneyPeriod, limit: Int, offset: Int) async throws -> JourneyWordsPage {
+        journeyWordOffsets.append(offset)
+        guard !journeyWordPages.isEmpty else { throw APIError.transport }
+        return journeyWordPages.removeFirst()
+    }
+
+    /// Answers `submitContentReport`, in order; once used up, every send succeeds.
+    var contentReportResults: [Result<ContentReportReceipt, APIError>] = []
+    private(set) var contentReports: [ContentReportRequest] = []
+    func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt {
+        contentReports.append(report)
+        guard !contentReportResults.isEmpty else { return ContentReportReceipt(reportId: "r-\(contentReports.count)", duplicate: false) }
+        return try contentReportResults.removeFirst().get()
+    }
 }
 
 final class StubTranscriber: SpeechTranscribing {

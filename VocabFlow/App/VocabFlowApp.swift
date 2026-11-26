@@ -17,6 +17,8 @@ struct VocabFlowApp: App {
     @State private var challengeMap: ChallengeMapStore
     @State private var challengeRun: ChallengeRunStore
     @State private var ranking: RankingStore
+    @State private var journey: LearningJourneyStore
+    @State private var contentReports: ContentReportStore
     @State private var purchases: PurchaseStore
     @State private var ads: AdStore
     private let sounds: SoundEffects
@@ -57,8 +59,12 @@ struct VocabFlowApp: App {
         let challengeRun = ChallengeRunStore(api: api, haptics: haptics)
         challengeRun.onSettled = { [challengeMap] in await challengeMap.refresh() }
         let ranking = RankingStore(api: api)
+        let journey = LearningJourneyStore(api: api)
+        let contentReports = ContentReportStore(api: api)
         ranking.onProfileChanged = { [learner] in await learner.reloadProfile() }
-        auth.onSignedOut = { [learner, practice, onboarding, customWords, placement, challengeMap, challengeRun, ranking] in
+        auth.onSignedOut = { [learner, practice, onboarding, customWords, placement, challengeMap, challengeRun, ranking, journey, contentReports] in
+            journey.reset()
+            contentReports.reset()
             placement.cancel()
             ranking.reset()
             challengeRun.reset()
@@ -94,6 +100,8 @@ struct VocabFlowApp: App {
         _challengeMap = State(initialValue: challengeMap)
         _challengeRun = State(initialValue: challengeRun)
         _ranking = State(initialValue: ranking)
+        _journey = State(initialValue: journey)
+        _contentReports = State(initialValue: contentReports)
         _purchases = State(initialValue: purchases)
         _ads = State(initialValue: ads)
         _store = State(initialValue: store)
@@ -122,6 +130,8 @@ struct VocabFlowApp: App {
                 .environment(challengeMap)
                 .environment(challengeRun)
                 .environment(ranking)
+                .environment(journey)
+                .environment(contentReports)
                 .environment(purchases)
                 .environment(ads)
                 .environment(\.soundEffects, sounds)

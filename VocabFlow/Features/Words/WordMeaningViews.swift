@@ -100,6 +100,7 @@ struct OtherMeaningsSheet: View {
     @Environment(\.motion) private var motion
     @State private var expandedIDs: Set<String> = []
     @State private var playingMeaningID: String?
+    @State private var reportTarget: ContentReportTarget?
 
     var body: some View {
         ScrollView {
@@ -138,6 +139,7 @@ struct OtherMeaningsSheet: View {
             .padding(.bottom, Spacing.l)
         }
         .onAppear { expandedIDs = Set(meanings.first.map { [$0.meaningId] } ?? []) }
+        .contentReportSheet($reportTarget)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(Color.canvas)
@@ -173,10 +175,13 @@ struct OtherMeaningsSheet: View {
             .accessibilityValue(Text(isExpanded ? "Expanded" : "Collapsed"))
 
             if isExpanded {
-                MeaningFields(lemma: lemma, sense: item.meaning, style: .quiet)
-                    .padding(.horizontal, Spacing.m)
-                    .padding(.bottom, Spacing.s)
-                    .transition(.opacity)
+                VStack(alignment: .leading, spacing: 0) {
+                    MeaningFields(lemma: lemma, sense: item.meaning, style: .quiet)
+                    ReportMeaningLink(item: item, lemma: lemma) { reportTarget = $0 }
+                }
+                .padding(.horizontal, Spacing.m)
+                .padding(.bottom, Spacing.s)
+                .transition(.opacity)
             }
         }
         .padding(.horizontal, Spacing.m)
@@ -276,6 +281,7 @@ struct WordDetailSheet: View {
     /// The meaning opened last; the header's audio follows it.
     @State private var focusedID: String?
     @State private var playingMeaningID: String?
+    @State private var reportTarget: ContentReportTarget?
 
     var body: some View {
         ScrollView {
@@ -301,6 +307,7 @@ struct WordDetailSheet: View {
             .padding(.bottom, Spacing.l)
         }
         .task { await loadDetail() }
+        .contentReportSheet($reportTarget)
         .onDisappear { speech.stop() }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
@@ -472,6 +479,8 @@ struct WordDetailSheet: View {
                     .foregroundStyle(Color.mutedInk)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            ReportMeaningLink(item: item, lemma: lemma) { reportTarget = $0 }
+                .padding(.top, -Spacing.s)
         }
     }
 
@@ -575,5 +584,31 @@ private struct MemoryStrengthRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// "Report a problem" at the foot of an open meaning. Hidden on a meaning showing the learner's own edit,
+/// which the server refuses to take (backend docs/content-reports.md).
+struct ReportMeaningLink: View {
+    let item: WordDetail.Meaning
+    let lemma: String
+    let onReport: (ContentReportTarget) -> Void
+
+    var body: some View {
+        if item.edited != true {
+            TextLink(title: "Report a problem", color: .mutedInk, systemImage: "flag") {
+                let sense = item.meaning
+                onReport(ContentReportTarget(
+                    context: .wordDetail(meaningID: item.meaningId),
+                    subtitle: "\(lemma) · \(sense.text)",
+                    reasons: ContentReportTarget.meaningReasons(
+                        hasDefinition: !(sense.definition ?? "").isEmpty,
+                        hasExample: !(sense.examples ?? []).isEmpty,
+                        hasAudio: sense.audio != nil
+                    )
+                ))
+            }
+            .accessibilityHint(Text("Tells our editors something in this meaning is wrong"))
+        }
     }
 }

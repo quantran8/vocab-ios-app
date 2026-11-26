@@ -837,7 +837,8 @@ function home(done = false, free = false) {
 /* Weekly postcard: one card per week, one stamp per day learned. Slots = the learner's goal (study days they chose),
    never the seven weekdays, so a day off is never drawn as a miss. A stamp names the day it was earned. */
 const STAMP_TILT = [-4, 3, -2, 4, -3, 2, -1];
-const stamp = (label, i, bonus = false, size = 56) => {
+/* hole: the colour behind the stamp, so the perforation reads as cut out (white on cards, the tile's tint elsewhere). */
+const stamp = (label, i, bonus = false, size = 56, hole = '#fff') => {
   const w = size, h = Math.round(size * 1.18), r = size / 18, step = size / 7;
   const holes = [];
   for (let x = step / 2; x < w; x += step) holes.push([x, 0], [x, h]);
@@ -846,7 +847,7 @@ const stamp = (label, i, bonus = false, size = 56) => {
   return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="transform:rotate(${STAMP_TILT[i % 7]}deg)" class="shrink-0 drop-shadow-[0_1px_0_rgba(18,17,24,0.12)]">
     <rect width="${w}" height="${h}" fill="${fill}"/>
     <rect x="${size / 9}" y="${size / 9}" width="${w - 2 * size / 9}" height="${h - 2 * size / 9}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/>
-    ${holes.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`).join('')}
+    ${holes.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${hole}"/>`).join('')}
     <text x="${w / 2}" y="${h / 2 + size / 14}" text-anchor="middle" font-size="${size * 0.32}" font-weight="800" fill="#fff">${label}</text>
     <path d="M${w / 2 - size / 9} ${h * 0.72} l${size / 16} ${size / 16} l${size / 7} -${size / 7}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
@@ -1620,42 +1621,89 @@ const growthChart = `<svg viewBox="0 0 310 170" class="w-full h-[170px]">
   <polyline points="4,120 40,112 76,101 112,96 148,80 184,72 220,50 256,30 270,20" fill="none" stroke="#2F9BF4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
   ${[['1/11', 4], ['8/11', 76], ['15/11', 148], ['22/11', 220]].map(([t, x]) => `<text x="${x}" y="162" font-size="11" fill="#7A7785">${t}</text>`).join('')}
 </svg>`;
-const statTile = (icon, n, label) => `<div class="card p-3.5"><span class="ico w-9 h-9 bg-blue-50 text-blue-600">${ic(icon, 'w-[18px] h-[18px]')}</span>
-  <div class="mt-2 text-[26px] font-extrabold tracking-tight tabular-nums">${n}</div><div class="text-[13px] text-ink-500">${label}</div></div>`;
-function journeyDetail(period = 'Tháng') {
-  return `${status()}${backHeader}
-  <div class="flex-1 overflow-hidden px-5">
-    <h1 class="h-display pt-1">Hành trình học tập</h1>
-    <div class="mt-6">${sectionTitle('Vốn từ của bạn')}
-      <div class="card p-4 space-y-4">
-        ${segmented(['Tuần', 'Tháng', 'Tất cả'], period)}
-        <div><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+128</div><div class="text-[15px] text-ink-500">Từ mới trong tháng này</div></div>
-        ${growthChart}
-        <div class="flex justify-between text-[15px] text-ink-500 tabular-nums"><span>Đầu kỳ <b class="text-ink-950">120</b></span><span>Hiện tại <b class="text-ink-950">248</b></span></div>
-      </div></div>
-    <div class="mt-9">${sectionTitle('Từ mới tháng này', '<span class="text-[14px] text-ink-500 font-semibold tabular-nums">128</span>')}
-      <div class="relative pl-6">
-        <span class="absolute left-[5px] top-2 bottom-12 w-[2px] bg-ink-100"></span>
-        ${[['Thứ Năm, 26/11', [['resilient', 'kiên cường; đàn hồi'], ['meticulous', 'tỉ mỉ'], ['ambiguous', 'mơ hồ'], ['commute', 'đi làm'], ['negotiate', 'đàm phán'], ['thrive', 'phát triển mạnh']]], ['Thứ Tư, 25/11', [['reluctant', 'miễn cưỡng'], ['cautious', 'thận trọng']]], ['Thứ Ba, 24/11', [['clarify', 'làm rõ'], ['sustain', 'duy trì; chịu đựng'], ['adequate', 'đủ'], ['retain', 'giữ lại'], ['diverse', 'đa dạng']]]].map(([day, words], i) => `
-        <div class="relative ${i ? 'mt-5' : ''}">
-          <span class="absolute -left-6 top-[3px] w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white"></span>
-          <div class="flex items-baseline gap-2"><span class="flex-1 text-[15px] font-bold">${day}</span><span class="text-[13px] font-semibold text-ink-500 tabular-nums">${words.length} từ</span></div>
-          <div class="mt-2.5 flex flex-wrap gap-2">${words.map(([w, m]) => `<span class="max-w-full px-3 py-1.5 rounded-xl bg-white border-2 border-ink-200 shadow-[0_3px_0_#E6E4EC]"><span class="block text-[15px] font-semibold leading-tight">${w}</span><span class="block mt-0.5 text-[13px] text-ink-500 leading-snug">${m}</span></span>`).join('')}</div>
-        </div>`).join('')}
-        <div class="mt-5 h-11 grid place-items-center text-[15px] font-semibold text-blue-600">Xem thêm 115 từ</div>
-      </div></div>
-    <div class="mt-9">${sectionTitle('Hoạt động tháng này')}
-      <div class="grid grid-cols-3 gap-2.5">${statTile('calendar', 13, 'Ngày đã học')}${statTile('check', 26, 'Buổi đã hoàn thành')}${statTile('rotate', 312, 'Lượt ôn nghĩa')}</div>
-      <p class="mt-3 text-[13px] text-ink-500">Mỗi phần học hoặc ôn đã hoàn thành được tính là một buổi.</p>
-      <p class="mt-2 text-[13px] text-ink-500">Theo dõi từ 1 thg 8, 2026</p></div>
-  </div>`;
-}
 function journeyEmpty() {
   return `${status()}${backHeader}
   <div class="flex-1 overflow-hidden px-5">
     <h1 class="h-display pt-1">Hành trình học tập</h1>
     <div class="mt-6 card p-4"><span class="ico bg-blue-50 text-blue-600">${ic('path')}</span>
       <div class="mt-3 font-bold text-[17px]">Hành trình bắt đầu từ một từ</div><p class="mt-1 text-[15px] text-ink-500">Hoàn thành buổi học đầu tiên để bắt đầu.</p></div>
+  </div>`;
+}
+
+/* The period control scopes the whole page, so it sits under the title, outside every card. */
+/* New words by topic: a stacked bar of where the period's words went, then one row per topic as its legend.
+   Each topic has its own fixed colour from the catalog (topics.color), the same in every period; no colour → Ink 300.
+   Rows say only what the period added (no topic progress: that is Home's "Đang học"). */
+/* [icon, name, new words in the period, newest words in the period, finished in the period, topic colour] */
+const JOURNEY_TOPICS = [['plane', 'Travel', 32, 'itinerary, layover, customs', false, '#2F9BF4'], ['utensils', 'Food', 24, 'recipe, simmer, seasoning', true, '#FF8A1F'], ['heart', 'Health', 22, 'symptom, recover, allergy', false, '#F0458A'], ['bubble', 'Daily conversation', 18, 'in, get, see', false, '#14B8A6'], ['home', 'Home', 18, 'chore, laundry, landlord', false, '#FFB800'], ['cart', 'Shopping', 14, 'receipt, refund, bargain', false, '#3BB273']];
+const topicRow = ([icon, name, n, recent, finished, color]) => `<div class="flex items-center gap-3 px-4 py-3 border-t-[1.5px] border-ink-100">
+    <span class="ico w-9 h-9 bg-ink-50 text-ink-700">${ic(icon, 'w-[18px] h-[18px]')}</span>
+    <div class="flex-1 min-w-0"><div class="flex items-center gap-2"><i class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${color || '#C8C8D0'}"></i><span class="font-semibold text-[15px] truncate">${name}</span>${finished ? `<span class="pill h-5 px-2 text-[11px] bg-green-50 text-green-800 shrink-0">${ic('check', 'w-3 h-3')}Học xong</span>` : ''}</div>
+      <div class="mt-0.5 text-[13px] text-ink-500 truncate">${recent}…</div></div>
+    <span class="text-[15px] font-bold tabular-nums">+${n}</span>${ic('chev', 'w-5 h-5 text-ink-400 shrink-0')}</div>`;
+/* First TOPIC_LIMIT topics (most new words first); the rest open in place under "Xem thêm N chủ đề". */
+const TOPIC_LIMIT = 4;
+function topicBreakdown(expanded = false) {
+  const shown = expanded ? JOURNEY_TOPICS : JOURNEY_TOPICS.slice(0, TOPIC_LIMIT);
+  const rest = JOURNEY_TOPICS.length - TOPIC_LIMIT;
+  return `<div class="card">
+    <div class="p-4"><div class="h-3 rounded-full overflow-hidden flex gap-[2px]">${JOURNEY_TOPICS.map(t => `<span style="flex:${t[2]};background:${t[5] || '#C8C8D0'}"></span>`).join('')}</div></div>
+    ${shown.map(topicRow).join('')}
+    ${rest > 0 ? `<div class="h-12 flex items-center justify-center gap-1.5 border-t-[1.5px] border-ink-100 text-[15px] font-semibold text-blue-600">${expanded ? 'Thu gọn' : `Xem thêm ${rest} chủ đề`}${ic(expanded ? 'up' : 'down', 'w-4 h-4')}</div>` : ''}</div>`;
+}
+/* Tapping a topic: this period's new words in that topic, with the meanings learned in the period. */
+const TRAVEL_WORDS = [['all', ['tất cả, mọi']], ['because', ['bởi vì']], ['say', ['nói', 'ghi, chỉ']], ['go', ['đi', 'trở nên, hóa']], ['i', ['tôi']], ['in', ['trong, ở trong', 'bằng', 'sau, trong … nữa', 'có nhà, có mặt']], ['this', ['đây, cái này, này']], ['think', ['nghĩ, cho rằng']], ['get', ['nhận được', 'trở nên', 'đến, tới', 'mua', 'đi lấy, đi đón']], ['see', ['nhìn thấy', 'hiểu', 'xem', 'gặp']], ['make', ['làm, chế tạo', 'khiến cho']], ['know', ['biết', 'quen biết']], ['take', ['cầm, lấy', 'mang theo', 'đưa đi', 'mất (thời gian)']], ['come', ['đến, tới']]];
+const topicSheetHead = `<div class="flex items-start gap-3 px-5 pt-3">
+      <span class="ico w-10 h-10 bg-ink-50 text-ink-700">${ic('bubble', 'w-5 h-5')}</span>
+      <div class="flex-1"><h2 class="text-[22px] font-extrabold tracking-[-0.4px] leading-tight">Daily conversation</h2>
+        <p class="mt-0.5 text-[15px] text-ink-500 tabular-nums">+18 từ mới tháng này</p></div>
+      <span class="w-9 h-9 rounded-full bg-ink-100 grid place-items-center text-ink-600">${ic('x', 'w-4 h-4')}</span></div>`;
+/* Glossary: a fixed word column and the meanings as running text, at most two lines. Meanings are joined by
+   " · " (a meaning's own synonyms keep their commas), so many meanings never change the row's shape. */
+function journeyTopicSheet() {
+  const content = `${topicSheetHead}
+    <div class="px-5 mt-3">${TRAVEL_WORDS.map(([w, ms], i) => `<div class="py-3 flex gap-3 items-baseline ${i ? 'border-t border-ink-100' : ''}">
+      <span class="w-[96px] shrink-0 text-[16px] font-semibold leading-snug break-words">${w}</span>
+      <span class="flex-1 min-w-0 text-[15px] text-ink-600 leading-snug line-clamp-2">${ms.map(m => `<span>${m}</span>`).join('<span class="text-ink-300 font-bold"> · </span>')}</span></div>`).join('')}</div>`;
+  return sheetOver(journeyDetail(), content, 250);
+}
+/* Activity: three tiles, each drawn as what it counts. */
+/* Each tile is tinted in its art's colour (50 fill, 200 border, 900 number, 700 label). */
+const ACT_TONE = { blue: 'bg-blue-50 border-blue-200 text-blue-900|text-blue-700', green: 'bg-green-50 border-green-200 text-green-900|text-green-700', sun: 'bg-sun-50 border-sun-200 text-sun-900|text-sun-800' };
+const actTile = (art, n, label, tone) => { const [box, sub] = ACT_TONE[tone].split('|');
+  return `<div class="rounded-[20px] border-2 ${box} p-3.5 flex flex-col"><div class="h-[46px] flex items-end">${art}</div>
+  <div class="mt-2 text-[26px] font-extrabold tracking-tight tabular-nums leading-none">${n}</div><div class="mt-1 text-[13px] font-semibold ${sub} leading-tight">${label}</div></div>`; };
+/* Days: the Home postcard's stamp, small and tilted: a day learned is a stamp earned. */
+const artDays = `<div class="relative w-[58px] h-[44px]"><span class="absolute left-0 bottom-0 opacity-50">${stamp('', 1, false, 30, '#EEF3FD')}</span><span class="absolute left-[20px] bottom-[2px]">${stamp('', 0, false, 34, '#EEF3FD')}</span></div>`;
+/* Sessions: finished sessions stack up like done cards; the top one carries the check. */
+const artSessions = `<div class="relative w-[52px] h-[44px]">
+  <span class="absolute left-[10px] top-0 w-[38px] h-[28px] rounded-[7px] bg-green-100 border-2 border-green-200"></span>
+  <span class="absolute left-[5px] top-[6px] w-[38px] h-[28px] rounded-[7px] bg-green-200 border-2 border-green-300"></span>
+  <span class="absolute left-0 top-[13px] w-[38px] h-[28px] rounded-[7px] bg-green-500 border-2 border-green-600 grid place-items-center text-white">${ic('check', 'w-4 h-4')}</span></div>`;
+/* Reviews: one meaning goes round again and again, so a card on a loop. */
+const artReviews = `<svg viewBox="0 0 50 44" width="50" height="44">
+  <path d="M8 24a17 17 0 0 1 31-9" fill="none" stroke="#FFC81F" stroke-width="3" stroke-linecap="round"/>
+  <path d="M42 22a17 17 0 0 1-31 9" fill="none" stroke="#FFC81F" stroke-width="3" stroke-linecap="round"/>
+  <path d="M33 13l7 2 1-7" fill="none" stroke="#FFC81F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 33l-7-2-1 7" fill="none" stroke="#FFC81F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="17" y="14" width="16" height="17" rx="3" fill="#FFF4C5" stroke="#B47800" stroke-width="2"/>
+  <path d="M21 20h8M21 25h5" stroke="#B47800" stroke-width="2" stroke-linecap="round"/></svg>`;
+function journeyDetail(period = 'Tháng') {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display pt-1">Hành trình học tập</h1>
+    <div class="mt-4">${segmented(['Tuần', 'Tháng', 'Tất cả'], period)}</div>
+    <div class="mt-8">${sectionTitle('Vốn từ của bạn')}
+      <div class="card p-4 space-y-4">
+        <div><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+128</div><div class="text-[15px] text-ink-500">Từ mới trong tháng này</div></div>
+        ${growthChart}
+        <div class="flex justify-between text-[15px] text-ink-500 tabular-nums"><span>Đầu kỳ <b class="text-ink-950">120</b></span><span>Hiện tại <b class="text-ink-950">248</b></span></div>
+      </div></div>
+    <div class="mt-9">${sectionTitle('Từ mới tháng này', '<span class="text-[14px] text-ink-500 font-semibold tabular-nums">+128</span>')}${topicBreakdown()}</div>
+    <div class="mt-9">${sectionTitle('Hoạt động tháng này')}
+      <div class="grid grid-cols-3 gap-2.5">${actTile(artDays, 13, 'Ngày đã học', 'blue')}${actTile(artSessions, 26, 'Buổi đã hoàn thành', 'green')}${actTile(artReviews, 312, 'Lượt ôn nghĩa', 'sun')}</div>
+      <p class="mt-3 text-[13px] text-ink-500">Mỗi phần học hoặc ôn đã hoàn thành được tính là một buổi.</p>
+      <p class="mt-2 text-[13px] text-ink-500">Theo dõi từ 1 thg 8, 2026</p></div>
   </div>`;
 }
 
@@ -2133,14 +2181,18 @@ document.getElementById('flows').innerHTML = [
   ]),
   flow('flow-journey', 'Luồng 7 · Hành trình học tập', 'Chỉ là lịch sử, đặt sau "Bài học hôm nay" và "Đang học" trên Trang chủ: Trang chủ trả lời "Hôm nay học gì?" trước, rồi mới tới "Mình đã đi được bao xa?". Khối trên Trang chủ và các trạng thái của nó ở 1.1; luồng này bắt đầu khi chạm khối đó. Không thêm tab, không lặp số liệu hiện tại của Từ của tôi. Mọi số đến từ các buổi học đã commit (<code>GET /me/learning-journey</code>, FRONTEND_FLOW §17).', [
     frame('7.1', 'Hành trình học tập', journeyDetail(), [
-      'Trang con của Trang chủ, nút quay lại của iOS, tiêu đề lớn trong nội dung.',
-      'Segmented Tuần / Tháng / Tất cả, mặc định Tháng. Kỳ áp cho biểu đồ và Hoạt động.',
-      'Thẻ tem chỉ có ở Trang chủ, cho tuần hiện tại; trang này không lặp lại nó và không có lịch (V1 không xem lại từng ngày). Quá khứ đọc qua biểu đồ và Hoạt động.',
-      'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối.',
-      '"Từ mới tháng này" (đổi theo segmented: tuần này / tháng này / từ khi bắt đầu) là danh sách đầy đủ của con số "+N" ở Trang chủ và trên biểu đồ: từ học lần đầu trong kỳ, vẽ thành dòng thời gian theo ngày học (ngày local), ngày mới nhất trên cùng: đường dọc Ink 100 bên trái, mỗi ngày một chấm Blue 500 (nhắc tem ở Trang chủ), tiêu đề "Thứ Năm, 26/11" và số từ bên phải. Từ của ngày đó là thẻ từ (cùng kiểu thẻ từ trong bài học: nền trắng, viền 2pt Ink 200, cạnh dày), xếp tự xuống dòng; ngày học nhiều trông dày hơn. Thẻ có từ (Semibold) và nghĩa bên dưới (13pt Ink 500): các nghĩa của từ đó học trong kỳ, theo thứ tự học, nối bằng "; " (resilient: "kiên cường; đàn hồi"); nghĩa dài thì thẻ giãn tới hết bề ngang rồi xuống dòng, không cắt. Chạm mở Chi tiết từ. VoiceOver đọc "resilient, kiên cường; đàn hồi". "Xem thêm" nối tiếp ngày đang dở. Số bên phải tiêu đề là tổng. Chạm một dòng mở Chi tiết từ (2.2). Hiện 10 dòng rồi "Xem thêm N từ" tải tiếp 20. Khác Từ của tôi: đây là lịch sử theo kỳ, không phải thư viện hiện có. Kỳ chưa có từ mới: "Chưa có từ mới trong kỳ này." <b>Cần backend</b>: <code>GET /me/learning-journey/words?period=&amp;limit=&amp;offset=</code> → <code>{total, items: [{wordId, lemma, meaningTexts[], learnedOn}]}</code>, cùng múi giờ và cách đếm với "+N".',
-      'Hoạt động: Ngày đã học, Buổi đã hoàn thành, Lượt ôn nghĩa (mỗi nghĩa ôn trong một buổi tính một lượt), một hàng ba ô. Không có ô Từ mới: con số đó đã ở biểu đồ và danh sách phía trên. Daily tách phần ôn và phần từ mới thành hai buổi, nên có dòng giải thích cách đếm.',
-      'Không có nút luyện tập ở đây: màn này không bắt đầu gì.',
-    ], 1760),
+      'Trang con của Trang chủ, nút quay lại của iOS, tiêu đề lớn trong nội dung. Không có nút luyện tập: màn này không bắt đầu gì.',
+      'Segmented Tuần / Tháng / Tất cả (mặc định Tháng) nằm ngay dưới tiêu đề trang, ngoài mọi card: nó là bộ lọc của cả trang (biểu đồ, Từ mới, Hoạt động). Mỗi tiêu đề phần ghi rõ kỳ, đổi theo segmented.',
+      'Trang này không liệt kê từ (danh sách là việc của Từ của tôi) và không lặp tiến độ chủ đề (việc của "Đang học" ở Trang chủ): card chỉ nói kỳ này đã thêm gì vào từng chủ đề. Đầu card là thanh ghép 12pt: mỗi đoạn một chủ đề, dài theo số từ mới, tô màu riêng của chủ đề (<code>topics.color</code> từ backend, cố định, không đổi theo kỳ hay thứ hạng; chủ đề chưa có màu và nhóm "Từ của bạn" dùng Ink 300); thanh luôn có đủ mọi chủ đề, kể cả chủ đề đang ẩn. Dưới là các dòng chủ đề làm chú thích, nhiều từ trước: ô icon 36pt Ink 50, chấm màu khớp đoạn, tên Semibold; dưới tên là 3 từ mới nhất của chủ đề trong kỳ (13pt Ink 500, một dòng, cắt, kết bằng "…"); bên phải "+32" (Bold) và ›. Chủ đề học xong trong kỳ có pill Green "Học xong" cạnh tên: sự kiện của kỳ, không phải tiến độ. Hiện cố định 4 chủ đề; còn nữa thì dòng cuối card "Xem thêm N chủ đề ⌄" (Blue 600, giữa) mở phần còn lại ngay trong card, rồi đổi thành "Thu gọn ⌃". Đổi kỳ thì thu gọn lại. Số bên phải tiêu đề là tổng "+128". <b>Cần backend</b>: theo chủ đề trong kỳ <code>newWordsByTopic: [{topicId, title, iosIcon, color, count, recentLemmas[≤3], finishedInPeriod}]</code>; <code>topics.color</code> (hex) mới.',
+      'Hoạt động giữ một hàng ba ô như cũ, nhưng mỗi ô vẽ đúng thứ nó đếm và cả ô tô theo màu của hình: Ngày đã học là tem (cùng tem với thẻ ở Trang chủ, lỗ răng cưa tô màu nền ô Blue 50 để trông như được đục thủng) trên ô Blue, Buổi đã hoàn thành là chồng thẻ đã xong với ✓ trên cùng trên ô Green, Lượt ôn nghĩa là thẻ nghĩa trên vòng lặp trên ô Sun. Ô: nền màu 50, viền 2pt màu 200 (thay Ink 200 của card thường), bo 20; số màu 900, nhãn Semibold màu 700 (Sun: 800 cho đủ tương phản). Hình nằm trên số, cao 46pt, chỉ trang trí (VoiceOver bỏ qua). Số và nhãn cùng cỡ cho cả ba ô.',
+      'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối. Dưới Hoạt động: dòng giải thích cách đếm buổi và "Theo dõi từ …".',
+      'Thẻ tem tuần chỉ có ở Trang chủ; trang này không có lịch (không xem lại từng ngày).',
+    ], 1400),
+    frame('7.3', 'Từ mới của một chủ đề', journeyTopicSheet(), [
+      'Chạm một dòng chủ đề ở 7.1 mở sheet (detent lớn). Dữ liệu mẫu là từ thật nhiều nghĩa (in, get, see, take). Đầu sheet: ô icon, tên chủ đề, "+18 từ mới tháng này".',
+      'Kiểu bảng từ (glossary): mỗi từ một dòng, chia bằng đường 1pt Ink 100, không thẻ, không viền. Cột từ cố định 96pt (16pt Semibold, từ dài xuống dòng trong cột). Bên phải là các nghĩa đã học trong kỳ thành một đoạn chữ 15pt Ink 600, tối đa 2 dòng rồi "…". Nghĩa nối bằng " · " (Ink 300), còn dấu phẩy giữ cho từ đồng nghĩa trong cùng một nghĩa, nên "in" đọc là "trong, ở trong · bằng · sau, trong … nữa · có nhà, có mặt".',
+      'Hình dạng dòng không phụ thuộc số nghĩa: một nghĩa hay năm nghĩa thì dòng cao một hoặc hai dòng chữ, cột nghĩa luôn thẳng. Đủ nghĩa ở Chi tiết từ (2.2): chạm dòng để mở. VoiceOver đọc đủ, không cắt.',
+    ]),
     frame('7.2', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
   ]),
   flow('flow-report', 'Luồng 8 · Báo lỗi nội dung', 'Báo lỗi ngay tại chỗ thấy lỗi: thẻ học, bài luyện, từng nghĩa trong Chi tiết từ. Chỉ là phản hồi cho biên tập viên: không chấm lại, không đổi tiến độ, không đổi bài đang làm. Không có trong Thử thách, Practice Lab, bài kiểm tra trình độ (<code>POST /me/content-reports</code>, FRONTEND_FLOW §18).', [

@@ -856,12 +856,12 @@ const emptySlot = (size = 56) => `<span class="shrink-0 rounded-[4px] border-2 b
 const postmark = `<span class="absolute -top-3 right-3 w-[74px] h-[74px] rounded-full border-[2.5px] border-green-600 text-green-700 grid place-items-center rotate-[-12deg] bg-white/70">
   <span class="text-center leading-tight"><span class="block text-[10px] font-extrabold tracking-[1.5px]">SYLL</span><span class="block text-[13px] font-black">ĐÃ ĐẠT</span></span></span>`;
 /* stamps: weekday of each day learned, in order; goal: the learner's study days per week. */
-function postcard({ week = '23–29/11', stamps = ['T2', 'T4'], goal = 3, size = 56, framed = false } = {}) {
+function postcard({ week = '23–29/11', stamps = ['T2', 'T4'], goal = 3, size = 56, framed = false, count = true } = {}) {
   const slots = Math.max(goal, stamps.length);
   const reached = stamps.length >= goal;
   return `<div class="relative ${framed ? 'card p-4' : ''}">
     <div class="flex items-baseline gap-2 ${reached ? 'pr-20' : ''}"><span class="flex-1 text-[13px] font-bold tracking-[1.2px] uppercase text-ink-500">Tuần ${week}</span>
-      <span class="text-[15px] font-bold tabular-nums">${stamps.length}/${goal} ngày</span></div>
+      ${count ? `<span class="text-[15px] font-bold tabular-nums">${stamps.length}/${goal} ngày</span>` : ''}</div>
     <div class="mt-3 flex flex-wrap gap-2.5">${Array.from({ length: slots }, (_, i) => i < stamps.length ? stamp(stamps[i], i, i >= goal, size) : emptySlot(size)).join('')}</div>
     ${reached ? postmark : ''}
   </div>`;
@@ -869,10 +869,10 @@ function postcard({ week = '23–29/11', stamps = ['T2', 'T4'], goal = 3, size =
 /* Home's journey block: this week's stamp card leads; new words are one line under it. The growth chart lives on the
    journey page, where it has axes and a period to compare. */
 function journeyCard() {
+  const stat = (n, label) => `<div class="flex-1 p-4"><div class="text-[26px] font-extrabold tracking-tight tabular-nums">${n}</div><div class="text-[13px] font-semibold text-ink-500">${label}</div></div>`;
   return `<div class="card">
-    <div class="p-4">${postcard()}</div>
-    <div class="flex items-center gap-2 px-4 py-3.5 border-t-[1.5px] border-ink-100 text-[15px]">
-      <span class="font-extrabold tabular-nums">+24</span><span class="flex-1 text-ink-600">từ mới tuần này</span>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
+    <div class="flex">${stat('+24', 'Từ mới tuần này')}<div class="w-[1.5px] bg-ink-100"></div>${stat('2/3', 'Ngày học tuần này')}</div>
+    <div class="p-4 border-t-[1.5px] border-ink-100">${postcard({ count: false })}</div>
   </div>`;
 }
 
@@ -1769,9 +1769,9 @@ document.getElementById('flows').innerHTML = [
       'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
       'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
-      'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Lối vào là link "Xem chi tiết" bên phải tiêu đề, cùng mẫu với "Đổi" của Đang học; cả card cũng bấm được và mở 7.1. Không chỉ dựa vào dấu ›: nhỏ quá để báo hiệu bấm được.',
+      'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Lối vào là link "Xem chi tiết" bên phải tiêu đề, cùng mẫu với "Đổi" của Đang học; cả card cũng bấm được và mở 7.1. Card không có dấu ›: link ở tiêu đề đã là hành động.',
       'Thẻ tuần (postcard) là phần chính của khối, mỗi tuần một thẻ. Số ô tem = số ngày học người học đã chọn (<code>weeklySessionGoal</code>), không phải 7 ngày, nên ngày nghỉ theo kế hoạch không bao giờ trông như bị bỏ lỡ và thẻ không giống streak. Mỗi <b>ngày</b> có học (<code>week.activeDays</code>) đóng một tem Blue 500, tem ghi thứ của ngày đó (dữ liệu tích cực, không phải lịch); ô chưa có tem viền đứt Ink 200. Đếm ngày chứ không đếm buổi: Daily tách hai buổi không được tính đôi.',
-      'Dưới thẻ một dòng "+24 từ mới tuần này": số từ (không phải nghĩa) học lần đầu trong tuần. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
+      'Hai số chính đứng cạnh nhau ở đầu card, cùng cỡ: "+24 Từ mới tuần này" (số từ, không phải nghĩa, học lần đầu trong tuần) và "2/3 Ngày học tuần này". Thẻ tem bên dưới minh hoạ số ngày, không lặp lại con số. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
       'Đủ mục tiêu: dấu bưu điện tròn Green "ĐÃ ĐẠT" nghiêng đè góc thẻ. Vượt mục tiêu: tem thêm màu Green, số thật (4/3), không thêm áp lực. Tem nghiêng nhẹ xen kẽ cho cảm giác đóng tay; Reduce Motion: tem hiện thẳng, không hiệu ứng đóng dấu. Thẻ chỉ đọc là "2 trên 3 ngày học tuần này, đã học Thứ Hai, Thứ Tư".',
       'Chưa học bao giờ: card chỉ có "Hành trình bắt đầu từ một từ" / "Hoàn thành buổi học đầu tiên để bắt đầu." kèm ›, vẫn mở trang Hành trình (7.2). Đang tải: khung xám. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả, không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card, thêm "Chưa cập nhật".',
     ], 1320),

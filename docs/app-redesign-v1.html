@@ -1634,10 +1634,10 @@ function journeyDetail(period = 'Tháng') {
         <div class="flex justify-between text-[15px] text-ink-500 tabular-nums"><span>Đầu kỳ <b class="text-ink-950">120</b></span><span>Hiện tại <b class="text-ink-950">248</b></span></div>
       </div></div>
     <div class="mt-9">${sectionTitle('Từ mới tháng này', '<span class="text-[14px] text-ink-500 font-semibold tabular-nums">128</span>')}
-      <div class="card">${[['resilient', 'kiên cường', '26/11'], ['meticulous', 'tỉ mỉ, kỹ lưỡng', '26/11'], ['ambiguous', 'mơ hồ, nhập nhằng', '25/11'], ['commute', 'đi lại (đi làm)', '24/11'], ['negotiate', 'đàm phán', '24/11'], ['thrive', 'phát triển mạnh', '23/11']].map(([w, m, d]) => `
-        <div class="row py-2.5"><div class="flex-1 min-w-0"><div class="font-bold text-[16px]">${w}</div><div class="text-[14px] text-ink-500 truncate">${m}</div></div>
-          <span class="text-[13px] text-ink-500 tabular-nums">${d}</span>${ic('chev', 'w-4 h-4 text-ink-300')}</div>`).join('')}
-        <div class="row justify-center text-[15px] font-semibold text-blue-600">Xem thêm 122 từ</div></div></div>
+      <div class="card overflow-hidden">${[['Thứ Năm, 26/11', [['resilient', 'kiên cường'], ['meticulous', 'tỉ mỉ, kỹ lưỡng']]], ['Thứ Tư, 25/11', [['ambiguous', 'mơ hồ, nhập nhằng']]], ['Thứ Ba, 24/11', [['commute', 'đi lại (đi làm)'], ['negotiate', 'đàm phán'], ['thrive', 'phát triển mạnh']]]].map(([day, words]) => `
+        <div class="flex items-center gap-2 px-4 h-9 bg-ink-50 border-t-[1.5px] first:border-t-0 border-ink-100"><span class="flex-1 text-[12px] font-bold tracking-[1.2px] uppercase text-ink-500">${day}</span><span class="text-[12px] font-semibold text-ink-500 tabular-nums">${words.length} từ</span></div>
+        ${words.map(([w, m]) => `<div class="row py-2.5"><div class="flex-1 min-w-0"><div class="font-bold text-[16px]">${w}</div><div class="text-[14px] text-ink-500 truncate">${m}</div></div>${ic('chev', 'w-4 h-4 text-ink-300')}</div>`).join('')}`).join('')}
+        <div class="row justify-center border-t-[1.5px] border-ink-100 text-[15px] font-semibold text-blue-600">Xem thêm 122 từ</div></div></div>
     <div class="mt-9">${sectionTitle('Hoạt động tháng này')}
       <div class="grid grid-cols-3 gap-2.5">${statTile('calendar', 13, 'Ngày đã học')}${statTile('check', 26, 'Buổi đã hoàn thành')}${statTile('rotate', 312, 'Lượt ôn nghĩa')}</div>
       <p class="mt-3 text-[13px] text-ink-500">Mỗi phần học hoặc ôn đã hoàn thành được tính là một buổi.</p>
@@ -2131,10 +2131,10 @@ document.getElementById('flows').innerHTML = [
       'Segmented Tuần / Tháng / Tất cả, mặc định Tháng. Kỳ áp cho biểu đồ và Hoạt động.',
       'Thẻ tem chỉ có ở Trang chủ, cho tuần hiện tại; trang này không lặp lại nó và không có lịch (V1 không xem lại từng ngày). Quá khứ đọc qua biểu đồ và Hoạt động.',
       'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối.',
-      '"Từ mới tháng này" (đổi theo segmented: tuần này / tháng này / từ khi bắt đầu) là danh sách đầy đủ của con số "+N" ở Trang chủ và trên biểu đồ: mỗi dòng một từ học lần đầu trong kỳ, nghĩa được học đầu tiên, ngày học (ngày local), mới nhất trước. Số bên phải tiêu đề là tổng. Chạm một dòng mở Chi tiết từ (2.2). Hiện 10 dòng rồi "Xem thêm N từ" tải tiếp 20. Khác Từ của tôi: đây là lịch sử theo kỳ, không phải thư viện hiện có. Kỳ chưa có từ mới: "Chưa có từ mới trong kỳ này." <b>Cần backend</b>: <code>GET /me/learning-journey/words?period=&amp;limit=&amp;offset=</code> → <code>{total, items: [{wordId, lemma, meaningText, learnedOn}]}</code>, cùng múi giờ và cách đếm với "+N".',
+      '"Từ mới tháng này" (đổi theo segmented: tuần này / tháng này / từ khi bắt đầu) là danh sách đầy đủ của con số "+N" ở Trang chủ và trên biểu đồ: từ học lần đầu trong kỳ, gom theo ngày học (ngày local), ngày mới nhất trước. Mỗi nhóm có dòng tiêu đề nền Ink 50 "THỨ NĂM, 26/11 · 2 từ" (số từ học trong ngày đó), rồi các dòng từ: từ và nghĩa được học đầu tiên, không lặp lại ngày. "Xem thêm" nối tiếp nhóm đang dở, không lặp tiêu đề ngày. Số bên phải tiêu đề là tổng. Chạm một dòng mở Chi tiết từ (2.2). Hiện 10 dòng rồi "Xem thêm N từ" tải tiếp 20. Khác Từ của tôi: đây là lịch sử theo kỳ, không phải thư viện hiện có. Kỳ chưa có từ mới: "Chưa có từ mới trong kỳ này." <b>Cần backend</b>: <code>GET /me/learning-journey/words?period=&amp;limit=&amp;offset=</code> → <code>{total, items: [{wordId, lemma, meaningText, learnedOn}]}</code>, cùng múi giờ và cách đếm với "+N".',
       'Hoạt động: Ngày đã học, Buổi đã hoàn thành, Lượt ôn nghĩa (mỗi nghĩa ôn trong một buổi tính một lượt), một hàng ba ô. Không có ô Từ mới: con số đó đã ở biểu đồ và danh sách phía trên. Daily tách phần ôn và phần từ mới thành hai buổi, nên có dòng giải thích cách đếm.',
       'Không có nút luyện tập ở đây: màn này không bắt đầu gì.',
-    ], 1660),
+    ], 1760),
     frame('7.2', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
   ]),
   flow('flow-report', 'Luồng 8 · Báo lỗi nội dung', 'Báo lỗi ngay tại chỗ thấy lỗi: thẻ học, bài luyện, từng nghĩa trong Chi tiết từ. Chỉ là phản hồi cho biên tập viên: không chấm lại, không đổi tiến độ, không đổi bài đang làm. Không có trong Thử thách, Practice Lab, bài kiểm tra trình độ (<code>POST /me/content-reports</code>, FRONTEND_FLOW §18).', [

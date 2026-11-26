@@ -163,7 +163,7 @@ struct ReorderTaskView: View {
                 }
                 guard dragID == id else { return }
                 dragCenter = CGPoint(x: value.location.x + grabOffset.width, y: value.location.y + grabOffset.height)
-                let index = slotIndex(at: value.location)
+                let index = slotIndex(at: dragCenter)
                 if index != insertIndex {
                     insertIndex = index
                     if index != nil { store.haptics.selectionChanged() }
@@ -184,9 +184,13 @@ struct ReorderTaskView: View {
             }
     }
 
-    /// Where the row would insert a tile dropped at `point`, or nil when the point is outside the answer panel.
+    /// Where the row would insert a tile centred at `point` (the dragged tile, not the finger), or nil outside the
+    /// answer panel. Over another tile it takes that tile's place; between tiles it goes after those whose centre it passed.
     private func slotIndex(at point: CGPoint) -> Int? {
         guard let panel = frames[Self.panelKey], panel.insetBy(dx: -Spacing.s, dy: -Spacing.s).contains(point) else { return nil }
+        if let hovered = panelTiles.firstIndex(where: { $0.id != dragID && frames[$0.id]?.contains(point) == true }) {
+            return hovered
+        }
         let rowHeight = Self.ruledRowHeight
         let others = attempt.placedTiles.filter { $0.id != dragID }
         return others.filter { tile in

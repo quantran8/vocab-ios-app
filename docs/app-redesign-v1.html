@@ -872,7 +872,8 @@ function journeyCard() {
   const number = 'text-[26px] font-extrabold tracking-tight tabular-nums leading-none';
   const label = 'mt-1.5 text-[13px] font-semibold text-ink-500';
   return `<div class="card">
-    <div class="p-4"><div class="${number}">+24</div><div class="${label}">Từ mới tuần này</div></div>
+    <div class="p-4"><div class="${number}">+24</div><div class="${label}">Từ mới tuần này</div>
+      <p class="mt-3 text-[15px] leading-snug line-clamp-2"><span class="font-semibold text-ink-800">resilient, meticulous, ambiguous</span> <span class="text-ink-500">và 21 từ khác</span></p></div>
     <div class="p-4 border-t-[1.5px] border-ink-100">
       <div class="flex items-start"><div class="flex-1"><div class="${number}">2/3</div><div class="${label}">Ngày học tuần này</div></div>
         <span class="text-[12px] font-bold tracking-[1.2px] uppercase text-ink-400">23–29/11</span></div>
@@ -1776,7 +1777,7 @@ document.getElementById('flows').innerHTML = [
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
       'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Lối vào là link "Xem chi tiết" bên phải tiêu đề, cùng mẫu với "Đổi" của Đang học; cả card cũng bấm được và mở 7.1. Card không có dấu ›: link ở tiêu đề đã là hành động.',
       'Thẻ tuần (postcard) là phần chính của khối, mỗi tuần một thẻ. Số ô tem = số ngày học người học đã chọn (<code>weeklySessionGoal</code>), không phải 7 ngày, nên ngày nghỉ theo kế hoạch không bao giờ trông như bị bỏ lỡ và thẻ không giống streak. Mỗi <b>ngày</b> có học (<code>week.activeDays</code>) đóng một tem Blue 500, tem ghi thứ của ngày đó (dữ liệu tích cực, không phải lịch); ô chưa có tem viền đứt Ink 200. Đếm ngày chứ không đếm buổi: Daily tách hai buổi không được tính đôi.',
-      'Hai số chính cùng cỡ, cùng kiểu nhãn: "+24 Từ mới tuần này" (số từ, không phải nghĩa, học lần đầu trong tuần) ở trên; "2/3 Ngày học tuần này" ở dưới, với các tem ngay bên dưới nó trong cùng một khối (không kẻ chia), vì tem chính là 2/3 đó. Ngày của tuần ở góc phải dòng này. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
+      'Hai số chính cùng cỡ, cùng kiểu nhãn: "+24 Từ mới tuần này" (số từ, không phải nghĩa, học lần đầu trong tuần) ở trên, kèm một dòng các từ vừa học gần nhất: tối đa 3 lemma (Semibold Ink 800, nối bằng dấu phẩy) rồi "và 21 từ khác" (Ink 500), tối đa 2 dòng; chỉ để đọc, không bấm. Dùng chữ thay vì chip để từ dài không làm vỡ dòng. Tuần chưa có từ mới: "0" và không có dòng này. <b>Cần backend</b> trả <code>week.recentWords</code> (tối đa 3 lemma, mới nhất trước) trong cùng response; "2/3 Ngày học tuần này" ở dưới, với các tem ngay bên dưới nó trong cùng một khối (không kẻ chia), vì tem chính là 2/3 đó. Ngày của tuần ở góc phải dòng này. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
       'Đủ mục tiêu: dấu bưu điện tròn Green "ĐÃ ĐẠT" nghiêng đè góc thẻ. Vượt mục tiêu: tem thêm màu Green, số thật (4/3), không thêm áp lực. Tem nghiêng nhẹ xen kẽ cho cảm giác đóng tay; Reduce Motion: tem hiện thẳng, không hiệu ứng đóng dấu. Thẻ chỉ đọc là "2 trên 3 ngày học tuần này, đã học Thứ Hai, Thứ Tư".',
       'Chưa học bao giờ: card chỉ có "Hành trình bắt đầu từ một từ" / "Hoàn thành buổi học đầu tiên để bắt đầu." kèm ›, vẫn mở trang Hành trình (7.2). Đang tải: khung xám. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả, không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card, thêm "Chưa cập nhật".',
     ], 1320),

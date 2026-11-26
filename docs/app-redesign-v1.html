@@ -140,6 +140,8 @@ tailwind.config = {
     <a href="#flow-profile" class="px-3 py-1.5 rounded-md hover:bg-ink-800">4 · Hồ sơ</a>
     <a href="#flow-ranking" class="px-3 py-1.5 rounded-md hover:bg-ink-800">5 · Xếp hạng</a>
     <a href="#flow-premium" class="px-3 py-1.5 rounded-md hover:bg-ink-800">6 · Premium</a>
+    <a href="#flow-journey" class="px-3 py-1.5 rounded-md hover:bg-ink-800">7 · Hành trình</a>
+    <a href="#flow-report" class="px-3 py-1.5 rounded-md hover:bg-ink-800">8 · Báo lỗi</a>
   </nav>
 </header>
 
@@ -255,6 +257,9 @@ const I = {
   crown: '<path d="m2 7 5 5 5-8 5 8 5-5-2 12H4z"/>', sparkles: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/>',
   ticket: '<path d="M3 8a2 2 0 0 0 0 4v4h18v-4a2 2 0 0 1 0-4V4H3z"/>', grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   wave: '<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 11v2"/>', card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', noads: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 3l18 18"/>',
+  flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 8 2a6 6 0 0 0 3.6-1.2A1 1 0 0 1 21 3.6v11a1 1 0 0 1-.4.8A6 6 0 0 1 17 16c-3 0-5-2-8-2a8 8 0 0 0-5 1.6"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  path: '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h7a4 4 0 0 1 0 8H10a4 4 0 0 0 0 8h7"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>', check: '<path d="M20 6 9 17l-5-5"/>',
   chev: '<path d="m9 18 6-6-6-6"/>', back: '<path d="m15 18-6-6 6-6"/>', down: '<path d="m6 9 6 6 6-6"/>', up: '<path d="m18 15-6-6-6 6"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
@@ -337,12 +342,13 @@ const blankUnder = `<div class="absolute inset-0 bg-white">${status()}</div>`;
 </script>
 <script>
 /* ===================== PRACTICE SCREENS (inspired by Duolingo) ===================== */
-/* ✕ in a 24pt slot (its 44pt tap area overhangs), and an empty 24pt slot on the other side, so the bar is centred. */
-const practiceHeader = (pct) => `
+/* ✕ in a 24pt slot (its 44pt tap area overhangs), and a 24pt slot on the other side, so the bar is centred.
+   That slot holds the report flag (Ink 400, 44pt tap area) in a real session; Practice Lab and placement leave it empty. */
+const practiceHeader = (pct, flag = true) => `
   <div class="px-5 pt-1 pb-3 flex items-center gap-4">
     <span class="w-6 shrink-0 text-ink-400">${ic('x', 'w-6 h-6')}</span>
     <div class="flex-1">${bar(pct, 'bg-blue-500', 'h-2.5')}</div>
-    <span class="w-6 shrink-0"></span>
+    <span class="w-6 shrink-0 text-ink-400">${flag ? ic('flag', 'w-[22px] h-[22px]') : ''}</span>
   </div>`;
 
 /* Word intro (always the known-check step): part of speech is an italic line under the word; the card shows
@@ -823,7 +829,37 @@ function home(done = false, free = false) {
           <span class="text-[13px] text-ink-500 tabular-nums w-12 text-right">${a}/${b}</span></div>`).join('')}
       </div>
     </div>
+    <div class="mt-10">${sectionTitle('Hành trình của bạn')}${journeyCard()}</div>
   </div>${tabbar('Trang chủ')}`;
+}
+
+/* ---------- learning journey (history only) ---------- */
+const JOURNEY_DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+/* done: tick in a Blue disc · today: Ink 400 ring · missed: Ink 300 dash · ahead: Ink 100 dot. Never colour alone. */
+const dayMark = st => ({
+  done: `<span class="w-[22px] h-[22px] rounded-full bg-blue-500 text-white grid place-items-center">${ic('check', 'w-3 h-3')}</span>`,
+  today: '<span class="w-[22px] h-[22px] rounded-full border-2 border-ink-400"></span>',
+  missed: `<span class="w-[22px] h-[22px] grid place-items-center text-ink-300">${ic('minus', 'w-4 h-4')}</span>`,
+  ahead: '<span class="w-[22px] h-[22px] grid place-items-center"><i class="w-2 h-2 rounded-full bg-ink-100"></i></span>',
+}[st]);
+const WEEK = ['done', 'done', 'missed', 'done', 'today', 'ahead', 'ahead'];
+const weekRhythm = (done = 4, goal = 7, days = WEEK) => `<div class="flex items-center gap-2"><span class="flex-1 text-[15px] font-semibold">Buổi học tuần này</span>
+    ${done >= goal ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã đạt mục tiêu tuần</span>` : ''}
+    <span class="text-[15px] font-bold tabular-nums">${done}/${goal}</span></div>
+  <div class="mt-3 grid grid-cols-7">${JOURNEY_DAYS.map((d, i) => `<div class="flex flex-col items-center gap-1.5">
+    <span class="text-[12px] ${days[i] === 'today' ? 'font-bold text-ink-950' : 'text-ink-500'}">${d}</span>${dayMark(days[i])}</div>`).join('')}</div>`;
+/* This week's running total of new words: no future points, no smoothing. */
+const sparkline = `<svg viewBox="0 0 96 40" class="w-24 h-10"><polyline points="4,36 18,27 32,27 46,15 60,6" fill="none" stroke="#2F9BF4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function journeyCard(kind = 'filled') {
+  if (kind === 'empty') return `<div class="card flex items-center gap-3 p-4"><span class="ico bg-blue-50 text-blue-600">${ic('path')}</span>
+    <div class="flex-1"><div class="font-bold text-[15px]">Hành trình bắt đầu từ một từ</div><div class="text-[13px] text-ink-500">Hoàn thành buổi học đầu tiên để bắt đầu.</div></div>${ic('chev', 'w-5 h-5 text-ink-400')}</div>`;
+  if (kind === 'error') return `<p class="text-[15px] text-ink-500">Chưa tải được hành trình · <span class="link">Thử lại</span></p>`;
+  if (kind === 'loading') return `<div class="card p-4 space-y-3"><div class="h-7 w-16 rounded-md bg-ink-100"></div><div class="h-4 w-40 rounded-md bg-ink-100"></div><div class="h-4 w-full rounded-md bg-ink-100"></div></div>`;
+  return `<div class="card">
+    <div class="flex items-center gap-4 p-4"><div class="flex-1"><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+24</div>
+      <div class="text-[15px] text-ink-500">Từ mới trong tuần này</div></div>${sparkline}</div>
+    <div class="p-4 border-t-[1.5px] border-ink-100">${weekRhythm()}</div>
+  </div>`;
 }
 
 /* `noWeak`: no word needs practice, so the Weak Words tile says so and has no button. */
@@ -862,7 +898,7 @@ function myWords(noWeak = false) {
 /* Word detail. IPA and audio belong to a Meaning: when every meaning sounds the same the hero carries them,
    otherwise (heteronyms like lead /liːd/ · /led/) each meaning card does, already in its collapsed row. */
 const wdHl = w => `<mark class="bg-blue-100 text-blue-800 font-bold rounded-md px-1">${w}</mark>`;
-function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
+function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date, edited = false }) {
   const pill = learned ? `<span class="pill bg-green-50 text-green-800">${ic('check', 'w-3 h-3')}Đã học</span>` : '<span class="pill bg-ink-100 text-ink-600">Chưa học</span>';
   /* Its own line under the meaning, indented past the number: the pill and chevron stay on the meaning's line. */
   const sound = ipa ? `<div class="-mt-2 pb-3 pl-11 pr-4 flex items-center gap-2.5 text-[17px] text-ink-600">${ipa}${soundInline('m')}</div>` : '';
@@ -875,7 +911,8 @@ function wdMeaning({ n, m, learned, open, ipa, def, ex, tr, date }) {
         <div class="mt-1.5 h-1 rounded-full bg-ink-100"><div class="h-1 w-[87%] rounded-full bg-blue-600"></div></div>
         <p class="mt-1 text-[13px] text-ink-500">Ôn tiếp 28 thg 11</p><span class="mt-2 pill bg-coral-50 text-coral-800">Cần luyện lại</span></div>
       <div><div class="eyebrow mb-2">Phát âm</div><div class="rounded-xl bg-green-50 text-green-800 px-3 py-2"><div class="text-[13px] font-bold flex items-center gap-1">Thành thạo${ic('check', 'w-3 h-3')}</div><div class="text-[12px] opacity-90">Điểm gần nhất 88 · cao nhất 93</div></div></div>
-      <div class="text-[13px] text-ink-500">Đã học ${date}</div>` : ''}</div>` : ''}</div>`;
+      <div class="text-[13px] text-ink-500">Đã học ${date}</div>` : ''}
+      ${edited ? '' : `<div class="h-8 flex items-center gap-1.5 text-[14px] font-semibold text-ink-500">${ic('flag', 'w-4 h-4')}Báo lỗi nội dung</div>`}</div>` : ''}</div>`;
 }
 const wdHero = (w, ipa) => `<div class="text-center"><div class="text-[38px] font-extrabold tracking-[-1.2px]">${w}</div>
   ${ipa ? `<div class="mt-2 flex items-center justify-center gap-3 text-[19px] text-ink-600">${ipa}${soundInline('l')}</div>` : ''}</div>`;
@@ -1551,6 +1588,99 @@ function obReady() {
   </div>${obAction('Học bài đầu tiên', true, 'btn-blue')}`;
 }
 
+/* ===================== JOURNEY & CONTENT REPORTS ===================== */
+/* iOS segmented control, as in Xếp hạng. */
+const segmented = (items, on) => `<div class="h-9 p-0.5 rounded-[9px] bg-ink-100 grid" style="grid-template-columns:repeat(${items.length},1fr)">${items.map(t =>
+  `<span class="rounded-[7px] grid place-items-center text-[13px] font-semibold ${t === on ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]' : 'text-ink-700'}">${t}</span>`).join('')}</div>`;
+/* Cumulative words learned this month on real date spacing; the area starts at the period's low point. */
+const growthChart = `<svg viewBox="0 0 310 170" class="w-full h-[170px]">
+  ${[20, 70, 120].map(y => `<line x1="0" x2="276" y1="${y}" y2="${y}" stroke="#EEEDF2" stroke-width="1"/>`).join('')}
+  ${[['248', 20], ['184', 70], ['120', 120]].map(([t, y]) => `<text x="282" y="${y + 4}" font-size="11" fill="#7A7785">${t}</text>`).join('')}
+  <path d="M4 120 L40 112 L76 101 L112 96 L148 80 L184 72 L220 50 L256 30 L270 20 L270 140 L4 140 Z" fill="#EAF5FE"/>
+  <polyline points="4,120 40,112 76,101 112,96 148,80 184,72 220,50 256,30 270,20" fill="none" stroke="#2F9BF4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  ${[['1/11', 4], ['8/11', 76], ['15/11', 148], ['22/11', 220]].map(([t, x]) => `<text x="${x}" y="162" font-size="11" fill="#7A7785">${t}</text>`).join('')}
+</svg>`;
+const statTile = (icon, n, label) => `<div class="card p-4"><span class="ico w-9 h-9 bg-blue-50 text-blue-600">${ic(icon, 'w-[18px] h-[18px]')}</span>
+  <div class="mt-2 text-[26px] font-extrabold tracking-tight tabular-nums">${n}</div><div class="text-[13px] text-ink-500">${label}</div></div>`;
+function journeyDetail(period = 'Tháng') {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display pt-1">Hành trình học tập</h1>
+    <div class="mt-6">${sectionTitle('Vốn từ của bạn')}
+      <div class="card p-4 space-y-4">
+        ${segmented(['Tuần', 'Tháng', 'Tất cả'], period)}
+        <div><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+128</div><div class="text-[15px] text-ink-500">Từ mới trong tháng này</div></div>
+        ${growthChart}
+        <div class="flex justify-between text-[15px] text-ink-500 tabular-nums"><span>Đầu kỳ <b class="text-ink-950">120</b></span><span>Hiện tại <b class="text-ink-950">248</b></span></div>
+      </div></div>
+    <div class="mt-9">${sectionTitle('Nhịp học tuần này')}<div class="card p-4">${weekRhythm()}</div></div>
+    <div class="mt-9">${sectionTitle('Hoạt động tháng này')}
+      <div class="grid grid-cols-2 gap-3">${statTile('calendar', 18, 'Ngày đã học')}${statTile('check', 26, 'Buổi đã hoàn thành')}${statTile('plus', 128, 'Từ mới')}${statTile('rotate', 312, 'Lượt ôn nghĩa')}</div>
+      <p class="mt-3 text-[13px] text-ink-500">Mỗi phần học hoặc ôn đã hoàn thành được tính là một buổi.</p>
+      <p class="mt-2 text-[13px] text-ink-500">Theo dõi từ 1 thg 8, 2026</p></div>
+  </div>`;
+}
+function journeyEmpty() {
+  return `${status()}${backHeader}
+  <div class="flex-1 overflow-hidden px-5">
+    <h1 class="h-display pt-1">Hành trình học tập</h1>
+    <div class="mt-6 card p-4"><span class="ico bg-blue-50 text-blue-600">${ic('path')}</span>
+      <div class="mt-3 font-bold text-[17px]">Hành trình bắt đầu từ một từ</div><p class="mt-1 text-[15px] text-ink-500">Hoàn thành buổi học đầu tiên để bắt đầu.</p></div>
+  </div>`;
+}
+/* Home's journey block on its own, one state per card. */
+function journeyStates() {
+  const block = (label, html) => `<div class="mt-6"><div class="text-[12px] font-bold text-ink-400 mb-2">${label}</div>${sectionTitle('Hành trình của bạn')}${html}</div>`;
+  return `${status()}
+  <div class="flex-1 overflow-hidden px-5 pt-2">
+    ${block('Đã đạt mục tiêu tuần', `<div class="card"><div class="flex items-center gap-4 p-4"><div class="flex-1"><div class="text-[26px] font-extrabold tracking-tight">+31</div><div class="text-[15px] text-ink-500">Từ mới trong tuần này</div></div>${sparkline}</div>
+      <div class="p-4 border-t-[1.5px] border-ink-100">${weekRhythm(8, 7, ['done', 'done', 'done', 'done', 'done', 'today', 'ahead'])}</div></div>`)}
+    ${block('Chưa học bao giờ', journeyCard('empty'))}
+    ${block('Đang tải', journeyCard('loading'))}
+    ${block('Lỗi', journeyCard('error'))}
+  </div>${tabbar('Trang chủ')}`;
+}
+
+/* A sheet over another sheet (report from Chi tiết từ): its scrim covers the first sheet too. */
+const sheetOverTop = (under, content, top) => `${under}<div class="absolute inset-0 bg-ink-950/40 z-30"></div>
+  <div class="absolute inset-x-0 bottom-0 bg-white rounded-t-[28px] z-40 flex flex-col overflow-hidden" style="top:${top}px">
+    <div class="grabber"></div>${content}</div>`;
+/* reasons: [label, selected]; note: '' shows the placeholder. */
+function reportContent({ subtitle, reasons, note = '', required = false, error = '', sending = false }) {
+  const sendable = reasons.some(([, on]) => on) && !(required && !note);
+  return `<div class="flex items-start gap-3 px-5 pt-3">
+      <div class="flex-1"><h2 class="text-[26px] font-extrabold tracking-[-0.6px] leading-tight">Báo lỗi nội dung</h2>
+        <p class="mt-1 text-[15px] text-ink-500">${subtitle}</p></div>
+      <span class="icon-btn">${ic('x', 'w-4 h-4')}</span></div>
+    <div class="flex-1 overflow-hidden px-5 pt-5">
+      <div class="eyebrow mb-2">Bạn thấy vấn đề gì?</div>
+      <div class="card overflow-hidden">${reasons.map(([t, on]) => `<div class="row py-2.5">${obRadio(on)}<span class="flex-1 font-semibold text-[15px] leading-snug">${t}</span></div>`).join('')}</div>
+      <div class="mt-5 eyebrow mb-2 ${note ? 'text-blue-700' : ''}">${required ? 'Chi tiết' : 'Chi tiết bổ sung (không bắt buộc)'}</div>
+      <div class="field ${note ? 'focus' : ''} h-[84px] items-start py-3 text-[16px] ${note ? '' : 'text-ink-400'}">${note || (required ? 'Chi tiết' : 'Chi tiết bổ sung (không bắt buộc)')}</div>
+      <div class="mt-1.5 text-right text-[12px] text-ink-500 tabular-nums">${[...note].length}/500</div>
+      ${error ? `<p class="mt-2 text-[14px] text-coral-700">${error}</p>` : ''}
+    </div>
+    <div class="px-5 pt-3 pb-10 space-y-3">
+      ${!sendable ? `<p class="text-[13px] text-ink-500 text-center">${required ? 'Hãy mô tả vấn đề' : 'Chọn vấn đề bạn gặp'}</p>${disabledBtn('Gửi báo cáo')}` : `<button class="btn btn-ink">${sending ? 'Đang gửi…' : 'Gửi báo cáo'}</button>`}
+      <button class="btn btn-line">Hủy</button>
+    </div>`;
+}
+const TASK_REASONS = ['Câu hỏi hoặc đáp án chưa hợp lý', 'Đáp án của tôi đáng lẽ được chấp nhận', 'Nghĩa hoặc bản dịch chưa đúng', 'Vấn đề khác'];
+const pick = (labels, on) => labels.map(t => [t, t === on]);
+function reportTask(on, extra = {}) {
+  return sheetOver(selectTask('wrong'), reportContent({ subtitle: 'Từ này nghĩa là gì?', reasons: pick(TASK_REASONS, on), ...extra }), 150);
+}
+function reportTaskBeforeAnswer() {
+  return sheetOver(selectTask('sel'), reportContent({ subtitle: 'Từ này nghĩa là gì?', reasons: pick(['Câu hỏi hoặc đáp án chưa hợp lý', 'Nghĩa hoặc bản dịch chưa đúng', 'Vấn đề khác'], null) }), 230);
+}
+const toast = t => `<div class="absolute inset-x-5 bottom-[230px] z-30 rounded-[12px] bg-ink-950 text-white text-[13px] font-bold text-center py-3 shadow-[0_6px_10px_rgba(18,17,24,0.2)]">${t}</div>`;
+function reportSent() { return `${selectTask('wrong')}${toast('Đã gửi báo cáo. Cảm ơn bạn!')}`; }
+function reportWordDetail() {
+  return sheetOverTop(wordDetail(), reportContent({ subtitle: 'resilient · kiên cường',
+    reasons: pick(['Nghĩa hoặc bản dịch chưa đúng', 'Định nghĩa chưa đúng', 'Ví dụ chưa đúng hoặc thiếu tự nhiên', 'Âm thanh hoặc phát âm có vấn đề', 'Vấn đề khác'], 'Ví dụ chưa đúng hoặc thiếu tự nhiên'),
+    note: 'Câu ví dụ nghe không tự nhiên' }), 120);
+}
+
 document.getElementById('flows').innerHTML = [
   flow('flow-auth', 'Luồng 0 · Đăng nhập & đăng ký', 'Màn đầu tiên khi chưa đăng nhập. Vùng sản phẩm: gọn, một hành động chính mỗi màn. Đăng nhập lần đầu xong thì sang Onboarding (Luồng 0b). Ngôn ngữ app tự theo ngôn ngữ máy (đổi trong Cài đặt), không có màn chọn ngôn ngữ.', [
     frame('0.1', 'Đăng nhập', login(false), [
@@ -1638,7 +1768,8 @@ document.getElementById('flows').innerHTML = [
       'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
       'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
-    ], 1120),
+      'Khối "Hành trình của bạn" ở cuối, sau Đang học: tuần này học bao nhiêu từ và bao nhiêu buổi. Chỉ là lịch sử; các trạng thái ở Luồng 7.',
+    ], 1460),
     go('Chạm Bắt đầu'),
     frame('1.2', 'Ôn từ bạn đã học', reviewPreview(), [
       'Thẻ từ có tên Topic nhỏ bên dưới, cạnh dày như thẻ đáp án; Syllie đứng giữa lời mở đầu và danh sách.',
@@ -1817,6 +1948,7 @@ document.getElementById('flows').innerHTML = [
     frame('2.2', 'Chi tiết từ (sheet)', wordDetail(), [
       'Mỗi nghĩa là card mở/đóng, mở được nhiều card cùng lúc (mở sẵn nghĩa đang xem hoặc nghĩa đã học đầu tiên; loa ở đầu trang theo card vừa mở gần nhất): Định nghĩa, Ví dụ, Trí nhớ, Phát âm đều có nhãn riêng; ví dụ (từ được tô nền) kèm bản dịch. Trí nhớ có pill "Cần luyện lại" khi từ nằm trong Từ còn yếu. Phát âm là một ô màu theo trạng thái (Chưa thử / Đang luyện / Thành thạo), có điểm khi chấm bằng Azure; vắng khi nghĩa không có phát âm. Không còn lưới kỹ năng.',
       'IPA và audio thuộc từng nghĩa. Mọi nghĩa đọc giống nhau thì IPA + loa nằm dưới từ (một lần), card không lặp lại.',
+      'Cuối mỗi nghĩa đang mở là link "Báo lỗi nội dung" (Ink 500, icon cờ), không có trên nghĩa người học đã tự sửa. Sheet báo lỗi: 8.7.',
     ]),
     go('Từ có nhiều cách đọc'),
     frame('2.2a', 'Chi tiết từ · nhiều cách đọc', wordDetailHeteronym(), [
@@ -1975,6 +2107,55 @@ document.getElementById('flows').innerHTML = [
       'Gói miễn phí: một quảng cáo toàn màn hình (Google AdMob) sau mỗi N buổi học hoàn thành (server cấu hình, mặc định 3). Hiện khi đóng màn Tổng kết và quay về Trang chủ, không bao giờ trong buổi học hay lúc mở app.',
       'Không hiện khi người học vừa chọn bước tiếp theo ở màn kết thúc (chọn chủ đề, luyện tập, Premium). Quảng cáo chưa tải xong thì để lần sau.',
       'Lần đầu: form đồng ý (UMP) nếu luật yêu cầu, rồi hộp thoại App Tracking Transparency của iOS. Premium không có quảng cáo.',
+    ]),
+  ]),
+  flow('flow-journey', 'Luồng 7 · Hành trình học tập', 'Chỉ là lịch sử, đặt sau "Bài học hôm nay" và "Đang học" trên Trang chủ: Trang chủ trả lời "Hôm nay học gì?" trước, rồi mới tới "Mình đã đi được bao xa?". Không thêm tab, không lặp số liệu hiện tại của Từ của tôi. Mọi số đến từ các buổi học đã commit (<code>GET /me/learning-journey</code>, FRONTEND_FLOW §17).', [
+    frame('7.1', 'Khối Hành trình · các trạng thái', journeyStates(), [
+      'Cả card là một nút mở trang con 7.2; dấu › chỉ là gợi ý điều hướng, không có nút 3D.',
+      'Trên: "+24" là số từ (không phải nghĩa) học lần đầu trong tuần; sparkline Blue 500 cộng dồn của tuần này, không có điểm tương lai, chỉ một ngày thì là một chấm. Ẩn sparkline ở cỡ chữ trợ năng.',
+      'Dưới: "Buổi học tuần này 4/7": mục tiêu tính theo <b>buổi</b> (cùng setting <code>weeklySessionGoal</code>), không theo ngày. Đạt hoặc vượt: pill Green "Đã đạt mục tiêu tuần", vẫn hiện số thật (8/7).',
+      'Dải T2–CN: đã học là tick trong tròn Blue 500, hôm nay chưa học là vòng Ink 400, ngày đã qua chưa học là gạch Ink 300, ngày chưa tới là chấm Ink 100. Mỗi trạng thái có hình riêng, không chỉ dựa vào màu; VoiceOver đọc "Thứ Hai, đã học".',
+      'Chưa học bao giờ: "Hành trình bắt đầu từ một từ" và vẫn mở được 7.3. Đang tải: khung xám, không spinner. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả và không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card cũ, thêm dòng "Chưa cập nhật".',
+    ], 1000),
+    go('Chạm card'),
+    frame('7.2', 'Hành trình học tập', journeyDetail(), [
+      'Trang con của Trang chủ, nút quay lại của iOS, tiêu đề lớn trong nội dung.',
+      'Segmented Tuần / Tháng / Tất cả, mặc định Tháng. Kỳ áp cho biểu đồ và Hoạt động; "Nhịp học tuần này" luôn là tuần hiện tại.',
+      'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối.',
+      'Hoạt động: Ngày đã học, Buổi đã hoàn thành, Từ mới, Lượt ôn nghĩa (mỗi nghĩa ôn trong một buổi tính một lượt). Daily tách phần ôn và phần từ mới thành hai buổi, nên có dòng giải thích cách đếm.',
+      'Không có nút luyện tập ở đây: màn này không bắt đầu gì.',
+    ], 1180),
+    frame('7.3', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
+  ]),
+  flow('flow-report', 'Luồng 8 · Báo lỗi nội dung', 'Báo lỗi ngay tại chỗ thấy lỗi: thẻ học, bài luyện, từng nghĩa trong Chi tiết từ. Chỉ là phản hồi cho biên tập viên: không chấm lại, không đổi tiến độ, không đổi bài đang làm. Không có trong Thử thách, Practice Lab, bài kiểm tra trình độ (<code>POST /me/content-reports</code>, FRONTEND_FLOW §18).', [
+    frame('8.1', 'Bài luyện · cờ báo lỗi', selectTask('sel'), [
+      'Cờ Ink 400 ở ô bên phải header, đối xứng với ✕, vùng chạm 44pt; thanh tiến độ giữ nguyên độ dài và vẫn nằm giữa.',
+      'Có cả trước và sau khi chấm. Đang ghi âm hoặc đang gửi bản ghi thì cờ mờ đi, không mở sheet khi micro đang thu.',
+      'Ở thẻ học (và bước "Tôi biết từ này") cờ báo lỗi chính thẻ học đó.',
+    ]),
+    go('Chạm cờ'),
+    frame('8.2', 'Báo lỗi · trước khi trả lời', reportTaskBeforeAnswer(), [
+      'Sheet vừa nội dung, có grabber; một lý do, không chọn sẵn. Nút "Gửi báo cáo" mờ, dòng nhắc "Chọn vấn đề bạn gặp" phía trên.',
+      'Chưa trả lời thì không có "Đáp án của tôi đáng lẽ được chấp nhận": không lộ đáp án trước khi chấm.',
+      'Lý do theo nội dung đang có: âm thanh chỉ khi có loa hoặc micro; định nghĩa và ví dụ chỉ khi thẻ có.',
+    ]),
+    frame('8.3', 'Báo lỗi · sau khi bị chấm sai', reportTask('Đáp án của tôi đáng lẽ được chấp nhận'), [
+      'Sau khi đáp án bị chấm sai thì có thêm "Đáp án của tôi đáng lẽ được chấp nhận". Với bài đọc to là "Phát âm của tôi bị chấm chưa đúng". Câu trả lời gửi kèm để biên tập viên tham khảo, không bao giờ gửi âm thanh.',
+      'Ghi chú tối đa 500 ký tự, đếm ngay dưới ô.',
+      'Đóng sheet hoặc Hủy: bài làm giữ nguyên lựa chọn, số lần thử và trạng thái.',
+    ]),
+    frame('8.4', 'Báo lỗi · Vấn đề khác', reportTask('Vấn đề khác', { required: true }), ['"Vấn đề khác" bắt buộc có ghi chú: nhãn đổi thành "Chi tiết", nút mờ với dòng nhắc "Hãy mô tả vấn đề".']),
+    frame('8.5', 'Báo lỗi · lỗi mạng', reportTask('Câu hỏi hoặc đáp án chưa hợp lý', { note: 'Hai đáp án đều đúng', error: 'Không kết nối được Syll. Kiểm tra mạng rồi thử lại.' }), [
+      'Lỗi hiện dưới ô, giữ nguyên lựa chọn và ghi chú. Gửi lại dùng cùng mã báo cáo nên server chỉ lưu một lần.',
+      'Đang gửi: nút "Đang gửi…", không đóng sheet bằng vuốt cho tới khi có kết quả (có giới hạn thời gian).',
+      'Nghĩa đang hiện bản người học tự sửa thì không báo lỗi được: "Nghĩa này đang hiển thị bản bạn tự sửa nên không thể báo lỗi."',
+    ]),
+    go('Gửi'),
+    frame('8.6', 'Đã gửi', reportSent(), ['Sheet đóng, toast Ink 950 "Đã gửi báo cáo. Cảm ơn bạn!" (VoiceOver đọc), quay lại đúng bài đang làm. Không có màn cảm ơn, không tự chuyển bài.']),
+    frame('8.7', 'Chi tiết từ · báo lỗi một nghĩa', reportWordDetail(), [
+      'Mỗi nghĩa đang mở có link "Báo lỗi nội dung" ở cuối (xem 2.2). Báo theo từng nghĩa, không báo cả từ.',
+      'Sheet báo lỗi mở chồng lên Chi tiết từ (ngoại lệ duy nhất của quy tắc không chồng sheet) để sheet cha giữ nguyên nghĩa đang mở.',
+      'Nghĩa người học đã tự sửa không có link: chỉ nội dung gốc mới đến tay biên tập viên.',
     ]),
   ]),
 ].join('');

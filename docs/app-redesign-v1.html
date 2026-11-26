@@ -866,13 +866,13 @@ function postcard({ week = '23–29/11', stamps = ['T2', 'T4'], goal = 3, size =
     ${reached ? postmark : ''}
   </div>`;
 }
-/* This week's running total of new words: no future points, no smoothing. */
-const sparkline = `<svg viewBox="0 0 96 40" class="w-24 h-10"><polyline points="4,36 18,27 32,27 46,15 60,6" fill="none" stroke="#2F9BF4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/* Home's journey block: this week's stamp card leads; new words are one line under it. The growth chart lives on the
+   journey page, where it has axes and a period to compare. */
 function journeyCard() {
   return `<div class="card">
-    <div class="flex items-center gap-4 p-4"><div class="flex-1"><div class="text-[26px] font-extrabold tracking-tight tabular-nums">+24</div>
-      <div class="text-[15px] text-ink-500">Từ mới trong tuần này</div></div>${sparkline}</div>
-    <div class="p-4 border-t-[1.5px] border-ink-100">${postcard()}</div>
+    <div class="p-4">${postcard()}</div>
+    <div class="flex items-center gap-2 px-4 py-3.5 border-t-[1.5px] border-ink-100 text-[15px]">
+      <span class="font-extrabold tabular-nums">+24</span><span class="flex-1 text-ink-600">từ mới tuần này</span>${ic('chev', 'w-5 h-5 text-ink-400')}</div>
   </div>`;
 }
 
@@ -1616,24 +1616,6 @@ const growthChart = `<svg viewBox="0 0 310 170" class="w-full h-[170px]">
 </svg>`;
 const statTile = (icon, n, label) => `<div class="card p-4"><span class="ico w-9 h-9 bg-blue-50 text-blue-600">${ic(icon, 'w-[18px] h-[18px]')}</span>
   <div class="mt-2 text-[26px] font-extrabold tracking-tight tabular-nums">${n}</div><div class="text-[13px] text-ink-500">${label}</div></div>`;
-/* History calendar (journey page): facts only. A learned day is a Blue disc; any other past day stays plain, so a
-   planned day off never reads as a miss. No plan, goal or streak marks. */
-function monthCalendar({ title = 'Tháng 11, 2026', offset = 6, days = 30, learned = [2, 3, 5, 9, 10, 12, 16, 18, 19, 23, 24, 25, 26], today = 26, selected = 25 } = {}) {
-  const head = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => `<span class="text-center text-[12px] font-semibold text-ink-500">${d}</span>`).join('');
-  const cell = d => {
-    const on = learned.includes(d), future = d > today;
-    const ring = d === selected ? 'ring-[3px] ring-blue-200' : d === today && !on ? 'ring-2 ring-ink-400' : '';
-    const tone = on ? 'bg-blue-500 text-white font-bold' : future ? 'text-ink-300' : 'text-ink-700';
-    return `<span class="mx-auto w-9 h-9 rounded-full grid place-items-center text-[15px] tabular-nums ${tone} ${ring}">${d}</span>`;
-  };
-  return `<div class="card p-4">
-    <div class="flex items-center justify-between mb-3"><span class="icon-btn">${ic('back', 'w-4 h-4')}</span>
-      <span class="font-bold text-[16px]">${title}</span><span class="icon-btn opacity-40">${ic('chev', 'w-4 h-4')}</span></div>
-    <div class="grid grid-cols-7 gap-y-1.5">${head}${Array.from({ length: offset }, () => '<span></span>').join('')}${Array.from({ length: days }, (_, i) => cell(i + 1)).join('')}</div>
-    <div class="mt-4 pt-3 border-t-[1.5px] border-ink-100 flex items-center gap-3"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-      <div class="flex-1"><div class="font-bold text-[15px]">Thứ Tư, 25 thg 11</div><div class="text-[13px] text-ink-500">2 buổi · 5 từ mới · 9 lượt ôn</div></div></div>
-  </div>`;
-}
 function journeyDetail(period = 'Tháng') {
   return `${status()}${backHeader}
   <div class="flex-1 overflow-hidden px-5">
@@ -1645,7 +1627,6 @@ function journeyDetail(period = 'Tháng') {
         ${growthChart}
         <div class="flex justify-between text-[15px] text-ink-500 tabular-nums"><span>Đầu kỳ <b class="text-ink-950">120</b></span><span>Hiện tại <b class="text-ink-950">248</b></span></div>
       </div></div>
-    <div class="mt-9">${sectionTitle('Lịch học')}${monthCalendar()}</div>
     <div class="mt-9">${sectionTitle('Hoạt động tháng này')}
       <div class="grid grid-cols-2 gap-3">${statTile('calendar', 13, 'Ngày đã học')}${statTile('check', 26, 'Buổi đã hoàn thành')}${statTile('plus', 128, 'Từ mới')}${statTile('rotate', 312, 'Lượt ôn nghĩa')}</div>
       <p class="mt-3 text-[13px] text-ink-500">Mỗi phần học hoặc ôn đã hoàn thành được tính là một buổi.</p>
@@ -1789,8 +1770,8 @@ document.getElementById('flows').innerHTML = [
       'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
       'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Cả card là một nút mở 7.1 (dấu › chỉ là gợi ý điều hướng).',
-      'Trên: "+24" là số từ (không phải nghĩa) học lần đầu trong tuần; sparkline Blue 500 cộng dồn của tuần này, không có điểm tương lai, một ngày thì là một chấm, ẩn ở cỡ chữ trợ năng.',
-      'Dưới: thẻ tuần (postcard), mỗi tuần một thẻ. Số ô tem = số ngày học người học đã chọn (<code>weeklySessionGoal</code>), không phải 7 ngày, nên ngày nghỉ theo kế hoạch không bao giờ trông như bị bỏ lỡ và thẻ không giống streak. Mỗi <b>ngày</b> có học (<code>week.activeDays</code>) đóng một tem Blue 500, tem ghi thứ của ngày đó (dữ liệu tích cực, không phải lịch); ô chưa có tem viền đứt Ink 200. Đếm ngày chứ không đếm buổi: Daily tách hai buổi không được tính đôi.',
+      'Thẻ tuần (postcard) là phần chính của khối, mỗi tuần một thẻ. Số ô tem = số ngày học người học đã chọn (<code>weeklySessionGoal</code>), không phải 7 ngày, nên ngày nghỉ theo kế hoạch không bao giờ trông như bị bỏ lỡ và thẻ không giống streak. Mỗi <b>ngày</b> có học (<code>week.activeDays</code>) đóng một tem Blue 500, tem ghi thứ của ngày đó (dữ liệu tích cực, không phải lịch); ô chưa có tem viền đứt Ink 200. Đếm ngày chứ không đếm buổi: Daily tách hai buổi không được tính đôi.',
+      'Dưới thẻ một dòng "+24 từ mới tuần này": số từ (không phải nghĩa) học lần đầu trong tuần. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
       'Đủ mục tiêu: dấu bưu điện tròn Green "ĐÃ ĐẠT" nghiêng đè góc thẻ. Vượt mục tiêu: tem thêm màu Green, số thật (4/3), không thêm áp lực. Tem nghiêng nhẹ xen kẽ cho cảm giác đóng tay; Reduce Motion: tem hiện thẳng, không hiệu ứng đóng dấu. Thẻ chỉ đọc là "2 trên 3 ngày học tuần này, đã học Thứ Hai, Thứ Tư".',
       'Chưa học bao giờ: card chỉ có "Hành trình bắt đầu từ một từ" / "Hoàn thành buổi học đầu tiên để bắt đầu." kèm ›, vẫn mở trang Hành trình (7.2). Đang tải: khung xám. Lỗi: một dòng "Chưa tải được hành trình · Thử lại", không hiện số 0 giả, không chặn Bài học hôm nay. Có dữ liệu cũ mà tải lại lỗi: giữ card, thêm "Chưa cập nhật".',
     ], 1320),
@@ -2137,13 +2118,11 @@ document.getElementById('flows').innerHTML = [
     frame('7.1', 'Hành trình học tập', journeyDetail(), [
       'Trang con của Trang chủ, nút quay lại của iOS, tiêu đề lớn trong nội dung.',
       'Segmented Tuần / Tháng / Tất cả, mặc định Tháng. Kỳ áp cho biểu đồ và Hoạt động.',
-      'Thẻ tem chỉ có ở Trang chủ, cho tuần hiện tại. Xem lại quá khứ là "Lịch học": lịch tháng (T2 đầu tuần), ngày có học là tròn Blue 500 số trắng; ngày đã qua không học chỉ là số Ink 700, không gạch, không đánh dấu bỏ lỡ; ngày chưa tới Ink 300; hôm nay chưa học có vòng Ink 400. Không vẽ lịch học dự định hay mục tiêu lên lịch: lịch chỉ ghi điều đã xảy ra.',
-      'Mặc định tháng này; ‹ › chuyển tháng (› tắt ở tháng hiện tại, ‹ dừng ở tháng có ngày học đầu tiên). Lịch độc lập với segmented phía trên. Chạm một ngày: dòng dưới lịch nói ngày đó học gì (số buổi, từ mới, lượt ôn); ngày không học thì "Không có buổi học", không phán xét. VoiceOver đọc từng ngày: "25 tháng 11, đã học, 2 buổi".',
-      '<b>Cần backend</b>: các ngày của một tháng bất kỳ (<code>GET /me/learning-journey/calendar?month=2026-11</code> → <code>days[]</code>: ngày, số buổi, từ mới, lượt ôn), cùng múi giờ và cách đếm như phần trên.',
+      'Thẻ tem chỉ có ở Trang chủ, cho tuần hiện tại; trang này không lặp lại nó và không có lịch (V1 không xem lại từng ngày). Quá khứ đọc qua biểu đồ và Hoạt động.',
       'Biểu đồ: số từ đã từng học, cộng dồn, không bao giờ giảm. Trục ngày theo khoảng cách thật, không làm mượt, không vẽ tương lai. Tất cả: điểm theo tháng (tới 24 tháng), rồi theo quý, rồi theo năm. "Đầu kỳ" là điểm gốc, "Hiện tại" là điểm cuối.',
       'Hoạt động: Ngày đã học, Buổi đã hoàn thành, Từ mới, Lượt ôn nghĩa (mỗi nghĩa ôn trong một buổi tính một lượt). Daily tách phần ôn và phần từ mới thành hai buổi, nên có dòng giải thích cách đếm.',
       'Không có nút luyện tập ở đây: màn này không bắt đầu gì.',
-    ], 1620),
+    ], 1300),
     frame('7.2', 'Hành trình · chưa có dữ liệu', journeyEmpty(), ['Người học mới: một card giải thích, không vẽ biểu đồ phẳng hay số 0.']),
   ]),
   flow('flow-report', 'Luồng 8 · Báo lỗi nội dung', 'Báo lỗi ngay tại chỗ thấy lỗi: thẻ học, bài luyện, từng nghĩa trong Chi tiết từ. Chỉ là phản hồi cho biên tập viên: không chấm lại, không đổi tiến độ, không đổi bài đang làm. Không có trong Thử thách, Practice Lab, bài kiểm tra trình độ (<code>POST /me/content-reports</code>, FRONTEND_FLOW §18).', [

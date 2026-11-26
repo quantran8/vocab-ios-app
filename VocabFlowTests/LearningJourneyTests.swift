@@ -6,7 +6,7 @@ final class LearningJourneyTests: XCTestCase {
     // Wednesday 2026-11-25 in the learner's zone: Monday and Wednesday studied, Thursday on ahead.
     static let json = #"""
     {"asOf":"2026-11-25T04:00:00.000Z","timezone":"Asia/Ho_Chi_Minh","historyAvailableFrom":"2026-08-01","historyComplete":true,
-     "week":{"startDate":"2026-11-23","endDateExclusive":"2026-11-30","newWords":7,"completedSessions":3,"activeDays":2,"weeklySessionGoal":3,
+     "week":{"startDate":"2026-11-23","endDateExclusive":"2026-11-30","newWords":7,"completedSessions":3,"activeDays":2,"weeklySessionGoal":3,"recentWords":[{"wordId":"w1","lemma":"resilient"},{"wordId":"w2","lemma":"thrive"}],
        "days":[{"date":"2026-11-23","completed":true,"completedSessions":2,"newWords":5},
                {"date":"2026-11-24","completed":false,"completedSessions":0,"newWords":0},
                {"date":"2026-11-25","completed":true,"completedSessions":1,"newWords":2},
@@ -26,9 +26,45 @@ final class LearningJourneyTests: XCTestCase {
     func testDecodesTheWeekAndTellsTodayFromTheDaysAhead() throws {
         let week = try Self.journey().week
         XCTAssertEqual(week.today?.date, "2026-11-25")
-        XCTAssertEqual(week.cumulativeNewWords, [5, 5, 7])
-        XCTAssertTrue(week.goalReached)
+        XCTAssertEqual(week.studiedDays.map(\.date), ["2026-11-23", "2026-11-25"])
+        XCTAssertFalse(week.goalReached, "three sessions over two days is 2/3 study days")
+        XCTAssertEqual(week.recentWords?.map(\.lemma), ["resilient", "thrive"])
+        XCTAssertEqual(week.otherNewWords, 5)
         XCTAssertTrue(week.days[3].isFuture)
+    }
+
+    func testTheGoalCountsStudyDaysNotSessions() throws {
+        let json = Self.json.replacingOccurrences(of: #""weeklySessionGoal":3"#, with: #""weeklySessionGoal":2"#)
+        XCTAssertTrue(try APIClient.decoder.decode(LearningJourney.self, from: Data(json.utf8)).week.goalReached)
+    }
+
+    func testWordsOfOneDayStayOneGroupAcrossPages() throws {
+        let page = try APIClient.decoder.decode(JourneyWordsPage.self, from: Data(#"""
+        {"total":3,"items":[
+          {"wordId":"a","lemma":"resilient","meaningTexts":["kiên cường","đàn hồi"],"learnedOn":"2026-11-26"},
+          {"wordId":"b","lemma":"thrive","meaningTexts":["phát triển"],"learnedOn":"2026-11-26"},
+          {"wordId":"c","lemma":"clarify","meaningTexts":[],"learnedOn":"2026-11-24"}]}
+        """#.utf8))
+        XCTAssertEqual(page.items[0].meaningText, "kiên cường; đàn hồi")
+        let days = JourneyWordDay.grouped(page.items)
+        XCTAssertEqual(days.map(\.date), ["2026-11-26", "2026-11-24"])
+        XCTAssertEqual(days[0].words.map(\.lemma), ["resilient", "thrive"])
+    }
+
+    func testMoreWordsAppendToTheLoadedPage() async throws {
+        let api = StubVocabAPI()
+        let word = { (id: String) in JourneyWord(wordId: id, lemma: id, meaningTexts: [], learnedOn: "2026-11-26") }
+        api.journeyWordPages = [
+            JourneyWordsPage(total: 3, items: [word("a"), word("b")]),
+            JourneyWordsPage(total: 3, items: [word("c")]),
+        ]
+        let store = LearningJourneyStore(api: api)
+        await store.loadWords(.month)
+        await store.loadWords(.month, more: true)
+        XCTAssertEqual(store.words[.month]?.map(\.wordId), ["a", "b", "c"])
+        XCTAssertEqual(api.journeyWordOffsets, [0, 2])
+        await store.loadWords(.month, more: true)
+        XCTAssertEqual(api.journeyWordOffsets, [0, 2], "nothing left to load")
     }
 
     func testAGoallessWeekIsNeverReached() throws {

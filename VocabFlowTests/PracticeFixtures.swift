@@ -257,6 +257,15 @@ final class StubVocabAPI: VocabAPI, @unchecked Sendable {
         return try (journeyResults[period] ?? .failure(.transport)).get()
     }
 
+    /// Answers `learningJourneyWords`, one page per call, in order.
+    var journeyWordPages: [JourneyWordsPage] = []
+    private(set) var journeyWordOffsets: [Int] = []
+    func learningJourneyWords(period: JourneyPeriod, limit: Int, offset: Int) async throws -> JourneyWordsPage {
+        journeyWordOffsets.append(offset)
+        guard !journeyWordPages.isEmpty else { throw APIError.transport }
+        return journeyWordPages.removeFirst()
+    }
+
     /// Answers `submitContentReport`, in order; once used up, every send succeeds.
     var contentReportResults: [Result<ContentReportReceipt, APIError>] = []
     private(set) var contentReports: [ContentReportRequest] = []

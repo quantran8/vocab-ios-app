@@ -27,22 +27,25 @@ struct LearningJourney: Decodable, Equatable {
         let newWords: Int
         let completedSessions: Int
         let activeDays: Int
-        /// Sessions the learner aims for each week; nil when the server has none.
+        /// Study days the learner aims for each week (the app sets it to the days they chose); nil when unset.
         let weeklySessionGoal: Int?
+        /// The week's newest words, at most three. Nil from an older backend.
+        var recentWords: [RecentWord]? = nil
         let days: [Day]
 
         /// The last day that isn't ahead: today in the learner's time zone.
         var today: Day? { days.last { !$0.isFuture } }
-        var goalReached: Bool { weeklySessionGoal.map { completedSessions >= $0 } ?? false }
+        /// The goal counts study days, never sessions: a Daily split in two still makes one day.
+        var goalReached: Bool { weeklySessionGoal.map { activeDays >= $0 } ?? false }
+        /// The days that earned a stamp, in order.
+        var studiedDays: [Day] { days.filter { $0.completed == true } }
+        /// New words beyond the ones named on Home.
+        var otherNewWords: Int { max(0, newWords - (recentWords?.count ?? 0)) }
+    }
 
-        /// New words learned so far this week, one running total per elapsed day.
-        var cumulativeNewWords: [Int] {
-            var total = 0
-            return days.filter { !$0.isFuture }.map { day in
-                total += day.newWords ?? 0
-                return total
-            }
-        }
+    struct RecentWord: Decodable, Equatable {
+        let wordId: String
+        let lemma: String
     }
 
     struct Point: Decodable, Equatable {
@@ -115,6 +118,28 @@ enum JourneyDate {
         return date.formatted(style(Date.FormatStyle().weekday(.wide)))
     }
 
+    /// "Thursday, 26 Nov" for a timeline day.
+    static func dayTitle(_ day: String) -> String {
+        guard let date = date(day) else { return day }
+        return date.formatted(style(Date.FormatStyle().weekday(.wide).day().month(.abbreviated)))
+    }
+
+    /// The day a stamp was earned, short enough for the stamp ("Mon", "T2").
+    static func stampLabel(_ day: String) -> String {
+        guard let date = date(day) else { return "" }
+        return date.formatted(style(Date.FormatStyle().weekday(.abbreviated)))
+    }
+
+    /// "23–29/11" for the week on Home.
+    static func weekRange(start: String, endExclusive: String) -> String {
+        guard let from = date(start), let to = date(endExclusive)?.addingTimeInterval(-86_400) else { return start }
+        let formatter = DateIntervalFormatter()
+        formatter.locale = AppLanguage.active.locale
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateTemplate = "dM"
+        return formatter.string(from: from, to: to)
+    }
+
     /// "12 Nov 2026".
     static func long(_ day: String) -> String {
         guard let date = date(day) else { return day }
@@ -126,5 +151,44 @@ enum JourneyDate {
         if granularity == "day" { return date.formatted(style(Date.FormatStyle().day().month(.defaultDigits))) }
         if granularity == "year" { return date.formatted(style(Date.FormatStyle().year())) }
         return date.formatted(style(Date.FormatStyle().month(.abbreviated).year(.twoDigits)))
+    }
+}
+
+/// `GET /me/learning-journey/words`: the period's new words, newest first (backend FRONTEND_FLOW §17).
+struct JourneyWordsPage: Decodable, Equatable {
+    let total: Int
+    let items: [JourneyWord]
+}
+
+struct JourneyWord: Decodable, Equatable, Identifiable {
+    let wordId: String
+    let lemma: String
+    /// The meanings of the word learned in the period, in learned order.
+    let meaningTexts: [String]
+    /// The local day the word was first learned.
+    let learnedOn: String
+
+    var id: String { wordId }
+    var meaningText: String { meaningTexts.joined(separator: "; ") }
+}
+
+/// One day of the new-words timeline: consecutive words learned on the same day.
+struct JourneyWordDay: Equatable, Identifiable {
+    let date: String
+    let words: [JourneyWord]
+
+    var id: String { date }
+
+    /// Pages arrive newest first, so a day can span two pages; it stays one group.
+    static func grouped(_ words: [JourneyWord]) -> [JourneyWordDay] {
+        var days: [JourneyWordDay] = []
+        for word in words {
+            if let last = days.last, last.date == word.learnedOn {
+                days[days.count - 1] = JourneyWordDay(date: last.date, words: last.words + [word])
+            } else {
+                days.append(JourneyWordDay(date: word.learnedOn, words: [word]))
+            }
+        }
+        return days
     }
 }

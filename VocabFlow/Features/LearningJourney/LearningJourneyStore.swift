@@ -17,6 +17,13 @@ final class LearningJourneyStore {
     /// The detail's data per period. A stale entry stays visible while it reloads.
     private(set) var periods: [JourneyPeriod: LearningJourney] = [:]
     private(set) var periodLoads: [JourneyPeriod: Load] = [:]
+    /// The period's new words, as many pages as were loaded, newest first.
+    private(set) var words: [JourneyPeriod: [JourneyWord]] = [:]
+    private(set) var wordTotals: [JourneyPeriod: Int] = [:]
+    private(set) var wordLoads: [JourneyPeriod: Load] = [:]
+    /// The first page shows this many; "See more" adds a page.
+    static let firstWordPage = 10
+    static let wordPage = 20
 
     private let api: VocabAPI
     private let now: () -> Date
@@ -68,12 +75,36 @@ final class LearningJourneyStore {
         }
     }
 
+    /// The first page of the period's new words, or the next one with `more`. A failure keeps what was loaded.
+    func loadWords(_ period: JourneyPeriod, more: Bool = false, force: Bool = false) async {
+        let loaded = words[period] ?? []
+        if !more, !force, words[period] != nil { return }
+        if more, let total = wordTotals[period], loaded.count >= total { return }
+        guard wordLoads[period] != .loading else { return }
+        let started = generation
+        wordLoads[period] = .loading
+        do {
+            let offset = more ? loaded.count : 0
+            let page = try await api.learningJourneyWords(period: period, limit: more ? Self.wordPage : Self.firstWordPage, offset: offset)
+            guard started == generation else { return }
+            words[period] = more ? loaded + page.items : page.items
+            wordTotals[period] = page.total
+            wordLoads[period] = .loaded
+        } catch {
+            guard started == generation, !Task.isCancelled else { return }
+            wordLoads[period] = .failed(error.asAPIError.userMessage)
+        }
+    }
+
     /// After a committed session: everything is stale, but stays on screen until it reloads.
     func invalidate() {
         generation += 1
         summaryLoadedAt = nil
         periodLoadedAt = [:]
         if summaryLoad == .loading { summaryLoad = .idle }
+        words = [:]
+        wordTotals = [:]
+        wordLoads = [:]
         for (period, load) in periodLoads where load == .loading { periodLoads[period] = .idle }
     }
 
@@ -86,6 +117,9 @@ final class LearningJourneyStore {
         periods = [:]
         periodLoads = [:]
         periodLoadedAt = [:]
+        words = [:]
+        wordTotals = [:]
+        wordLoads = [:]
     }
 
     private func isStale(_ loadedAt: Date?) -> Bool {

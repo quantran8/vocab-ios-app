@@ -1,11 +1,12 @@
 import Charts
 import SwiftUI
 
-/// Pushed from Home's journey card: vocabulary growth for the chosen period, this week's rhythm and the period's
-/// activity. History only; it starts nothing (backend FRONTEND_FLOW §17).
+/// Pushed from Home's journey card (docs/app-redesign-v1.html, 7.1): vocabulary growth for the chosen period, the
+/// period's new words as a timeline, and its activity. History only; it starts nothing (backend FRONTEND_FLOW §17).
 struct LearningJourneyView: View {
     @Environment(LearningJourneyStore.self) private var journey
     @State private var period: JourneyPeriod = .month
+    @State private var openWord: JourneyWord?
 
     var body: some View {
         ScrollView {
@@ -20,8 +21,20 @@ struct LearningJourneyView: View {
             .padding(.bottom, Spacing.l)
         }
         .background(Color.canvas)
-        .refreshable { await journey.load(period, force: true) }
-        .task(id: period) { await journey.load(period) }
+        .refreshable {
+            async let figures: Void = journey.load(period, force: true)
+            async let words: Void = journey.loadWords(period, force: true)
+            _ = await (figures, words)
+        }
+        .task(id: period) {
+            // Words are reloaded on every visit: a session committed since may have added some.
+            async let figures: Void = journey.load(period)
+            async let words: Void = journey.loadWords(period, force: true)
+            _ = await (figures, words)
+        }
+        .sheet(item: $openWord) { word in
+            WordDetailSheet(wordID: word.wordId, lemma: word.lemma, ipa: nil, playAudio: nil)
+        }
     }
 
     @ViewBuilder
@@ -33,12 +46,16 @@ struct LearningJourneyView: View {
             SectionTitle("Your vocabulary")
             growthCard(data)
 
-            if let week = (journey.periods[.week] ?? data)?.week, data != nil {
-                SectionTitle("This week’s rhythm")
-                    .padding(.top, Spacing.xl)
-                WeekRhythm(week: week)
-                    .padding(Spacing.m)
-                    .cardSurface()
+            if data != nil {
+                SectionTitle(newWordsCaption) {
+                    if let total = journey.wordTotals[period] {
+                        Text(total, format: .number.locale(AppLanguage.active.locale))
+                            .font(Typography.secondary.weight(.semibold).monospacedDigit())
+                            .foregroundStyle(Color.mutedInk)
+                    }
+                }
+                .padding(.top, Spacing.xl)
+                NewWordsTimeline(period: period, onOpen: { openWord = $0 })
             }
 
             if let data {
@@ -147,16 +164,13 @@ struct LearningJourneyView: View {
 
     private func activity(_ data: LearningJourney.Period) -> some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            Grid(horizontalSpacing: Spacing.s, verticalSpacing: Spacing.s) {
-                GridRow {
-                    tile("Days learned", data.activeDays, systemImage: "calendar")
-                    tile("Sessions completed", data.completedSessions, systemImage: "checkmark.circle")
-                }
-                GridRow {
-                    tile("New words", data.newWords, systemImage: "plus.circle")
-                    tile("Meaning reviews", data.reviewedMeanings, systemImage: "arrow.clockwise")
-                }
+            // No new-word tile: the chart and the list above already carry that number.
+            HStack(alignment: .top, spacing: Spacing.s) {
+                tile("Days learned", data.activeDays, systemImage: "calendar")
+                tile("Sessions completed", data.completedSessions, systemImage: "checkmark.circle")
+                tile("Meaning reviews", data.reviewedMeanings, systemImage: "arrow.clockwise")
             }
+            .fixedSize(horizontal: false, vertical: true)
             Text("Each finished learning or review part counts as one session.")
                 .font(Typography.micro)
                 .foregroundStyle(Color.mutedInk)
@@ -181,7 +195,7 @@ struct LearningJourneyView: View {
                 .foregroundStyle(Color.mutedInk)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(Spacing.m)
+        .padding(Spacing.s + 2)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .cardSurface()
         .accessibilityElement(children: .combine)
@@ -263,6 +277,131 @@ private struct GrowthChart: View {
             AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
                 AxisGridLine().foregroundStyle(Color.ink100)
                 AxisValueLabel().font(Typography.caption).foregroundStyle(Color.mutedInk)
+            }
+        }
+    }
+}
+
+/// The period's new words, a day at a time: a dot on a line per study day, its words as tiles (word over its meanings).
+/// A busy day reads as one at a glance; tapping a tile opens the word.
+private struct NewWordsTimeline: View {
+    let period: JourneyPeriod
+    let onOpen: (JourneyWord) -> Void
+    @Environment(LearningJourneyStore.self) private var journey
+
+    var body: some View {
+        let words = journey.words[period] ?? []
+        let total = journey.wordTotals[period] ?? 0
+        VStack(alignment: .leading, spacing: 0) {
+            if words.isEmpty {
+                switch journey.wordLoads[period] {
+                case .failed(let message)?:
+                    failed(message)
+                case .loaded?:
+                    Text("No new words in this period.")
+                        .font(Typography.secondary)
+                        .foregroundStyle(Color.mutedInk)
+                default:
+                    ProgressView().frame(maxWidth: .infinity, minHeight: 80)
+                }
+            } else {
+                ForEach(Array(JourneyWordDay.grouped(words).enumerated()), id: \.element.id) { index, day in
+                    dayRow(day, isLast: index == JourneyWordDay.grouped(words).count - 1 && words.count >= total)
+                }
+                if words.count < total {
+                    more(total - words.count)
+                }
+            }
+        }
+    }
+
+    private func dayRow(_ day: JourneyWordDay, isLast: Bool) -> some View {
+        HStack(alignment: .top, spacing: Spacing.s) {
+            // The line runs past the dot down to the next day.
+            VStack(spacing: 0) {
+                Circle()
+                    .fill(Color.blue500)
+                    .frame(width: 12, height: 12)
+                    .padding(.top, 4)
+                if !isLast {
+                    Rectangle().fill(Color.ink100).frame(width: 2).frame(maxHeight: .infinity)
+                }
+            }
+            .frame(width: 12)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(verbatim: JourneyDate.dayTitle(day.date))
+                        .font(Typography.secondary.weight(.bold))
+                        .foregroundStyle(Color.ink)
+                    Spacer(minLength: Spacing.xs)
+                    Text("\(day.words.count) words")
+                        .font(Typography.micro.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(Color.mutedInk)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isHeader)
+                WrapLayout(spacing: Spacing.xs) {
+                    ForEach(day.words) { word in tile(word) }
+                }
+            }
+            .padding(.bottom, Spacing.l)
+        }
+    }
+
+    private func tile(_ word: JourneyWord) -> some View {
+        Button { onOpen(word) } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: word.lemma)
+                    .font(Typography.secondary.weight(.semibold))
+                    .foregroundStyle(Color.ink)
+                if !word.meaningTexts.isEmpty {
+                    Text(verbatim: word.meaningText)
+                        .font(Typography.micro)
+                        .foregroundStyle(Color.mutedInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, Spacing.s)
+            .padding(.vertical, Spacing.xs - 2)
+            .background(Color.surface, in: RoundedRectangle(cornerRadius: Radii.tile, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Radii.tile, style: .continuous).strokeBorder(Color.ink200, lineWidth: 2))
+            .background(Color.ink200, in: RoundedRectangle(cornerRadius: Radii.tile, style: .continuous).offset(y: 3))
+            .padding(.bottom, 3)
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .accessibilityLabel(Text(verbatim: word.meaningTexts.isEmpty ? word.lemma : "\(word.lemma), \(word.meaningText)"))
+    }
+
+    private func more(_ remaining: Int) -> some View {
+        Button {
+            Task { await journey.loadWords(period, more: true) }
+        } label: {
+            Group {
+                if journey.wordLoads[period] == .loading {
+                    ProgressView()
+                } else {
+                    Text("Show \(remaining) more words")
+                }
+            }
+            .font(Typography.secondary.weight(.semibold))
+            .foregroundStyle(Color.link)
+            .frame(maxWidth: .infinity, minHeight: Spacing.minTouchTarget)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(journey.wordLoads[period] == .loading)
+    }
+
+    private func failed(_ message: String) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text(verbatim: message)
+                .font(Typography.secondary)
+                .foregroundStyle(Color.errorInk)
+            SecondaryButton(title: "Try again", systemImage: "arrow.clockwise") {
+                Task { await journey.loadWords(period, force: true) }
             }
         }
     }

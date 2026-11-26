@@ -467,6 +467,7 @@ protocol VocabAPI: Sendable {
 
     // Learning journey and content reports (FRONTEND_FLOW §17–18).
     func learningJourney(period: JourneyPeriod) async throws -> LearningJourney
+    func learningJourneyWords(period: JourneyPeriod, limit: Int, offset: Int) async throws -> JourneyWordsPage
     func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt
 }
 
@@ -492,6 +493,7 @@ extension VocabAPI {
     func redeem(code: String) async throws -> PremiumPlan { throw APIError.transport }
 
     func learningJourney(period: JourneyPeriod) async throws -> LearningJourney { throw APIError.transport }
+    func learningJourneyWords(period: JourneyPeriod, limit: Int, offset: Int) async throws -> JourneyWordsPage { throw APIError.transport }
     func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt { throw APIError.transport }
 }
 
@@ -793,6 +795,16 @@ struct LiveVocabAPI: VocabAPI {
     func learningJourney(period: JourneyPeriod) async throws -> LearningJourney {
         var request = get("me/learning-journey")
         request.query = [URLQueryItem(name: "period", value: period.rawValue)]
+        return try await client.send(request)
+    }
+
+    func learningJourneyWords(period: JourneyPeriod, limit: Int, offset: Int) async throws -> JourneyWordsPage {
+        var request = get("me/learning-journey/words")
+        request.query = [
+            URLQueryItem(name: "period", value: period.rawValue),
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset)),
+        ]
         return try await client.send(request)
     }
 

@@ -517,6 +517,7 @@ private struct PracticeFlowView: View {
     @Environment(PracticeSessionStore.self) private var store
     @Environment(\.motion) private var motion
     @State private var isConfirmingExit = false
+    @State private var reportTarget: ContentReportTarget?
 
     var body: some View {
         ZStack {
@@ -537,13 +538,15 @@ private struct PracticeFlowView: View {
                 stageTotal: progress.total,
                 step: progress.current,
                 totalSteps: progress.total,
-                onClose: { isConfirmingExit = true }
+                onClose: { isConfirmingExit = true },
+                trailing: reportButton
             )
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.top, Spacing.xxs)
             .padding(.bottom, Spacing.s)
             .background(Color.canvas)
         }
+        .contentReportSheet($reportTarget)
         .sheet(isPresented: $isConfirmingExit) {
             ConfirmSheet(
                 style: .leavePractice,
@@ -556,6 +559,14 @@ private struct PracticeFlowView: View {
                 motion.perform(MotionTokens.transition) { store.close() }
             }
         }
+    }
+
+    /// The flag mirrors the ✕; it captures what's on screen when tapped.
+    private var reportButton: AnyView? {
+        guard store.contentReportTarget != nil else { return nil }
+        return AnyView(ContentReportButton(isEnabled: store.canOpenContentReport) {
+            reportTarget = store.contentReportTarget
+        })
     }
 
     private func partName(_ part: SessionPartProgress.Part) -> LocalizedStringKey {

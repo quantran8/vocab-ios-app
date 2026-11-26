@@ -5,9 +5,12 @@ struct HomeView: View {
     @Environment(LearnerStore.self) private var learner
     @Environment(LearningPlanStore.self) private var plan
     @Environment(ChallengeMapStore.self) private var challengeMap
+    @Environment(LearningJourneyStore.self) private var journey
     @Environment(\.motion) private var motion
     /// Pushes the Challenge Map onto Home's navigation stack.
     var onOpenChallengeMap: () -> Void = {}
+    /// Pushes the learning journey (history) onto Home's navigation stack.
+    var onOpenJourney: () -> Void = {}
     /// Opens the Focus sheet (topics and collection).
     var onChooseTopics: () -> Void = {}
     var onOpenRandomPractice: () -> Void = {}
@@ -31,6 +34,10 @@ struct HomeView: View {
                     learningSection(collection)
                         .padding(.top, Spacing.xl + Spacing.xs)
                 }
+
+                // History comes after what to learn today; a failure here never blocks the lesson above.
+                LearningJourneyCard(onOpen: onOpenJourney)
+                    .padding(.top, Spacing.xl + Spacing.xs)
             }
             .padding(.horizontal, Spacing.screenGutter)
             .padding(.bottom, Spacing.l)
@@ -38,7 +45,8 @@ struct HomeView: View {
         .refreshable {
             async let learnerRefresh: Void = learner.refresh()
             async let mapRefresh: Void = challengeMap.refresh()
-            _ = await (learnerRefresh, mapRefresh)
+            async let journeyRefresh: Void = journey.refreshSummary(force: true)
+            _ = await (learnerRefresh, mapRefresh, journeyRefresh)
         }
         // Never mid-session (Home isn't on screen then), at most once per launch.
         .task(id: learner.home?.reviewLoad?.promptChoice) {

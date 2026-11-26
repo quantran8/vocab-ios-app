@@ -346,6 +346,8 @@ struct WordDetail: Decodable, Equatable {
         var speaking: MeaningSpeaking? = nil
         /// Missed recently, the latest answer included (the Weak Words definition).
         var needsPractice: Bool? = nil
+        /// Shows the learner's own edit, which can't be reported. Nil from an older backend.
+        var edited: Bool? = nil
     }
 
     let wordId: String
@@ -462,6 +464,10 @@ protocol VocabAPI: Sendable {
     func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan
     /// Only while `features.redeemEnabled`; otherwise the server answers 404.
     func redeem(code: String) async throws -> PremiumPlan
+
+    // Learning journey and content reports (FRONTEND_FLOW §17–18).
+    func learningJourney(period: JourneyPeriod) async throws -> LearningJourney
+    func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt
 }
 
 /// Older test doubles and previews keep compiling: these calls just fail offline.
@@ -484,6 +490,9 @@ extension VocabAPI {
 
     func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan { throw APIError.transport }
     func redeem(code: String) async throws -> PremiumPlan { throw APIError.transport }
+
+    func learningJourney(period: JourneyPeriod) async throws -> LearningJourney { throw APIError.transport }
+    func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt { throw APIError.transport }
 }
 
 extension VocabAPI {
@@ -779,6 +788,19 @@ struct LiveVocabAPI: VocabAPI {
 
     func reportLearner(username: String, reason: ReportReason) async throws {
         _ = try await client.sendRaw(try post("ranking/reports", LearnerReport(username: username, reason: reason)))
+    }
+
+    func learningJourney(period: JourneyPeriod) async throws -> LearningJourney {
+        var request = get("me/learning-journey")
+        request.query = [URLQueryItem(name: "period", value: period.rawValue)]
+        return try await client.send(request)
+    }
+
+    /// Safe to retry: the server replays its first answer for the same `clientReportId`.
+    func submitContentReport(_ report: ContentReportRequest) async throws -> ContentReportReceipt {
+        var request = try post("me/content-reports", report)
+        request.retries = Self.readRetries
+        return try await client.send(request)
     }
 
     func syncAppStoreTransaction(signedTransaction: String) async throws -> PremiumPlan {

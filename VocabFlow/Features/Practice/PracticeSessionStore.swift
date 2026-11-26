@@ -809,3 +809,54 @@ final class PracticeSessionStore {
         }
     }
 }
+
+// MARK: - Content reports
+
+extension PracticeSessionStore {
+    /// What the flag in the header reports right now; nil where reporting is off (Practice Lab, checkpoint challenge)
+    /// or while the mic is busy. Captured once when the sheet opens, so a later step never changes it.
+    var contentReportTarget: ContentReportTarget? {
+        guard !isSandbox, let sessionID, lastRequest?.mode != .checkpointChallenge,
+              let step = currentStep else { return nil }
+        switch step {
+        case .learn(let id, let card):
+            return Self.learnTarget(sessionID: sessionID, learnStepID: id, card: card)
+        case .practice(.knownCheck, let task):
+            // The check step shows its word's Learn card, so a report is about that card.
+            guard let learnID = knownChecks[task.id]?.learnStepID, let card = knownCheckOffer else { return nil }
+            return Self.learnTarget(sessionID: sessionID, learnStepID: learnID, card: card)
+        case .practice(_, let task):
+            let attempt = attempts[task.id]
+            let canAppeal = attempt?.canAppealAnswer ?? false
+            return ContentReportTarget(
+                context: .practiceTask(sessionID: sessionID, taskID: task.id, excerpt: canAppeal ? attempt?.reportExcerpt : nil),
+                subtitle: task.question,
+                reasons: ContentReportTarget.taskReasons(
+                    canAppeal: canAppeal,
+                    hasAudio: task.template == .recording || task.prompt?.isAudio == true
+                ),
+                isRecording: task.template == .recording
+            )
+        }
+    }
+
+    /// The flag is shown but off while recording or uploading: the sheet must never open over a live mic.
+    var canOpenContentReport: Bool {
+        switch recording {
+        case .recording, .uploading: false
+        default: true
+        }
+    }
+
+    private static func learnTarget(sessionID: String, learnStepID: String, card: LearnCard) -> ContentReportTarget {
+        ContentReportTarget(
+            context: .learnCard(sessionID: sessionID, learnStepID: learnStepID),
+            subtitle: card.word,
+            reasons: ContentReportTarget.meaningReasons(
+                hasDefinition: !(card.definition ?? "").isEmpty,
+                hasExample: !(card.examples ?? []).isEmpty,
+                hasAudio: card.audio != nil
+            )
+        )
+    }
+}

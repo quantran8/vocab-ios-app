@@ -829,7 +829,7 @@ function home(done = false, free = false) {
           <span class="text-[13px] text-ink-500 tabular-nums w-12 text-right">${a}/${b}</span></div>`).join('')}
       </div>
     </div>
-    <div class="mt-10">${sectionTitle('Hành trình của bạn')}${journeyCard()}</div>
+    <div class="mt-10">${sectionTitle('Hành trình của bạn', '<span class="link">Xem chi tiết</span>')}${journeyCard()}</div>
   </div>${tabbar('Trang chủ')}`;
 }
 
@@ -1769,7 +1769,7 @@ document.getElementById('flows').innerHTML = [
       'Bỏ lời chào và tên người dùng: không cho thêm thông tin (tên đã có ở Hồ sơ), và tên dài từng làm vỡ bố cục. Đầu màn là một hàng: Syllie (~104pt) bên trái, pill LP bên phải căn giữa theo chiều dọc với Syllie; LP là con số duy nhất ở đầu màn.',
       'Màn này không có tiêu đề lớn (ngoại lệ có chủ đích: "Hôm nay" sẽ lặp với "Bài học hôm nay"). VoiceOver lấy nhãn "Bài học hôm nay" làm header.',
       'Bỏ dòng ngày tháng và "Đã xong 7/20"; tab bar giữ bản iOS (tint màu Blue).',
-      'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Cả card là một nút mở 7.1 (dấu › chỉ là gợi ý điều hướng).',
+      'Khối "Hành trình của bạn" ở cuối, sau Đang học: chỉ là lịch sử. Lối vào là link "Xem chi tiết" bên phải tiêu đề, cùng mẫu với "Đổi" của Đang học; cả card cũng bấm được và mở 7.1. Không chỉ dựa vào dấu ›: nhỏ quá để báo hiệu bấm được.',
       'Thẻ tuần (postcard) là phần chính của khối, mỗi tuần một thẻ. Số ô tem = số ngày học người học đã chọn (<code>weeklySessionGoal</code>), không phải 7 ngày, nên ngày nghỉ theo kế hoạch không bao giờ trông như bị bỏ lỡ và thẻ không giống streak. Mỗi <b>ngày</b> có học (<code>week.activeDays</code>) đóng một tem Blue 500, tem ghi thứ của ngày đó (dữ liệu tích cực, không phải lịch); ô chưa có tem viền đứt Ink 200. Đếm ngày chứ không đếm buổi: Daily tách hai buổi không được tính đôi.',
       'Dưới thẻ một dòng "+24 từ mới tuần này": số từ (không phải nghĩa) học lần đầu trong tuần. Không có sparkline: một đường cộng dồn không trục chỉ lặp lại con số, và đầu tuần chỉ là một chấm. Biểu đồ nằm ở 7.1, có trục và kỳ so sánh.',
       'Đủ mục tiêu: dấu bưu điện tròn Green "ĐÃ ĐẠT" nghiêng đè góc thẻ. Vượt mục tiêu: tem thêm màu Green, số thật (4/3), không thêm áp lực. Tem nghiêng nhẹ xen kẽ cho cảm giác đóng tay; Reduce Motion: tem hiện thẳng, không hiệu ứng đóng dấu. Thẻ chỉ đọc là "2 trên 3 ngày học tuần này, đã học Thứ Hai, Thứ Tư".',
